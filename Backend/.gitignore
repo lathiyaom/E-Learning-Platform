@@ -1,0 +1,23 @@
+# Backend .gitignore
+
+# Node modules and logs
+dist/
+node_modules/
+/npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+
+# Database and migration artifacts
+*.sqlite
+logs/
+
+# Misc
+.DS_Store
+
+# Coverage and build outputs
+/coverage
+/build
