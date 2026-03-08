@@ -2,55 +2,152 @@ const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema(
   {
-    tenantId: {
+    organization_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Tenant",
       required: true,
-      index: true,
     },
     title: {
       type: String,
       required: true,
-      trim: true,
+      maxlength: 200,
     },
     description: {
       type: String,
-      trim: true,
+      required: true,
+      maxlength: 2000,
+    },
+    event_type: {
+      type: String,
+      enum: ["holiday", "exam", "meeting", "workshop", "deadline", "celebration", "other"],
+      required: true,
+    },
+    start_date: {
+      type: Date,
+      required: true,
+    },
+    end_date: {
+      type: Date,
+      required: true,
+    },
+    location: {
+      type: String,
+      maxlength: 500,
+      default: "",
+    },
+    target_role: {
+      type: String,
+      enum: ["all", "student", "teacher", "admin"],
+      default: "all",
+    },
+    // For recurring events
+    is_recurring: {
+      type: Boolean,
+      default: false,
+    },
+    recurring_pattern: {
+      type: String,
+      enum: ["daily", "weekly", "monthly", "yearly"],
+      default: null,
+    },
+    recurring_end_date: {
+      type: Date,
+      default: null,
+    },
+    // Event visibility
+    is_public: {
+      type: Boolean,
+      default: true,
+    },
+    requires_registration: {
+      type: Boolean,
+      default: false,
+    },
+    registration_deadline: {
+      type: Date,
+      default: null,
+    },
+    max_participants: {
+      type: Number,
+      default: null,
+    },
+    current_participants: {
+      type: Number,
+      default: 0,
+    },
+    // Event resources
+    attachments: [{
+      file_name: String,
+      file_url: String,
+      file_size: Number,
+      mime_type: String
+    }],
+    // Event status
+    status: {
+      type: String,
+      enum: ["draft", "published", "cancelled", "completed"],
+      default: "draft",
+    },
+    // Created by
+    created_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    // Reminders
+    reminders: [{
+      type: {
+        type: String,
+        enum: ["email", "notification", "sms"],
+        default: "email"
+      },
+      time_before: {
+        type: Number, // minutes before event
+        default: 60
+      },
+      sent: {
+        type: Boolean,
+        default: false
+      }
+    }],
+    // Event color for calendar
+    color: {
+      type: String,
+      default: "#3B82F6", // Blue
+    },
+    // Event tags
+    tags: [{
+      type: String,
+      maxlength: 50
+    }],
+    // Legacy fields for backward compatibility
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
     },
     eventDate: {
       type: Date,
-      required: true,
-      index: true,
     },
     startTime: {
       type: String,
-      required: true,
       match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
     },
     endTime: {
       type: String,
       match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
     },
-    location: {
-      type: String,
-      trim: true,
-    },
     type: {
       type: String,
       enum: ["seminar", "workshop", "webinar", "competition", "cultural", "sports", "conference", "other"],
-      default: "other",
-      index: true,
     },
     organizer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    targetAudience: [
-      {
-        type: String,
-        enum: ["all", "students", "teachers", "admins"],
-      },
-    ],
+    targetAudience: [{
+      type: String,
+      enum: ["all", "students", "teachers", "admins"],
+    }],
     registrationRequired: {
       type: Boolean,
       default: false,
@@ -59,32 +156,17 @@ const eventSchema = new mongoose.Schema(
       type: Number,
       min: 0,
     },
-    registeredParticipants: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    status: {
-      type: String,
-      enum: ["upcoming", "ongoing", "completed", "cancelled"],
-      default: "upcoming",
-      index: true,
-    },
+    registeredParticipants: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }],
     imageUrl: {
       type: String,
       trim: true,
     },
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
     },
   },
   { 
@@ -95,6 +177,12 @@ const eventSchema = new mongoose.Schema(
 );
 
 // Compound indexes
+eventSchema.index({ organization_id: 1, start_date: 1 });
+eventSchema.index({ organization_id: 1, status: 1 });
+eventSchema.index({ target_role: 1 });
+eventSchema.index({ event_type: 1 });
+eventSchema.index({ created_by: 1 });
+// Legacy indexes for backward compatibility
 eventSchema.index({ tenantId: 1, eventDate: 1 });
 eventSchema.index({ tenantId: 1, status: 1, eventDate: 1 });
 eventSchema.index({ tenantId: 1, type: 1 });

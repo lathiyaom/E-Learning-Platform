@@ -11,6 +11,7 @@ const lectureController = {
       const { courseId, title, description, lectureDate, startTime, endTime, room, type, videoUrl, conductedBy } = req.body;
       const tenantId = req.user.tenantId;
       const userType = req.user.userType;
+      const resolvedConductedBy = conductedBy || (userType === "teacher" ? req.user.id : null);
 
       // Only admin and teacher can create lectures
       if (!["admin", "teacher"].includes(userType)) {
@@ -21,10 +22,10 @@ const lectureController = {
       }
 
       // Validate required fields
-      if (!courseId || !title || !lectureDate || !startTime || !endTime || !conductedBy) {
+      if (!courseId || !title || !lectureDate || !startTime || !endTime || !resolvedConductedBy) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: courseId, title, lectureDate, startTime, endTime, conductedBy",
+          message: "Missing required fields: courseId, title, lectureDate, startTime, endTime",
         });
       }
 
@@ -38,7 +39,7 @@ const lectureController = {
         room,
         type,
         videoUrl,
-        conductedBy,
+        conductedBy: resolvedConductedBy,
       };
 
       const lecture = await lectureService.createLecture(tenantId, lectureData);
@@ -318,21 +319,26 @@ const lectureController = {
       const tenantId = req.user.tenantId;
       const userType = req.user.userType;
 
-      // Only admin can delete lectures
-      if (userType !== "admin") {
-        return res.status(403).json({
-          success: false,
-          message: "Unauthorized to delete lecture",
-        });
-      }
-
-      const lecture = await Lecture.findOneAndDelete({ _id: id, tenantId });
+      const lecture = await Lecture.findOne({ _id: id, tenantId });
       if (!lecture) {
         return res.status(404).json({
           success: false,
           message: "Lecture not found",
         });
       }
+
+      const canDelete =
+        userType === "admin" ||
+        (userType === "teacher" && lecture.conductedBy?.toString() === req.user.id);
+
+      if (!canDelete) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized to delete this lecture",
+        });
+      }
+
+      await lecture.deleteOne();
 
       res.status(200).json({
         success: true,

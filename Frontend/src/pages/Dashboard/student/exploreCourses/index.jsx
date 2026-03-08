@@ -1,138 +1,141 @@
-import React, { useState, useMemo } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import AdminLayout from "../../../../utils/Adminlayoute";
-import { getBreadcrumbs } from "../../../../utils/breadcrumbs";
-import CoursePoster from "./coursePoster";
-import FilterSidebar from "./FilterSidebar";
-import CourseGrid from "./CourseGrid";
-import { useGetAllCoursesQuery } from "../../../../redux/Apis/courseApi";
+import { useGetMarketplaceCoursesQuery } from "../../../../redux/Apis/courseApi";
+import {
+  useEnrollStudentMutation,
+  useGetMyEnrollmentsQuery,
+} from "../../../../redux/Apis/enrollmentApi";
+import { ErrorToster, SuccessToster } from "../../../../components/toster";
+import { getApiErrorMessage } from "../../../../utils/apiError";
 
-function ExploreCourses() {
-  const breadcrumbItems = getBreadcrumbs("EXPLORE_COURSES");
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    categories: [],
-    levels: [],
-    priceRanges: [],
-    minRating: 0,
-  });
+const ExploreCourses = () => {
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("popular");
 
-  const { data: coursesData, isLoading } = useGetAllCoursesQuery();
-  const allCourses = coursesData?.data || [];
+  const { data: coursesData, isLoading } = useGetMarketplaceCoursesQuery(sortBy);
+  const { data: enrollmentsData, refetch: refetchEnrollments } = useGetMyEnrollmentsQuery();
+  const [enrollStudent, { isLoading: enrolling }] = useEnrollStudentMutation();
 
-  // Count active filters for badge
-  const activeFilterCount =
-    filters.categories.length +
-    filters.levels.length +
-    filters.priceRanges.length +
-    (filters.minRating > 0 ? 1 : 0);
+  const courses = coursesData?.data || [];
+  const enrollments = enrollmentsData?.data || [];
+
+  const enrolledCourseIds = useMemo(() => {
+    return new Set(
+      enrollments.map((item) => {
+        const id = item.courseId?._id || item.courseId || item.course_id?._id || item.course_id;
+        return id?.toString();
+      })
+    );
+  }, [enrollments]);
 
   const filteredCourses = useMemo(() => {
-    return allCourses
-      .filter((course) => {
-        if (
-          filters.categories.length > 0 &&
-          !filters.categories.includes(course.category)
-        ) {
-          return false;
-        }
+    const normalized = search.trim().toLowerCase();
+    if (!normalized) return courses;
+    return courses.filter((course) => {
+      const title = (course.title || "").toLowerCase();
+      const category = (course.category || "").toLowerCase();
+      return title.includes(normalized) || category.includes(normalized);
+    });
+  }, [courses, search]);
 
-        if (filters.levels.length > 0 && !filters.levels.includes(course.level)) {
-          return false;
-        }
-
-        if (filters.priceRanges.length > 0) {
-          const isFree = !course.price || course.price === 0;
-          const isPaid = course.price > 0;
-          const hasFree = filters.priceRanges.includes("free");
-          const hasPaid = filters.priceRanges.includes("paid");
-
-          if ((isFree && !hasFree) || (isPaid && !hasPaid)) {
-            return false;
-          }
-        }
-
-        if (filters.minRating > 0 && (course.rating || 0) < filters.minRating) {
-          return false;
-        }
-
-        return true;
-      })
-      .map((course) => ({
-        id: course.id,
-        title: course.title,
-        image: course.imageUrl || "https://via.placeholder.com/400x300",
-        category: course.category || "General",
-        categoryIcon: "code",
-        badge: course.isFeatured ? { text: "Featured", bgColor: "bg-studprimary" } : null,
-        duration: course.duration || "N/A",
-        lessons: course.lessons || 0,
-        rating: course.rating || 0,
-        reviews: course.reviews || 0,
-        level: course.level || "Beginner",
-        instructor: course.instructorName || "Instructor",
-        instructorImage: course.instructorImage || "https://via.placeholder.com/100",
-        price: course.price || 0,
-      }));
-  }, [allCourses, filters]);
-
-  const handleCourseClick = (courseId) => {
-    console.log("Course clicked:", courseId);
+  const handleEnroll = async (courseId) => {
+    try {
+      await enrollStudent({ courseId }).unwrap();
+      SuccessToster("Enrolled successfully", 2500);
+      refetchEnrollments();
+    } catch (error) {
+      ErrorToster(getApiErrorMessage(error, "Failed to enroll"), 3000);
+    }
   };
 
-  if (isLoading) {
-    return (
-      <AdminLayout
-        showSearch={false}
-        className="p-0"
-        breadcrumbItems={breadcrumbItems}
-      >
-        <CoursePoster />
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-studprimary"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
   return (
-    <AdminLayout
-      showSearch={false}
-      className="p-0"
-      breadcrumbItems={breadcrumbItems}
-    >
-      <CoursePoster />
+    <AdminLayout showSearch={false}>
+      <div className="space-y-6">
+        <div className="rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-700 text-white p-6">
+          <h1 className="text-2xl font-bold">Explore Courses</h1>
+          <p className="text-blue-100 mt-1">
+            Browse courses from all organizations and enroll instantly.
+          </p>
+        </div>
 
-      <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 p-4 sm:p-6 xl:p-8">
-        <FilterSidebar
-          isOpen={filterOpen}
-          onClose={() => setFilterOpen(false)}
-          filters={filters}
-          onFilterChange={setFilters}
-        />
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col md:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Search by title or category"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+          />
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+          >
+            <option value="popular">Popular</option>
+            <option value="newest">Newest</option>
+            <option value="highest_rated">Highest Rated</option>
+            <option value="price_low_to_high">Price Low to High</option>
+            <option value="price_high_to_low">Price High to Low</option>
+          </select>
+        </div>
 
-        <CourseGrid
-          courses={filteredCourses}
-          onCourseClick={handleCourseClick}
-          activeFilterCount={activeFilterCount}
-          onFilterToggle={() => setFilterOpen(true)}
-        />
-      </div>
+        {isLoading ? (
+          <div className="text-center py-12">Loading courses...</div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-10 text-center text-slate-500 dark:text-slate-400">
+            No courses found.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredCourses.map((course) => {
+              const courseId = course._id || course.id;
+              const enrolled = enrolledCourseIds.has(courseId?.toString());
+              const price = course.priceUSD ?? course.price ?? course.pricing ?? 0;
+              const orgName = course.organization_id?.name || course.tenantId?.name || "Organization";
 
-      {/* Fixed Mobile Filter FAB */}
-      <button
-        onClick={() => setFilterOpen(true)}
-        className="xl:hidden fixed bottom-6 right-6 w-14 h-14 bg-studprimary text-white rounded-full shadow-lg shadow-studprimary/30 flex items-center justify-center z-30 hover:bg-studprimary/90 active:scale-95 transition-all"
-      >
-        <SlidersHorizontal size={22} />
-        {activeFilterCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-            {activeFilterCount}
-          </span>
+              return (
+                <div
+                  key={courseId}
+                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                >
+                  <img
+                    src={course.image || "https://placehold.co/640x360?text=Course"}
+                    alt={course.title}
+                    className="w-full h-40 object-cover"
+                  />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{orgName}</p>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mt-1 line-clamp-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2">
+                      {course.description}
+                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">
+                        {Number(price) > 0 ? `$${price}` : "Free"}
+                      </span>
+                      <button
+                        onClick={() => handleEnroll(courseId)}
+                        disabled={enrolled || enrolling}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold ${
+                          enrolled
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        } disabled:opacity-70`}
+                      >
+                        {enrolled ? "Enrolled" : "Enroll"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
-      </button>
+      </div>
     </AdminLayout>
   );
-}
+};
 
 export default ExploreCourses;

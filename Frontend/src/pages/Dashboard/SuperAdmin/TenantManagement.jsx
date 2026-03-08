@@ -32,12 +32,15 @@ const TenantManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [showConfirmModal, setShowConfirmModal] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(null);
   const [assignIdentifier, setAssignIdentifier] = useState("");
   const [assignLoading, setAssignLoading] = useState(false);
 
   const tenants = data?.data || [];
+
+  const normalizeRole = (role) => (role || "").toLowerCase();
 
   const filteredTenants = tenants.filter((tenant) => {
     const matchesSearch =
@@ -50,8 +53,8 @@ const TenantManagement = () => {
 
     const matchesRole =
       roleFilter === "all" ||
-      (roleFilter === "superadmin" && tenant.userType === "SUPERADMIN") ||
-      (roleFilter === "admin" && tenant.userType === "ADMIN");
+      (roleFilter === "superadmin" && normalizeRole(tenant.userType) === "superadmin") ||
+      (roleFilter === "admin" && normalizeRole(tenant.userType) === "admin");
 
     return matchesSearch && matchesStatus && matchesRole;
   });
@@ -116,7 +119,7 @@ const TenantManagement = () => {
   };
 
   const getRoleBadge = (role) => {
-    return role === "SUPERADMIN"
+    return normalizeRole(role) === "superadmin"
       ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
       : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
   };
@@ -202,8 +205,8 @@ const TenantManagement = () => {
       </div>
 
       {/* Tenants Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-visible">
+        <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
               <tr>
@@ -250,10 +253,10 @@ const TenantManagement = () => {
                         </div>
                         <div>
                           <p className="font-semibold text-slate-900 dark:text-white">
-                            {tenant.institutionName || "N/A"}
+                            {tenant.institutionName || tenant.name || "N/A"}
                           </p>
                           <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {tenant.name}
+                            {tenant.OrgOwnerEmail || tenant.email}
                           </p>
                         </div>
                       </div>
@@ -272,12 +275,12 @@ const TenantManagement = () => {
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadge(tenant.userType)}`}
                       >
-                        {tenant.userType === "SUPERADMIN" ? (
+                        {normalizeRole(tenant.userType) === "superadmin" ? (
                           <Shield className="h-3 w-3" />
                         ) : (
                           <Building className="h-3 w-3" />
                         )}
-                        {tenant.userType}
+                        {normalizeRole(tenant.userType) === "superadmin" ? "SUPERADMIN" : "ADMIN"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -295,113 +298,22 @@ const TenantManagement = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="relative inline-block">
                         <button
-                          onClick={() =>
-                            setOpenDropdown(
-                              openDropdown === tenant._id ? null : tenant._id
-                            )
-                          }
+                          onClick={(e) => {
+                            if (openDropdown === tenant._id) {
+                              setOpenDropdown(null);
+                              return;
+                            }
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenuPosition({
+                              top: rect.bottom + 8,
+                              left: rect.right - 224, // menu width 56 * 4 = 224px
+                            });
+                            setOpenDropdown(tenant._id);
+                          }}
                           className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         >
                           <MoreVertical className="h-5 w-5 text-slate-500" />
                         </button>
-
-                        {openDropdown === tenant._id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-10"
-                              onClick={() => setOpenDropdown(null)}
-                            />
-                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-20">
-                              <button
-                                onClick={() => {
-                                  window.location.href = `/superadmin/tenants/${tenant._id}`;
-                                  setOpenDropdown(null);
-                                }}
-                                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                              >
-                                <Eye className="h-4 w-4" />
-                                View Details
-                              </button>
-
-                              {tenant.userType === "ADMIN" && (
-                                <button
-                                  onClick={() => {
-                                    setShowConfirmModal({
-                                      type: "promote",
-                                      tenant,
-                                    });
-                                    setOpenDropdown(null);
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-purple-600 dark:text-purple-400"
-                                >
-                                  <Shield className="h-4 w-4" />
-                                  Promote to Super Admin
-                                </button>
-                              )}
-
-                              {tenant.userType === "SUPERADMIN" && (
-                                <button
-                                  onClick={() => {
-                                    setShowConfirmModal({
-                                      type: "demote",
-                                      tenant,
-                                    });
-                                    setOpenDropdown(null);
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-orange-600 dark:text-orange-400"
-                                >
-                                  <ShieldOff className="h-4 w-4" />
-                                  Demote to Admin
-                                </button>
-                              )}
-
-                              <button
-                                onClick={() => {
-                                  setShowAssignModal({ tenant });
-                                  setOpenDropdown(null);
-                                }}
-                                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                              >
-                                <ChevronDown className="h-4 w-4" />
-                                Assign Teacher
-                              </button>
-
-                              <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
-
-                              {tenant.status !== "active" && (
-                                <button
-                                  onClick={() => {
-                                    setShowConfirmModal({
-                                      type: "activate",
-                                      tenant,
-                                    });
-                                    setOpenDropdown(null);
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-green-600 dark:text-green-400"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                  Activate
-                                </button>
-                              )}
-
-                              {tenant.status !== "suspended" && (
-                                <button
-                                  onClick={() => {
-                                    setShowConfirmModal({
-                                      type: "suspend",
-                                      tenant,
-                                    });
-                                    setOpenDropdown(null);
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600 dark:text-red-400"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                  Suspend
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -411,6 +323,99 @@ const TenantManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Global Floating Dropdown (prevents table clipping issues) */}
+      {openDropdown && (
+        <>
+          <div className="fixed inset-0 z-[150]" onClick={() => setOpenDropdown(null)} />
+          {(() => {
+            const tenant = tenants.find((t) => t._id === openDropdown);
+            if (!tenant) return null;
+            return (
+              <div
+                className="fixed w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-[160]"
+                style={{ top: menuPosition.top, left: Math.max(8, menuPosition.left) }}
+              >
+                <button
+                  onClick={() => {
+                    window.location.href = `/superadmin/tenants/${tenant._id}`;
+                    setOpenDropdown(null);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  View Details
+                </button>
+
+                {normalizeRole(tenant.userType) === "admin" && (
+                  <button
+                    onClick={() => {
+                      setShowConfirmModal({ type: "promote", tenant });
+                      setOpenDropdown(null);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-purple-600 dark:text-purple-400"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Promote to Super Admin
+                  </button>
+                )}
+
+                {normalizeRole(tenant.userType) === "superadmin" && (
+                  <button
+                    onClick={() => {
+                      setShowConfirmModal({ type: "demote", tenant });
+                      setOpenDropdown(null);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-orange-600 dark:text-orange-400"
+                  >
+                    <ShieldOff className="h-4 w-4" />
+                    Demote to Admin
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setShowAssignModal({ tenant });
+                    setOpenDropdown(null);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                  Assign Teacher
+                </button>
+
+                <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
+
+                {tenant.status !== "active" && (
+                  <button
+                    onClick={() => {
+                      setShowConfirmModal({ type: "activate", tenant });
+                      setOpenDropdown(null);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-green-600 dark:text-green-400"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Activate
+                  </button>
+                )}
+
+                {tenant.status !== "suspended" && (
+                  <button
+                    onClick={() => {
+                      setShowConfirmModal({ type: "suspend", tenant });
+                      setOpenDropdown(null);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600 dark:text-red-400"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Suspend
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+        </>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && (

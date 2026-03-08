@@ -21,6 +21,11 @@ const Lecture = require("./Lecture.mongoose");
 const Timetable = require("./Timetable.mongoose");
 const Rating = require("./Rating.mongoose");
 
+// System Models
+const ActivityLog = require("./ActivityLog.mongoose");
+const Conversation = require("./Conversation.mongoose");
+const Message = require("./Message.mongoose");
+
 // Sequelize Models (COMMENTED OUT)
 // const User = require("./User");
 // const Course = require("./Course");
@@ -57,4 +62,7 @@ module.exports = {
   Lecture,
   Timetable,
   Rating,
+  ActivityLog,
+  Conversation,
+  Message,
 };

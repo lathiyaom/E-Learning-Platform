@@ -1,16 +1,13 @@
 import React, { useMemo, useState } from "react";
 import ProgressCard from "./ProgressCard";
-import { useGetStudentEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
+import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 import { Code2 } from "lucide-react";
 
 function MyProgress() {
   const DEFAULT_COUNT = 3;
   const [visibleCount, setVisibleCount] = useState(DEFAULT_COUNT);
-  
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const { data: enrollmentsData, isLoading } = useGetStudentEnrollmentsQuery(user.id, {
-    skip: !user.id,
-  });
+
+  const { data: enrollmentsData, isLoading } = useGetMyEnrollmentsQuery();
 
   const enrollments = enrollmentsData?.data || [];
 
@@ -92,16 +89,21 @@ function MyProgress() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {visibleCourses.map((enrollment) => (
           <ProgressCard
-            key={enrollment.id}
+            key={enrollment._id || enrollment.id}
             icon={Code2}
             category="Course"
             badgeColor="text-blue-600"
             badgeBg="bg-blue-50 dark:bg-blue-900/20"
             iconBg="bg-blue-100 dark:bg-blue-900/30"
-            title={enrollment.courseTitle || `Course ${enrollment.courseId}`}
+            title={
+              enrollment.courseId?.title ||
+              enrollment.course_id?.title ||
+              enrollment.courseTitle ||
+              `Course ${enrollment.courseId || enrollment.course_id}`
+            }
             instructor="Instructor"
-            completion={enrollment.progressPercent || 0}
-            lessonsDone={Math.floor((enrollment.progressPercent || 0) / 5)}
+            completion={enrollment.progressPercent ?? enrollment.progress ?? 0}
+            lessonsDone={Math.floor(((enrollment.progressPercent ?? enrollment.progress ?? 0) / 5))}
             lessonsTotal={20}
           />
         ))}

@@ -1,15 +1,95 @@
+import { useMemo } from "react";
 import { PerformanceLineChart } from "./ChartComponents";
-import { performanceChartData } from "./chartData";
 import {
   MessageCircle,
   RefreshCcw,
   Trophy,
   CheckCircle2,
-  MessagesSquare,
   ArrowRight,
 } from "lucide-react";
+import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
+import { useGetUpcomingHolidaysQuery } from "../../../../redux/Apis/holidayApi";
+import { useDispatch, useSelector } from "react-redux";
+import { getUpcomingEvents } from "../../../../redux/Apis/eventApi";
+import { useEffect } from "react";
 
 const ChartSection = () => {
+  const dispatch = useDispatch();
+  const { data: enrollmentsData } = useGetMyEnrollmentsQuery();
+  const { data: holidaysData } = useGetUpcomingHolidaysQuery();
+  const { upcomingEvents } = useSelector((state) => state.event);
+  const enrollments = enrollmentsData?.data || [];
+
+  useEffect(() => {
+    dispatch(getUpcomingEvents({ days: 30, page: 1, limit: 6 }));
+  }, [dispatch]);
+
+  const performanceChartData = useMemo(() => {
+    const now = new Date();
+    const months = Array.from({ length: 6 }).map((_, idx) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - idx), 1);
+      return {
+        month: date.toLocaleString("default", { month: "short" }),
+      };
+    });
+
+    const totalEnrollments = enrollments.length || 1;
+    const avgProgress =
+      enrollments.reduce((sum, e) => sum + Number(e.progressPercent || e.progress || 0), 0) /
+      totalEnrollments;
+    const completed = enrollments.filter(
+      (e) => Number(e.progressPercent || e.progress || 0) >= 100,
+    ).length;
+
+    return months.map((m, index) => {
+      const growth = Math.min(100, Math.round((avgProgress * (index + 1)) / 6));
+      const completionRate = Math.min(
+        100,
+        Math.round(((completed / totalEnrollments) * 100 * (index + 1)) / 6),
+      );
+      const engagement = Math.min(100, Math.round((enrollments.length * 12 * (index + 1)) / 6));
+
+      return {
+        month: m.month,
+        accuracy: growth,
+        completionRate,
+        engagement,
+      };
+    });
+  }, [enrollments]);
+
+  const communityFeed = useMemo(() => {
+    const eventItems = (upcomingEvents || []).slice(0, 3).map((event, index) => ({
+      id: `event-${event._id || index}`,
+      title: event.title || "Upcoming event",
+      subtitle: event.eventType || "Event",
+      time:
+        event.startDate || event.date
+          ? new Date(event.startDate || event.date).toLocaleDateString()
+          : "Scheduled",
+      icon: Trophy,
+    }));
+
+    const holidayItems = (holidaysData?.data || []).slice(0, 2).map((holiday, index) => ({
+      id: `holiday-${holiday._id || index}`,
+      title: holiday.title || holiday.name || "Holiday",
+      subtitle: "Holiday notice",
+      time: holiday.date ? new Date(holiday.date).toLocaleDateString() : "Upcoming",
+      icon: CheckCircle2,
+    }));
+
+    const enrollmentItems = enrollments.slice(0, 1).map((item, index) => ({
+      id: `enroll-${item._id || index}`,
+      title:
+        item.courseId?.title || item.course_id?.title || item.courseTitle || "Course enrolled",
+      subtitle: "Learning activity",
+      time: item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "Recent",
+      icon: MessageCircle,
+    }));
+
+    return [...eventItems, ...holidayItems, ...enrollmentItems].slice(0, 6);
+  }, [upcomingEvents, holidaysData?.data, enrollments]);
+
   return (
     <div className="py-8">
       {/* Performance Metrics Section */}
@@ -53,112 +133,36 @@ const ChartSection = () => {
               </button>
             </div>
             <div className="p-6 space-y-7 flex-1 overflow-y-auto max-h-[500px] hide-scrollbar">
-              <div className="flex gap-4 items-start group">
-                <div className="relative flex-shrink-0">
-                  <img
-                    className="w-10 h-10 rounded-xl object-cover ring-2 ring-slate-50 dark:ring-white/5 group-hover:scale-105 transition-transform"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuClcR0prvpaYncoJKf1koboBdcDuK6rmH_INVYxO53UtA1x3iYzPYIAevGAiemDb8B5CjUgEEk_j81QU43Vdy045avwS5SLAQMBxYVG4liz71SIchOMn6kjHkXB56hTTZ0EqdhZ2R2_QWUK46jxaCdMNCm1_dJwy3dpPqr1n8xo6lzH9MQdjTquR0KL4G072V6Sf2JgEVJJ0LXoTYzITN5FSbIya6gq6FoHzJiQJucesYnLBuZMal_rmdEXV52BFIswgM2Dx1cLeQ"
-                    alt="User"
-                  />
-                  <div className="absolute -bottom-1 -right-1 bg-studprimary dark:bg-premium-gold w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1E1F26]">
-                    <MessageCircle className="w-2.5 h-2.5 text-white dark:text-deep-charcoal" />
+              {communityFeed.length === 0 && (
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  No community activity yet.
+                </div>
+              )}
+              {communityFeed.map((item) => (
+                <div key={item.id} className="flex gap-4 items-start group">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-tan-100 dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold font-extrabold text-xs">
+                      {item.title.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 bg-studprimary dark:bg-premium-gold w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1E1F26]">
+                      <item.icon className="w-2.5 h-2.5 text-white dark:text-deep-charcoal" />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                      <span className="font-bold text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors">
+                        {item.title}
+                      </span>{" "}
+                      <span className="text-studprimary dark:text-premium-gold font-semibold uppercase text-[10px] tracking-widest bg-studprimary/5 dark:bg-premium-gold/10 px-1.5 py-0.5 rounded">
+                        {item.subtitle}
+                      </span>
+                    </p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 font-bold uppercase tracking-tighter">
+                      {item.time}
+                    </p>
                   </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                    <span className="font-bold text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors">
-                      Marcus L.
-                    </span>{" "}
-                    replied to your post in{" "}
-                    <span className="text-studprimary dark:text-premium-gold font-semibold uppercase text-[10px] tracking-widest bg-studprimary/5 dark:bg-premium-gold/10 px-1.5 py-0.5 rounded">
-                      Python Forum
-                    </span>
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 font-bold uppercase tracking-tighter">
-                    Just now
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start group">
-                <div className="relative flex-shrink-0">
-                  <img
-                    className="w-10 h-10 rounded-xl object-cover ring-2 ring-slate-50 dark:ring-white/5 group-hover:scale-105 transition-transform"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUjgPniYqOM_Qyaxanv5gCboL4etAZDMN4YtDA7jcVX0emtBue7Xyus20wlfxrN5HhgwCJ5cBADj8UGWvQ1SHL1WGyfP-F4uqgCvMKxwRSFUMOF2Rb5XAgWXzGQ6tzvGPUmvg6W4qPSD9Wgmkela5tOjQCwImCJA6JHVqjBMDJnCnaH8F6lH186N4k8MjEENCNKh11UoWBTpbtc-R6aWwlPC2smiX7cmYVOrBnDR8wHIKwa0n1PZsbMbHw7jtffr_ctQpyjMHThw"
-                    alt="User"
-                  />
-                  <div className="absolute -bottom-1 -right-1 bg-studprimary dark:bg-premium-gold w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1E1F26]">
-                    <Trophy className="w-2.5 h-2.5 text-white dark:text-deep-charcoal" />
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                    <span className="font-bold text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors">
-                      Achievement!
-                    </span>{" "}
-                    You earned the{" "}
-                    <span className="text-studprimary dark:text-premium-gold font-semibold uppercase text-[10px] tracking-widest bg-studprimary/5 dark:bg-premium-gold/10 px-1.5 py-0.5 rounded">
-                      Weekly Goal Crusher
-                    </span>
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 font-bold uppercase tracking-tighter">
-                    42m ago
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start group">
-                <div className="relative flex-shrink-0">
-                  <img
-                    className="w-10 h-10 rounded-xl object-cover ring-2 ring-slate-50 dark:ring-white/5 group-hover:scale-105 transition-transform"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJpiAS7h0KVMkWupdRHFgPAQ0kO2IIDUt3Y5-Vdlw0SuMJDbRXK-RWCyr60z1pOllZUgQB41aBVrUFrqAF7HrvtzMjE5Sl9hJDRBtO94p31coGk9DZcEdpZ06yAHpKPhdGOq8af2xL5pLDPVk0pbNcI4QiEHtelPxK2vAafy52y84KWkmfdTh1xvX-XqzEkusuB-LEpKz8MeyBYmtrDj9_AeVbaEZjgSfxF-YhDZyDe-QhtkdcJuGJzJXOiHYvbuYrmY4FVNLdyQ"
-                    alt="User"
-                  />
-                  <div className="absolute -bottom-1 -right-1 bg-studprimary dark:bg-premium-gold w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1E1F26]">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-white dark:text-deep-charcoal" />
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                    <span className="font-bold text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors">
-                      Sarah J.
-                    </span>{" "}
-                    completed the{" "}
-                    <span className="text-studprimary dark:text-premium-gold font-semibold uppercase text-[10px] tracking-widest bg-studprimary/5 dark:bg-premium-gold/10 px-1.5 py-0.5 rounded">
-                      UX Research
-                    </span>{" "}
-                    module.
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 font-bold uppercase tracking-tighter">
-                    2h ago
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start group">
-                <div className="relative flex-shrink-0">
-                  <div className="w-10 h-10 rounded-xl bg-tan-100 dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold font-extrabold text-xs">
-                    JD
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 bg-studprimary dark:bg-premium-gold w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1E1F26]">
-                    <MessagesSquare className="w-2.5 h-2.5 text-white dark:text-deep-charcoal" />
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                    <span className="font-bold text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors">
-                      John Doe
-                    </span>{" "}
-                    started a new discussion in{" "}
-                    <span className="text-studprimary dark:text-premium-gold font-semibold uppercase text-[10px] tracking-widest bg-studprimary/5 dark:bg-premium-gold/10 px-1.5 py-0.5 rounded">
-                      AI Ethics
-                    </span>
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 font-bold uppercase tracking-tighter">
-                    5h ago
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
             <div className="p-4 border-t border-slate-50 dark:border-white/5 mt-auto">
               <button className="w-full py-3.5 text-[11px] font-extrabold text-studprimary dark:text-premium-gold hover:bg-tan-50 dark:hover:bg-white/5 rounded-xl transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-2">

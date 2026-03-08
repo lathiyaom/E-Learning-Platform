@@ -4,6 +4,7 @@ import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import { useGetExamsByCourseQuery, useDeleteExamMutation } from "../../../redux/Apis/examApi";
 import { useNavigate } from "react-router-dom";
 import { selectCurrentUser } from "../../../redux/slice/authSlice";
+import AdminLayout from "../../../utils/Adminlayoute";
 
 const Exams = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
@@ -18,8 +19,11 @@ const Exams = () => {
   const [deleteExam] = useDeleteExamMutation();
 
   const courseList = coursesData?.data || [];
+  const teacherId = String(user?._id || user?.id || "");
   const myCourses = courseList.filter(
-    (course) => (course.createdBy || course.createdBy?._id) === user?.id
+    (course) =>
+      String(course?.createdBy?._id || course?.createdBy || "") === teacherId ||
+      String(course?.teacher_id?._id || course?.teacher_id || "") === teacherId
   );
 
   const exams = examsData?.data || [];
@@ -37,11 +41,11 @@ const Exams = () => {
   };
 
   return (
-    <div className="p-6">
+    <AdminLayout showSearch={false} className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Manage Exams</h1>
         <button
-          onClick={() => navigate("/teacher/exams/create")}
+          onClick={() => navigate("/teacher/exams")}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           disabled={!selectedCourse}
         >
@@ -103,13 +107,13 @@ const Exams = () => {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => navigate(`/teacher/exams/${exam._id || exam.id}`)}
+                        onClick={() => navigate(`/teacher/exams`)}
                         className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
                       >
                         View
                       </button>
                       <button
-                        onClick={() => navigate(`/teacher/exams/${exam._id || exam.id}/edit`)}
+                        onClick={() => navigate(`/teacher/exams`)}
                         className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-300"
                       >
                         Edit
@@ -128,7 +132,7 @@ const Exams = () => {
           </>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

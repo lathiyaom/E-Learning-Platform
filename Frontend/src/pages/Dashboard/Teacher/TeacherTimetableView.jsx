@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Clock, MapPin, Users, Loader2 } from "lucide-react";
 import { getMySchedule } from "../../../redux/Apis/timetableApi";
+import AdminLayout from "../../../utils/Adminlayoute";
 
 const TeacherTimetableView = () => {
   const dispatch = useDispatch();
@@ -14,17 +15,8 @@ const TeacherTimetableView = () => {
     }
   }, [dispatch, user]);
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const timeSlots = [
-    "09:00 AM",
-    "10:00 AM",
-    "11:00 AM",
-    "12:00 PM",
-    "01:00 PM",
-    "02:00 PM",
-    "03:00 PM",
-    "04:00 PM",
-  ];
+  const schedule = mySchedule || {};
+  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
   if (loading) {
     return (
@@ -34,63 +26,53 @@ const TeacherTimetableView = () => {
     );
   }
 
-  const timetable = mySchedule || {};
-
   return (
-    <div className="p-8 bg-slate-100 min-h-screen">
+    <AdminLayout showSearch={false} className="p-8 bg-slate-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">My Timetable</h1>
 
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-slate-200">
-              <th className="border p-3 text-left font-semibold">Time</th>
-              {daysOfWeek.map((day) => (
-                <th key={day} className="border p-3 text-center font-semibold">
-                  {day}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {timeSlots.map((time) => (
-              <tr key={time} className="hover:bg-slate-50">
-                <td className="border p-3 font-medium text-gray-700">{time}</td>
-                {daysOfWeek.map((day) => {
-                  const slot = timetable[day]?.find((s) => s.time === time);
-                  return (
-                    <td key={`${day}-${time}`} className="border p-2">
-                      {slot ? (
-                        <div className="bg-blue-100 p-3 rounded-lg">
-                          <p className="font-semibold text-blue-900">{slot.subject}</p>
-                          <div className="flex items-center gap-2 text-sm text-blue-700 mt-1">
-                            <MapPin size={14} />
-                            <span>{slot.room}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-blue-700">
-                            <Users size={14} />
-                            <span>{slot.class}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center text-gray-400 py-4">-</div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {days.map((day) => {
+          const slots = schedule[day] || [];
+          return (
+            <section key={day} className="bg-white rounded-xl shadow p-4">
+              <h2 className="font-bold text-lg capitalize mb-3">{day}</h2>
+              {slots.length === 0 ? (
+                <p className="text-sm text-gray-500">No lectures</p>
+              ) : (
+                <div className="space-y-3">
+                  {slots.map((slot) => (
+                    <div key={slot._id} className="border rounded-lg p-3 bg-slate-50">
+                      <p className="font-semibold text-slate-900">
+                        {slot.courseId?.title || "Lecture"}
+                      </p>
+                      <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
+                        <Clock size={14} />
+                        {slot.startTime} - {slot.endTime}
+                      </p>
+                      <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
+                        <MapPin size={14} />
+                        {slot.room || "N/A"}
+                      </p>
+                      <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
+                        <Users size={14} />
+                        {slot.type || "class"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
 
-      {Object.keys(timetable).length === 0 && (
+      {Object.keys(schedule).length === 0 && (
         <div className="bg-white p-12 rounded-lg shadow text-center mt-6">
           <Clock className="mx-auto mb-4 text-gray-400" size={48} />
           <p className="text-gray-500">No timetable scheduled yet</p>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 };
 

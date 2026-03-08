@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import { useGetCourseEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
+import AdminLayout from "../../../utils/Adminlayoute";
 
 const Students = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const { user } = useSelector((state) => state.auth || {});
+  const teacherId = String(user?._id || user?.id || "");
   
   const { data: coursesData, isLoading: coursesLoading } = useGetAllCoursesQuery();
   const { data: enrollmentsData, isLoading: enrollmentsLoading } = useGetCourseEnrollmentsQuery(
@@ -13,13 +16,15 @@ const Students = () => {
   );
 
   const myCourses = coursesData?.data?.filter(
-    (course) => course.createdBy === user.id
+    (course) =>
+      String(course?.createdBy?._id || course?.createdBy || "") === teacherId ||
+      String(course?.teacher_id?._id || course?.teacher_id || "") === teacherId
   ) || [];
 
   const students = enrollmentsData?.data || [];
 
   return (
-    <div className="p-6">
+    <AdminLayout showSearch={false} className="p-6">
       <h1 className="text-3xl font-bold mb-6">My Students</h1>
 
       <div className="bg-white rounded-lg shadow p-6">
@@ -35,7 +40,7 @@ const Students = () => {
           >
             <option value="">-- Select Course --</option>
             {myCourses.map((course) => (
-              <option key={course.id} value={course.id}>
+              <option key={course._id || course.id} value={course._id || course.id}>
                 {course.title}
               </option>
             ))}
@@ -80,12 +85,16 @@ const Students = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {students.map((enrollment) => (
-                        <tr key={enrollment.id}>
+                        <tr key={enrollment._id || enrollment.id}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {enrollment.studentId}
+                            {enrollment.studentId?.firstName
+                              ? `${enrollment.studentId.firstName} ${enrollment.studentId.lastName || ""}`.trim()
+                              : enrollment.studentId}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(enrollment.enrollmentDate).toLocaleDateString()}
+                            {enrollment.enrollmentDate
+                              ? new Date(enrollment.enrollmentDate).toLocaleDateString()
+                              : "-"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -123,7 +132,7 @@ const Students = () => {
           </>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

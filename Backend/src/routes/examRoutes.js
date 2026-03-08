@@ -13,20 +13,20 @@ router.post(
   examController.createExam
 );
 
-// Get exam by ID
-router.get(
-  "/:id",
-  authenticate,
-  tenantScope,
-  examController.getExamById
-);
-
 // Get exams by course
 router.get(
   "/course/:courseId",
   authenticate,
   tenantScope,
   examController.getExamsByCourse
+);
+
+// Get exam by ID
+router.get(
+  "/:id",
+  authenticate,
+  tenantScope,
+  examController.getExamById
 );
 
 // Update exam

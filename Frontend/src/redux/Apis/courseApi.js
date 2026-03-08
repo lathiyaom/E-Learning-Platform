@@ -15,6 +15,19 @@ export const courseApi = apiSlice.injectEndpoints({
             ]
           : [{ type: "Course", id: "LIST" }],
     }),
+    getMarketplaceCourses: builder.query({
+      query: (sortBy) => {
+        const url = "/Course/Marketplace";
+        return sortBy ? `${url}?sortBy=${sortBy}` : url;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: "Course", id: _id })),
+              { type: "Course", id: "MARKETPLACE" },
+            ]
+          : [{ type: "Course", id: "MARKETPLACE" }],
+    }),
 
     getCourseById: builder.query({
       query: (id) => `/Course/${id}`,
@@ -58,6 +71,7 @@ export const courseApi = apiSlice.injectEndpoints({
 
 export const {
   useGetAllCoursesQuery,
+  useGetMarketplaceCoursesQuery,
   useLazyGetAllCoursesQuery,
   useGetCourseByIdQuery,
   useLazyGetCourseByIdQuery,

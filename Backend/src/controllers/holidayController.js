@@ -290,6 +290,58 @@ const holidayController = {
       });
     }
   },
+
+  /**
+   * Get calendar holidays by year/month
+   * GET /Holiday/calendar/:year/:month
+   */
+  getCalendarHolidays: async (req, res) => {
+    try {
+      const { year, month } = req.params;
+      const tenantId = req.user.tenantId;
+
+      // Validate year and month
+      const yearNum = parseInt(year);
+      const monthNum = parseInt(month);
+
+      if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid year or month",
+        });
+      }
+
+      // Get start and end dates for the month
+      const startDate = new Date(yearNum, monthNum - 1, 1);
+      const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59);
+
+      const query = {
+        $or: [
+          { tenantId: null }, // Platform holidays
+          { tenantId }, // Organization holidays
+        ],
+        date: { $gte: startDate, $lte: endDate },
+      };
+
+      const holidays = await Holiday.find(query).sort({ date: 1 });
+
+      res.status(200).json({
+        success: true,
+        message: "Calendar holidays retrieved successfully",
+        data: holidays,
+        meta: {
+          year: yearNum,
+          month: monthNum,
+          count: holidays.length,
+        },
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  },
 };
 
 module.exports = holidayController;

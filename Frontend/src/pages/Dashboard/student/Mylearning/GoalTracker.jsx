@@ -1,13 +1,33 @@
 import React from "react";
+import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 
 function GoalTracker() {
-  const days = [
-    { label: "S", completed: true },
-    { label: "M", completed: true },
-    { label: "T", completed: true },
-    { label: "W", completed: false },
-    { label: "T", completed: false },
-  ];
+  const { data: enrollmentsData } = useGetMyEnrollmentsQuery();
+  const enrollments = enrollmentsData?.data || [];
+
+  const buildWeek = () => {
+    const now = new Date();
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - now.getDay());
+
+    return Array.from({ length: 7 }).map((_, index) => {
+      const date = new Date(sunday);
+      date.setDate(sunday.getDate() + index);
+      const dateKey = date.toDateString();
+      const completed = enrollments.some((enrollment) => {
+        const updatedAt = enrollment.updatedAt || enrollment.lastAccessedAt || enrollment.createdAt;
+        return updatedAt && new Date(updatedAt).toDateString() === dateKey;
+      });
+
+      return {
+        label: date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1),
+        completed,
+      };
+    });
+  };
+
+  const days = buildWeek();
+  const streakDays = days.filter((day) => day.completed).length;
 
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-6 shadow-sm dark:dark-glass">
@@ -15,7 +35,9 @@ function GoalTracker() {
         Daily Goal Tracker
       </h4>
       <p className="text-slate-500 dark:text-slate-400 text-[11px] mb-5">
-        Complete 1 lesson to maintain your streak.
+        {streakDays > 0
+          ? `${streakDays} active learning day(s) this week.`
+          : "Complete at least one lesson to start your weekly streak."}
       </p>
       <div className="flex gap-2">
         {days.map((day, index) => (
@@ -30,12 +52,6 @@ function GoalTracker() {
             {day.label}
           </div>
         ))}
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold bg-slate-50/50 dark:bg-white/5 text-slate-300">
-          W
-        </div>
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold bg-slate-50/50 dark:bg-white/5 text-slate-300">
-          T
-        </div>
       </div>
     </div>
   );

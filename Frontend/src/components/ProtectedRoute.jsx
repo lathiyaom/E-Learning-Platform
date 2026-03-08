@@ -85,7 +85,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
         superadmin: "/superadmin/dashboard",
         admin: "/admin/dashboard",
         teacher: "/teacher/dashboard",
-        student: "/Dashboard",
+        student: "/student/dashboard",
       };
 
       const redirectPath = dashboardMap[user.userType?.toLowerCase()] || "/unauthorized";

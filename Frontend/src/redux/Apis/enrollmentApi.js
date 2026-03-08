@@ -28,6 +28,10 @@ export const enrollmentApi = createApi({
       query: (studentId) => `/Enrollment/student/${studentId}`,
       providesTags: ["Enrollment"],
     }),
+    getMyEnrollments: builder.query({
+      query: () => "/Enrollment/my-courses",
+      providesTags: ["Enrollment"],
+    }),
     getCourseEnrollments: builder.query({
       query: (courseId) => `/Enrollment/course/${courseId}`,
       providesTags: ["Enrollment"],
@@ -60,6 +64,7 @@ export const enrollmentApi = createApi({
 export const {
   useEnrollStudentMutation,
   useGetStudentEnrollmentsQuery,
+  useGetMyEnrollmentsQuery,
   useGetCourseEnrollmentsQuery,
   useUpdateProgressMutation,
   useDropCourseMutation,

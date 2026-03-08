@@ -1,30 +1,32 @@
 import React, { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { useGetStudentEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
+import { useGetMyEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
 import { useGetStudentAttendanceQuery } from "../../../redux/Apis/attendanceApi";
 import { selectCurrentUser } from "../../../redux/slice/authSlice";
+import AdminLayout from "../../../utils/Adminlayoute";
 
 const StudentAttendance = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
   const user = useSelector(selectCurrentUser);
+  const studentId = user?._id || user?.id;
 
-  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useGetStudentEnrollmentsQuery(
-    user?.id,
-    { skip: !user?.id }
-  );
+  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useGetMyEnrollmentsQuery(undefined, {
+    skip: !studentId
+  });
   const { data: attendanceResponse, isLoading: attendanceLoading } = useGetStudentAttendanceQuery(
-    { studentId: user?.id, courseId: selectedCourse },
-    { skip: !selectedCourse || !user?.id }
+    { studentId, courseId: selectedCourse },
+    { skip: !selectedCourse || !studentId }
   );
+  const attendanceError = attendanceResponse?.success === false ? attendanceResponse?.message : null;
 
   const enrollments = enrollmentsData?.data || [];
   const rawData = attendanceResponse?.data || {};
   const backendRecords = rawData.records || [];
   const attendanceRecords = useMemo(() => {
-    if (!user?.id) return [];
+    if (!studentId) return [];
     return backendRecords.map((rec) => {
       const studentRec = (rec.attendanceRecords || []).find(
-        (r) => (r.studentId?._id || r.studentId)?.toString() === (user.id || user._id)?.toString()
+        (r) => (r.studentId?._id || r.studentId)?.toString() === studentId?.toString()
       );
       return {
         id: rec._id,
@@ -33,7 +35,7 @@ const StudentAttendance = () => {
         remarks: studentRec?.remarks,
       };
     });
-  }, [backendRecords, user?.id, user?._id]);
+  }, [backendRecords, studentId]);
 
   const stats = useMemo(() => {
     if (attendanceRecords.length === 0) {
@@ -48,6 +50,7 @@ const StudentAttendance = () => {
   }, [attendanceRecords, rawData]);
 
   return (
+    <AdminLayout>
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">My Attendance</h1>
 
@@ -80,6 +83,10 @@ const StudentAttendance = () => {
             {attendanceLoading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : attendanceError ? (
+              <div className="text-center py-8 text-red-500">
+                {attendanceError}
               </div>
             ) : attendanceRecords.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -156,6 +163,7 @@ const StudentAttendance = () => {
         )}
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

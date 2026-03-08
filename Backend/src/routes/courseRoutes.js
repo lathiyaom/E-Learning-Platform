@@ -20,6 +20,13 @@ router.get(
 );
 
 router.get(
+  "/Marketplace",
+  authenticate,
+  authorize("student", "admin", "teacher", "superadmin"),
+  courseController.allPlatformCourses
+);
+
+router.get(
   "/:id",
   authenticate,
   tenantScope,

@@ -14,11 +14,20 @@ const enrollStudent = async (req, res) => {
     // Students enroll themselves, or admin can enroll a student
     const studentId = req.body.studentId || req.user.id;
 
-    const enrollment = await enrollmentService.enrollStudent(
-      req.tenantId,
-      courseId,
-      studentId
-    );
+    let enrollment;
+    if (req.user.userType === "student") {
+      enrollment = await enrollmentService.enrollStudentAcrossPlatform(
+        courseId,
+        studentId
+      );
+    } else {
+      const tenantId = req.tenantId || req.user.id;
+      enrollment = await enrollmentService.enrollStudent(
+        tenantId,
+        courseId,
+        studentId
+      );
+    }
 
     return res.status(201).json({
       message: "Enrolled successfully",
@@ -27,6 +36,28 @@ const enrollStudent = async (req, res) => {
     });
   } catch (error) {
     return res.status(400).json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
+const getMyEnrollments = async (req, res) => {
+  try {
+    // Get current user's enrollments
+    const studentId = req.user.id;
+
+    const enrollments = await enrollmentService.getStudentEnrollmentsAcrossPlatform(
+      studentId
+    );
+
+    return res.status(200).json({
+      message: "Your enrollments retrieved successfully",
+      success: true,
+      data: enrollments,
+    });
+  } catch (error) {
+    return res.status(500).json({
       message: error.message,
       success: false,
     });
@@ -157,6 +188,7 @@ const deleteEnrollment = async (req, res) => {
 
 module.exports = {
   enrollStudent,
+  getMyEnrollments,
   getStudentEnrollments,
   getCourseEnrollments,
   updateProgress,

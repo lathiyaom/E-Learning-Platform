@@ -1,37 +1,53 @@
 import React from "react";
 import { SkillsRadarChart } from "../Student_Dashboard/ChartComponents";
+import { useProfile } from "./useProfile";
+import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 
 function ProficiencyMetrics() {
+  const { formData } = useProfile();
+  const { data: enrollmentsData } = useGetMyEnrollmentsQuery();
+  const enrollments = enrollmentsData?.data || [];
+
+  const filledProfileFields = [
+    formData?.firstName,
+    formData?.lastName,
+    formData?.email,
+    formData?.phoneNo,
+    formData?.campus,
+    formData?.about,
+  ].filter((value) => String(value || "").trim().length > 0).length;
+
+  const averageProgress = enrollments.length
+    ? Math.round(
+        enrollments.reduce(
+          (sum, enrollment) => sum + Number(enrollment.progressPercent || enrollment.progress || 0),
+          0,
+        ) / enrollments.length,
+      )
+    : 0;
+
+  const completedCourses = enrollments.filter(
+    (enrollment) => Number(enrollment.progressPercent || enrollment.progress || 0) >= 100,
+  ).length;
+
   const progressData = [
     {
-      name: "Core Engineering",
-      value: 88,
+      name: "Profile Completion",
+      value: Math.round((filledProfileFields / 6) * 100),
       color: "bg-blue-500",
       text: "text-blue-500",
     },
     {
-      name: "Aesthetic Design",
-      value: 20,
-      color: "bg-purple-500",
-      text: "text-purple-500",
-    },
-    {
-      name: "Quantitative Analysis",
-      value: 70,
+      name: "Avg Course Progress",
+      value: averageProgress,
       color: "bg-green-500",
       text: "text-green-500",
     },
     {
-      name: "Teamwork",
-      value: 100,
+      name: "Course Completion",
+      value: enrollments.length ? Math.round((completedCourses / enrollments.length) * 100) : 0,
       color: "bg-amber-500",
       text: "text-amber-500",
-    },
-    {
-      name: "Creativity",
-      value: 75,
-      color: "bg-pink-500",
-      text: "text-pink-500",
     },
   ];
 

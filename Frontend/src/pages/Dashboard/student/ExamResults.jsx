@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { useGetStudentEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
+import { useGetMyEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
 import { useGetStudentSubmissionsQuery } from "../../../redux/Apis/examApi";
 import { selectCurrentUser } from "../../../redux/slice/authSlice";
+import AdminLayout from "../../../utils/Adminlayoute";
 
 const ExamResults = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
   const user = useSelector(selectCurrentUser);
 
-  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useGetStudentEnrollmentsQuery(
-    user?.id,
+  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useGetMyEnrollmentsQuery(
+    undefined,
     { skip: !user?.id }
   );
   const { data: submissionsData, isLoading: submissionsLoading } = useGetStudentSubmissionsQuery(
@@ -21,7 +22,7 @@ const ExamResults = () => {
   const submissions = submissionsData?.data || [];
 
   const filteredSubmissions = selectedCourse
-    ? submissions.filter(s => s.courseId === selectedCourse)
+    ? submissions.filter((s) => (s.examId?.courseId?._id || s.examId?.courseId)?.toString() === selectedCourse.toString())
     : submissions;
 
   const calculateAverageScore = () => {
@@ -39,6 +40,7 @@ const ExamResults = () => {
   };
 
   return (
+    <AdminLayout>
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">My Exam Results</h1>
 
@@ -108,12 +110,12 @@ const ExamResults = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredSubmissions.map((submission) => (
-                  <tr key={submission.id}>
+                  <tr key={submission._id || submission.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {submission.examTitle || `Exam ${submission.examId}`}
+                      {submission.examId?.title || submission.examTitle || `Exam ${submission.examId?._id || submission.examId}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(submission.submittedAt).toLocaleDateString()}
+                      {new Date(submission.submittedAt || submission.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -148,6 +150,7 @@ const ExamResults = () => {
         )}
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

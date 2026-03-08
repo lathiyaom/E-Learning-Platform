@@ -1,5 +1,5 @@
 const Attendance = require("../models/Attendance.mongoose");
-const { User } = require("../models");
+const Enrollment = require("../models/Enrollment.mongoose");
 
 const markAttendance = async (tenantId, courseId, classDate, attendanceRecords, markedBy) => {
   if (!courseId || !classDate || !attendanceRecords || attendanceRecords.length === 0) {
@@ -10,12 +10,21 @@ const markAttendance = async (tenantId, courseId, classDate, attendanceRecords, 
     throw new Error("Tenant ID is required");
   }
 
-  // Validate all student IDs exist in the tenant
+  // Validate all student IDs are enrolled in this course (supports cross-org student accounts)
   const studentIds = attendanceRecords.map(r => r.studentId);
-  const students = await User.find({ _id: { $in: studentIds }, tenantId });
-  
-  if (students.length !== studentIds.length) {
-    throw new Error("Some students not found in tenant");
+  const enrolled = await Enrollment.find({
+    $or: [
+      { tenantId, courseId, studentId: { $in: studentIds } },
+      { organization_id: tenantId, course_id: courseId, student_id: { $in: studentIds } },
+    ],
+  }).select("studentId student_id");
+
+  const enrolledSet = new Set(
+    enrolled.map((e) => String(e.studentId || e.student_id)),
+  );
+  const invalidStudents = studentIds.filter((id) => !enrolledSet.has(String(id)));
+  if (invalidStudents.length > 0) {
+    throw new Error("Some students are not enrolled in this course");
   }
 
   // Check for duplicate attendance for same date

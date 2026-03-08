@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetPlatformStatsQuery } from "../../../redux/Apis/superAdminApi";
 import SuperAdminLayout from "../../../utils/SuperAdminLayout";
 import {
@@ -13,6 +14,12 @@ import {
 } from "lucide-react";
 
 const StatCard = ({ title, value, icon: Icon, trend, color = "blue", subtitle }) => {
+  const colorMap = {
+    blue: "bg-blue-500/10 text-blue-500",
+    green: "bg-green-500/10 text-green-500",
+    purple: "bg-purple-500/10 text-purple-500",
+    orange: "bg-orange-500/10 text-orange-500",
+  };
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-300">
       <div className="flex items-start justify-between">
@@ -37,10 +44,8 @@ const StatCard = ({ title, value, icon: Icon, trend, color = "blue", subtitle })
             </div>
           )}
         </div>
-        <div
-          className={`p-3 rounded-xl bg-${color}-500/10 dark:bg-${color}-500/20`}
-        >
-          <Icon className={`h-6 w-6 text-${color}-500`} />
+        <div className={`p-3 rounded-xl ${colorMap[color] || colorMap.blue}`}>
+          <Icon className="h-6 w-6" />
         </div>
       </div>
     </div>
@@ -48,6 +53,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color = "blue", subtitle })
 };
 
 const SuperAdminDashboard = () => {
+  const navigate = useNavigate();
   const { data, isLoading, isError, error } = useGetPlatformStatsQuery();
 
   const stats = data?.data || {};
@@ -79,7 +85,7 @@ const SuperAdminDashboard = () => {
   }
 
   return (
-    <SuperAdminLayout pageTitle="Dashboard" showSearch={true}>
+    <SuperAdminLayout pageTitle="Platform Overview" subheader="Control center for the full platform">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white mb-8">
         <h2 className="text-2xl font-bold mb-2">Welcome back, Super Admin!</h2>
@@ -258,7 +264,7 @@ const SuperAdminDashboard = () => {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
-            onClick={() => (window.location.href = "/superadmin/tenants")}
+            onClick={() => navigate("/superadmin/tenants")}
             className="flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
           >
             <Building className="h-6 w-6 text-blue-500" />
@@ -273,7 +279,7 @@ const SuperAdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => (window.location.href = "/superadmin/users")}
+            onClick={() => navigate("/superadmin/users")}
             className="flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-green-500 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
           >
             <Users className="h-6 w-6 text-green-500" />
@@ -288,7 +294,7 @@ const SuperAdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => (window.location.href = "/superadmin/analytics")}
+            onClick={() => navigate("/superadmin/analytics")}
             className="flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
           >
             <TrendingUp className="h-6 w-6 text-purple-500" />

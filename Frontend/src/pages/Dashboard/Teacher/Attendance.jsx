@@ -4,6 +4,7 @@ import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import { useGetCourseEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
 import { useMarkAttendanceMutation } from "../../../redux/Apis/attendanceApi";
 import { selectCurrentUser } from "../../../redux/slice/authSlice";
+import AdminLayout from "../../../utils/Adminlayoute";
 
 const Attendance = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
@@ -20,8 +21,11 @@ const Attendance = () => {
 
   const courseId = selectedCourse;
   const courseList = coursesData?.data || [];
+  const teacherId = String(user?._id || user?.id || "");
   const myCourses = courseList.filter(
-    (course) => (course.createdBy || course.createdBy?._id) === user?.id
+    (course) =>
+      String(course?.createdBy?._id || course?.createdBy || "") === teacherId ||
+      String(course?.teacher_id?._id || course?.teacher_id || "") === teacherId
   );
   const students = enrollmentsData?.data || [];
 
@@ -62,7 +66,7 @@ const Attendance = () => {
   };
 
   return (
-    <div className="p-6">
+    <AdminLayout showSearch={false} className="p-6">
       <h1 className="text-3xl font-bold mb-6">Mark Attendance</h1>
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -183,7 +187,7 @@ const Attendance = () => {
           </>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

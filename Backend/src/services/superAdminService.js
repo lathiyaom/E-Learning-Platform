@@ -45,8 +45,24 @@ const getAllTenants = async (filters = {}) => {
     .skip(skip)
     .limit(parseInt(limit));
 
+  const tenantIds = tenants.map((tenant) => tenant._id);
+  const userCounts = await User.aggregate([
+    { $match: { tenant_id: { $in: tenantIds } } },
+    { $group: { _id: "$tenant_id", count: { $sum: 1 } } },
+  ]);
+
+  const countMap = new Map(
+    userCounts.map((entry) => [entry._id.toString(), entry.count])
+  );
+
+  const tenantsWithCounts = tenants.map((tenant) => {
+    const tenantObj = tenant.toObject();
+    tenantObj.userCount = countMap.get(tenant._id.toString()) || 0;
+    return tenantObj;
+  });
+
   return {
-    tenants,
+    tenants: tenantsWithCounts,
     pagination: {
       total,
       page: parseInt(page),
@@ -64,7 +80,7 @@ const getTenantWithUsers = async (tenantId) => {
     .select("-password -token -refreshToken");
   if (!tenant) throw new Error("Tenant not found");
 
-  const users = await User.find({ tenantId })
+  const users = await User.find({ tenant_id: tenantId })
     .select("-password -token -refreshToken")
     .sort({ createdAt: -1 });
 
@@ -253,10 +269,10 @@ const deleteTenant = async (tenantId, requesterId) => {
   }
 
   // Count users under this tenant
-  const userCount = await User.countDocuments({ tenantId });
+  const userCount = await User.countDocuments({ tenant_id: tenantId });
 
   // Delete all users under this tenant (cascade)
-  await User.deleteMany({ tenantId });
+  await User.deleteMany({ tenant_id: tenantId });
 
   // Delete the tenant
   await Tenant.findByIdAndDelete(tenantId);

@@ -59,58 +59,38 @@ const analyticsService = {
    */
   getTeacherDashboard: async (tenantId, teacherId) => {
     try {
-      // Courses taught
-      const myCourses = await Course.find({ tenantId, instructors: teacherId });
+      // Courses taught (supports both legacy and new field shapes)
+      const myCourses = await Course.find({
+        $and: [
+          { $or: [{ tenantId }, { organization_id: tenantId }] },
+          {
+            $or: [
+              { createdBy: teacherId },
+              { teacher_id: teacherId },
+            ],
+          },
+        ],
+      });
       const courseIds = myCourses.map((c) => c._id);
 
       // Total students
       const totalStudents = await Enrollment.countDocuments({
-        courseId: { $in: courseIds },
+        $or: [{ courseId: { $in: courseIds } }, { course_id: { $in: courseIds } }],
       });
 
       // Get average rating
-      const averageRating = await Rating.aggregate([
-        { $match: { courseId: { $in: courseIds } } },
-        { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-      ]);
-
-      // Attendance summary
-      const attendanceSummary = await Attendance.aggregate([
-        { $match: { courseId: { $in: courseIds } } },
-        {
-          $group: {
-            _id: "$courseId",
-            totalClasses: { $sum: 1 },
-            averageAttendance: {
-              $avg: {
-                $multiply: [
-                  {
-                    $divide: [
-                      { $size: "$attendanceRecords" },
-                      { $add: [{ $size: "$attendanceRecords" }, 1] },
-                    ],
-                  },
-                  100,
-                ],
-              },
-            },
-          },
-        },
-      ]);
-
-      // Recent feedback
-      const recentFeedback = await Feedback.find({
-        courseId: { $in: courseIds },
-      })
-        .limit(5)
-        .sort({ createdAt: -1 });
+      const averageRating =
+        myCourses.length > 0
+          ? myCourses.reduce((sum, c) => sum + Number(c.rating || 0), 0) / myCourses.length
+          : 0;
 
       return {
-        courseCount: myCourses.length,
+        totalCourses: myCourses.length,
         totalStudents,
-        averageRating: averageRating[0]?.avgRating || 0,
-        attendanceSummary,
-        recentFeedback,
+        avgRating: Number(averageRating.toFixed(2)),
+        avgAttendance: 0,
+        attendanceTrend: [],
+        studentProgress: [],
       };
     } catch (error) {
       throw new Error(`Failed to get teacher dashboard: ${error.message}`);

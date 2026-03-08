@@ -7,7 +7,9 @@ import {
   BarChart3,
   Building,
   GraduationCap,
-  MessageSquare
+  MessageSquare,
+  CalendarDays,
+  CalendarX2
 } from "lucide-react";
 
 function AdminDashboard() {
@@ -165,6 +167,32 @@ function AdminDashboard() {
             <div>
               <h3 className="font-bold text-gray-900">Settings</h3>
               <p className="text-sm text-gray-600">Configure options</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/admin/events"
+            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-300 flex items-center gap-4"
+          >
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <CalendarDays className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Manage Events</h3>
+              <p className="text-sm text-gray-600">Create notices and events</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/admin/holidays"
+            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-300 flex items-center gap-4"
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+              <CalendarX2 className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Manage Holidays</h3>
+              <p className="text-sm text-gray-600">Publish holiday calendar</p>
             </div>
           </Link>
         </div>

@@ -1,5 +1,36 @@
 const { Course } = require("../models");
 
+const buildCourseSortClause = (sortBy = "popular") => {
+  let sortClause = { rating: -1, reviewCount: -1 };
+
+  switch (sortBy?.toLowerCase()) {
+    case "price_low_to_high":
+      sortClause = { price: 1 };
+      break;
+    case "price_high_to_low":
+      sortClause = { price: -1 };
+      break;
+    case "rating":
+    case "highest_rated":
+      sortClause = { rating: -1, reviewCount: -1 };
+      break;
+    case "newest":
+      sortClause = { createdAt: -1 };
+      break;
+    case "oldest":
+      sortClause = { createdAt: 1 };
+      break;
+    case "most_reviewed":
+      sortClause = { reviewCount: -1 };
+      break;
+    case "popular":
+    default:
+      sortClause = { rating: -1, reviewCount: -1 };
+  }
+
+  return sortClause;
+};
+
 const createCourse = async (courseData) => {
   const {
     title,
@@ -34,20 +65,28 @@ const createCourse = async (courseData) => {
   }
 
   // Check for duplicate course title within the same tenant
-  const existingCourse = await Course.findOne({ title, tenantId });
+  const existingCourse = await Course.findOne({
+    title,
+    $or: [{ tenantId }, { organization_id: tenantId }],
+  });
   if (existingCourse) {
     throw new Error("This Course Is Already Available");
   }
 
   const newCourse = await Course.create({
+    organization_id: tenantId,
+    teacher_id: createdBy,
     title,
     image,
     description,
     category,
     rating: rating || 0,
     reviewCount: reviewCount || 0,
+    video_url: videoUrl,
     videoUrl,
     tags: tags || ["Popular"],
+    price: isPaid ? priceUSD : 0,
+    pricing: isPaid ? priceUSD : 0,
     priceUSD: isPaid ? priceUSD : 0,
     isPaid: isPaid !== undefined ? isPaid : false,
     tenantId,
@@ -59,36 +98,26 @@ const createCourse = async (courseData) => {
 
 const getAllCourses = async (tenantId, sortBy = "popular") => {
   if (!tenantId) throw new Error("Tenant ID required for course query");
-  
-  let sortClause = { rating: -1, reviewCount: -1 }; // Default
+  const sortClause = buildCourseSortClause(sortBy);
 
-  // Build sort clause based on sortBy parameter
-  switch (sortBy?.toLowerCase()) {
-    case "price_low_to_high":
-      sortClause = { priceUSD: 1 };
-      break;
-    case "price_high_to_low":
-      sortClause = { priceUSD: -1 };
-      break;
-    case "rating":
-    case "highest_rated":
-      sortClause = { rating: -1, reviewCount: -1 };
-      break;
-    case "newest":
-      sortClause = { createdAt: -1 };
-      break;
-    case "oldest":
-      sortClause = { createdAt: 1 };
-      break;
-    case "most_reviewed":
-      sortClause = { reviewCount: -1 };
-      break;
-    case "popular":
-    default:
-      sortClause = { rating: -1, reviewCount: -1 };
-  }
+  const courses = await Course.find({
+    $or: [{ tenantId }, { organization_id: tenantId }],
+  }).sort(sortClause);
 
-  const courses = await Course.find({ tenantId }).sort(sortClause);
+  return courses;
+};
+
+const getPlatformCourses = async (sortBy = "popular") => {
+  const sortClause = buildCourseSortClause(sortBy);
+
+  // Courses can be linked with either legacy `tenantId` or newer `organization_id`.
+  const courses = await Course.find({
+    $or: [{ tenantId: { $exists: true, $ne: null } }, { organization_id: { $exists: true, $ne: null } }],
+  })
+    .sort(sortClause)
+    .populate("tenantId", "name code")
+    .populate("organization_id", "name code")
+    .populate("teacher_id", "firstName lastName email");
 
   return courses;
 };
@@ -97,7 +126,10 @@ const getCourseById = async (id, tenantId) => {
   if (!id) throw new Error("Course ID is required");
   if (!tenantId) throw new Error("Tenant ID required");
 
-  const course = await Course.findOne({ _id: id, tenantId });
+  const course = await Course.findOne({
+    _id: id,
+    $or: [{ tenantId }, { organization_id: tenantId }],
+  });
   if (!course) throw new Error("Course Not Found");
 
   return course;
@@ -107,7 +139,10 @@ const updateCourse = async (id, tenantId, updateData) => {
   if (!id) throw new Error("Course ID is required");
   if (!tenantId) throw new Error("Tenant ID required");
 
-  const course = await Course.findOne({ _id: id, tenantId });
+  const course = await Course.findOne({
+    _id: id,
+    $or: [{ tenantId }, { organization_id: tenantId }],
+  });
   if (!course) throw new Error("Course Not Found");
 
   const { title, image, description, category, videoUrl, tags, priceUSD, isPaid, rating, reviewCount } = updateData;
@@ -144,7 +179,10 @@ const deleteCourse = async (id, tenantId) => {
   if (!id) throw new Error("Course ID is required");
   if (!tenantId) throw new Error("Tenant ID required");
 
-  const course = await Course.findOne({ _id: id, tenantId });
+  const course = await Course.findOne({
+    _id: id,
+    $or: [{ tenantId }, { organization_id: tenantId }],
+  });
   if (!course) throw new Error("Course Not Found");
 
   await course.deleteOne();
@@ -154,6 +192,7 @@ const deleteCourse = async (id, tenantId) => {
 module.exports = {
   createCourse,
   getAllCourses,
+  getPlatformCourses,
   getCourseById,
   updateCourse,
   deleteCourse,

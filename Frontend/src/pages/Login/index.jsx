@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../../components/Button";
 import ilus from "../../assets/imgs/ilustrater.png";
 
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation, setCredentials } from "../../redux";
 import { SuccessToster, ErrorToster } from "../../components/toster";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
+  // Get auth state from Redux
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
 
   const [login, { isLoading }] = useLoginMutation();
 
@@ -18,6 +22,59 @@ function Login() {
     password: "",
     Rememberme: false,
   });
+
+  // ✅ Check if user is already logged in (even if Redux state is lost)
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      // First check Redux state
+      if (isAuthenticated && user) {
+        const userType = user.userType?.toLowerCase();
+        const dashboardMap = {
+          superadmin: "/superadmin/dashboard",
+          admin: "/admin/dashboard",
+          teacher: "/teacher/dashboard",
+          student: "/student/dashboard",
+        };
+        const redirectPath = dashboardMap[userType] || "/";
+        console.log("✅ User already logged in (Redux), redirecting to:", redirectPath);
+        navigate(redirectPath, { replace: true });
+        return;
+      }
+
+      // Check localStorage for persisted auth
+      try {
+        const storedAuth = localStorage.getItem("authUser");
+        if (storedAuth) {
+          const { user: storedUser, accessToken } = JSON.parse(storedAuth);
+          if (storedUser && accessToken) {
+            // Restore Redux state
+            dispatch(setCredentials({ 
+              user: storedUser, 
+              accessToken,
+              refreshToken: JSON.parse(storedAuth).refreshToken 
+            }));
+            
+            const userType = storedUser.userType?.toLowerCase();
+            const dashboardMap = {
+              superadmin: "/superadmin/dashboard",
+              admin: "/admin/dashboard",
+              teacher: "/teacher/dashboard",
+              student: "/student/dashboard",
+            };
+            const redirectPath = dashboardMap[userType] || "/";
+            console.log("✅ Session restored from localStorage, redirecting to:", redirectPath);
+            navigate(redirectPath, { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking existing session:", error);
+        // Clear invalid localStorage data
+        localStorage.removeItem("authUser");
+      }
+    };
+
+    checkExistingSession();
+  }, [isAuthenticated, user, navigate, dispatch]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -93,11 +150,44 @@ function Login() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      ErrorToster(
-        error?.data?.message || "Login Failed. Please try again",
-        4000,
-        "top-center",
-      );
+      
+      // Handle different types of errors
+      let errorMessage = getApiErrorMessage(error, "Login failed. Please try again.");
+      
+      if (error?.status === 400) {
+        errorMessage = error?.data?.message || "Invalid request. Please check your input.";
+      } else if (error?.status === 401) {
+        errorMessage = "Invalid email or password";
+      } else if (error?.status === 403) {
+        if (error?.data?.message?.includes("already logged in")) {
+          errorMessage = "You are already logged in. Redirecting to dashboard...";
+          
+          // Force redirect to dashboard after showing message
+          setTimeout(() => {
+            // Try to get user from Redux state
+            const currentUser = user;
+            if (currentUser) {
+              const userType = currentUser.userType?.toLowerCase();
+              const dashboardMap = {
+                superadmin: "/superadmin/dashboard",
+                admin: "/admin/dashboard",
+                teacher: "/teacher/dashboard",
+                student: "/student/dashboard",
+              };
+              navigate(dashboardMap[userType] || "/", { replace: true });
+            } else {
+              // If no user in state, redirect to home
+              navigate("/", { replace: true });
+            }
+          }, 2000);
+        } else {
+          errorMessage = "Access denied. Please contact support.";
+        }
+      } else if (error?.status === 429) {
+        errorMessage = "Too many login attempts. Please try again later.";
+      }
+
+      ErrorToster(errorMessage, 4000, "top-center");
     }
   };
 

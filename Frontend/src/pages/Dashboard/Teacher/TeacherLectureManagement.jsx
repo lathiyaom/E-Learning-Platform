@@ -7,6 +7,8 @@ import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 const TeacherLectureManagement = () => {
     const dispatch = useDispatch();
     const { lectures, loading, error, pagination } = useSelector((state) => state.lecture);
+    const { user } = useSelector((state) => state.auth || {});
+    const teacherId = String(user?._id || user?.id || "");
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCourse, setSelectedCourse] = useState("");
@@ -24,14 +26,15 @@ const TeacherLectureManagement = () => {
         type: "theory",
         videoUrl: "",
     });
-    const [materials, setMaterials] = useState([
-        { name: "Chapter 1 Notes", url: "#", type: "PDF" },
-        { name: "Code Examples", url: "#", type: "ZIP" },
-    ]);
+    const [materials, setMaterials] = useState([]);
 
     // Fetch courses from API
-    const { data: coursesData, isLoading: loadingCourses } = useGetAllCoursesQuery();
-    const courses = coursesData?.data || [];
+    const { data: coursesData } = useGetAllCoursesQuery();
+    const courses = (coursesData?.data || []).filter(
+      (course) =>
+        String(course?.createdBy?._id || course?.createdBy || "") === teacherId ||
+        String(course?.teacher_id?._id || course?.teacher_id || "") === teacherId,
+    );
 
     useEffect(() => {
         if (selectedCourse) {
@@ -79,6 +82,7 @@ const TeacherLectureManagement = () => {
         const lectureData = {
             ...formData,
             courseId: selectedCourse,
+            conductedBy: user?._id || user?.id,
         };
 
         if (editingLecture) {
@@ -241,6 +245,7 @@ const TeacherLectureManagement = () => {
                                         <button
                                             onClick={() => {
                                                 setSelectedLecture(lecture);
+                                                setMaterials(Array.isArray(lecture.materials) ? lecture.materials : []);
                                                 setShowMaterialsModal(true);
                                             }}
                                             className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white px-3 py-2 rounded-lg text-sm transition"
@@ -307,7 +312,7 @@ const TeacherLectureManagement = () => {
                                 onClick={handleCloseModal}
                                 className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                             >
-                                ✕
+                                X
                             </button>
                         </div>
 
@@ -460,7 +465,7 @@ const TeacherLectureManagement = () => {
                                 onClick={() => setShowMaterialsModal(false)}
                                 className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                             >
-                                ✕
+                                X
                             </button>
                         </div>
 
@@ -473,13 +478,17 @@ const TeacherLectureManagement = () => {
                             <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 mb-6 text-center">
                                 <FileUp className="w-10 h-10 mx-auto text-slate-400 mb-2" />
                                 <p className="text-slate-600 dark:text-slate-400">
-                                    Drag and drop materials or click to upload
+                                    Materials attached to this lecture
                                 </p>
-                                <input type="file" className="hidden" />
                             </div>
 
                             {/* Materials List */}
                             <div className="space-y-2">
+                                {materials.length === 0 && (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        No materials uploaded yet.
+                                    </p>
+                                )}
                                 {materials.map((material, idx) => (
                                     <div
                                         key={idx}
@@ -489,14 +498,13 @@ const TeacherLectureManagement = () => {
                                             <FileUp className="w-5 h-5 text-blue-600" />
                                             <div>
                                                 <p className="font-medium text-slate-900 dark:text-white">
-                                                    {material.name}
+                                                    {material.name || material.title || "Material"}
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    {material.type}
+                                                    {material.type || "file"}
                                                 </p>
                                             </div>
                                         </div>
-                                        <Trash2 className="w-4 h-4 text-red-600 cursor-pointer hover:text-red-800" />
                                     </div>
                                 ))}
                             </div>
@@ -519,3 +527,6 @@ const TeacherLectureManagement = () => {
 };
 
 export default TeacherLectureManagement;
+
+
+

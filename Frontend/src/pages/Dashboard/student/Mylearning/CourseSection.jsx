@@ -1,68 +1,47 @@
 import React, { useState } from "react";
 import CourseCard from "../Student_Dashboard/RecommendedCourseCard";
-import { ArrowDown, ArrowRight, ArrowUp, LayoutGrid, List } from "lucide-react";
-
-const ongoingCoursesData = [
-  {
-    id: 1,
-    title: "Advanced JavaScript Architecture & Patterns",
-    image:
-      "https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&q=80&w=400",
-    category: "Architecture",
-    progress: 75,
-    unitsCompleted: 12,
-    totalUnits: 16,
-    lastAccess: "2h ago",
-    progressColor: "#b48c4c",
-  },
-  {
-    id: 2,
-    title: "UI/UX Design Masterclass: Pro Workflows",
-    image:
-      "https://images.unsplash.com/photo-1541462608141-ad4d74b93478?auto=format&fit=crop&q=80&w=400",
-    category: "Interface Design",
-    progress: 45,
-    unitsCompleted: 9,
-    totalUnits: 20,
-    lastAccess: "Yesterday",
-    progressColor: "#6366f1",
-  },
-  {
-    id: 3,
-    title: "Fullstack Python Web Development",
-    image:
-      "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&q=80&w=400",
-    category: "Development",
-    progress: 60,
-    unitsCompleted: 15,
-    totalUnits: 25,
-    lastAccess: "3h ago",
-    progressColor: "#3776ab",
-  },
-  {
-    id: 5,
-    title: "iOS & Swift - The Complete iOS App Development Bootcamp",
-    image:
-      "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=400",
-    category: "Mobile",
-    progress: 90,
-    unitsCompleted: 45,
-    totalUnits: 50,
-    lastAccess: "1h ago",
-    progressColor: "#f05138",
-  },
-];
+import { ArrowDown, ArrowUp, LayoutGrid, List } from "lucide-react";
+import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 
 function CourseSection() {
   const [activeTab, setActiveTab] = useState("Ongoing");
   const [showAll, setShowAll] = useState(false);
+  const { data: enrollmentsData, isLoading } = useGetMyEnrollmentsQuery();
+
+  const enrollments = enrollmentsData?.data || [];
+  const mapEnrollmentToCard = (enrollment) => {
+    const course = enrollment.courseId || enrollment.course_id || {};
+    const progress = Number(enrollment.progressPercent ?? enrollment.progress ?? 0);
+    const lastAccessDate = enrollment.lastAccessedAt || enrollment.last_accessed_at || enrollment.updatedAt;
+
+    return {
+      id: enrollment._id || enrollment.id,
+      title: course.title || "Untitled Course",
+      image: course.image || "https://placehold.co/640x360?text=Course",
+      category: course.category || "General",
+      progress,
+      unitsCompleted: Math.round((progress / 100) * 20),
+      totalUnits: 20,
+      lastAccess: lastAccessDate ? new Date(lastAccessDate).toLocaleDateString() : "N/A",
+    };
+  };
+
+  const ongoingCoursesData = enrollments
+    .filter((enrollment) => (enrollment.status || "active") === "active")
+    .map(mapEnrollmentToCard);
+
+  const completedCoursesData = enrollments
+    .filter((enrollment) => (enrollment.status || "").toLowerCase() === "completed")
+    .map(mapEnrollmentToCard);
+
+  const activeCourses = activeTab === "Completed" ? completedCoursesData : ongoingCoursesData;
 
   return (
     <section className="space-y-8">
       {/* Tabs Header */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10">
         <div className="flex gap-8">
-          {["Ongoing", "Completed", "Wishlist"].map((tab) => (
+          {["Ongoing", "Completed"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -89,24 +68,34 @@ function CourseSection() {
           </button>
         </div>
       </div>
+      {isLoading ? (
+        <div className="py-20 text-center bg-slate-50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
+          <p className="text-slate-400 font-medium">Loading courses...</p>
+        </div>
+      ) : (
 
-      {activeTab === "Ongoing" ? (
         <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max">
-            {(showAll
-              ? ongoingCoursesData
-              : ongoingCoursesData.slice(0, 2)
-            ).map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                isOngoing={true}
-                onButtonClick={() => console.log("Continue", course.title)}
-              />
-            ))}
-          </div>
+          {activeCourses.length === 0 ? (
+            <div className="py-20 text-center bg-slate-50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
+              <p className="text-slate-400 font-medium">No courses in {activeTab}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max">
+              {(showAll
+                ? activeCourses
+                : activeCourses.slice(0, 2)
+              ).map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  isOngoing={true}
+                  onButtonClick={() => console.log("Continue", course.title)}
+                />
+              ))}
+            </div>
+          )}
 
-          {ongoingCoursesData.length > 2 && (
+          {activeCourses.length > 2 && (
             <div className="flex justify-center pt-4">
               <button
                 onClick={() => setShowAll(!showAll)}
@@ -126,12 +115,6 @@ function CourseSection() {
               </button>
             </div>
           )}
-        </div>
-      ) : (
-        <div className="py-20 text-center bg-slate-50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
-          <p className="text-slate-400 font-medium">
-            No courses in {activeTab}
-          </p>
         </div>
       )}
     </section>

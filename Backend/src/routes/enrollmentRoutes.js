@@ -8,7 +8,6 @@ const enrollmentController = require("../controllers/enrollmentController");
 router.post(
   "/enroll",
   authenticate,
-  tenantScope,
   authorize("student", "admin"),
   enrollmentController.enrollStudent
 );
@@ -19,6 +18,14 @@ router.get(
   authenticate,
   tenantScope,
   enrollmentController.getStudentEnrollments
+);
+
+// Get current student's enrollments
+router.get(
+  "/my-courses",
+  authenticate,
+  authorize("student"),
+  enrollmentController.getMyEnrollments
 );
 
 // Get course enrollments (teacher/admin only)

@@ -54,7 +54,8 @@ const getUserFeedback = async (req, res) => {
       });
     }
 
-    const feedbacks = await feedbackService.getUserFeedback(req.tenantId, reviewerId);
+    const tenantScopeForQuery = req.user.userType === "student" ? null : req.tenantId;
+    const feedbacks = await feedbackService.getUserFeedback(tenantScopeForQuery, reviewerId);
 
     return res.status(200).json({
       message: "User feedback retrieved successfully",

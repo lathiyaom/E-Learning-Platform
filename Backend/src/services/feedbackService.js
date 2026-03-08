@@ -2,10 +2,6 @@ const Feedback = require("../models/Feedback.mongoose");
 const { Course } = require("../models");
 
 const createFeedback = async (tenantId, feedbackData) => {
-  if (!tenantId) {
-    throw new Error("Tenant ID is required");
-  }
-
   const { courseId, reviewerId, rating, comment, subject, isAnonymous } = feedbackData;
 
   if (!courseId || !reviewerId || !rating) {
@@ -16,20 +12,24 @@ const createFeedback = async (tenantId, feedbackData) => {
     throw new Error("Rating must be between 1 and 5");
   }
 
-  // Verify course exists
-  const course = await Course.findOne({ _id: courseId, tenantId });
+  // Verify course exists across platform and resolve its tenant context
+  const course = await Course.findById(courseId);
   if (!course) {
     throw new Error("Course not found");
   }
+  const resolvedTenantId = course.tenantId || course.organization_id || tenantId;
+  if (!resolvedTenantId) {
+    throw new Error("Course tenant context not found");
+  }
 
   // Check if user already gave feedback
-  const existing = await Feedback.findOne({ tenantId, courseId, reviewerId });
+  const existing = await Feedback.findOne({ tenantId: resolvedTenantId, courseId, reviewerId });
   if (existing) {
     throw new Error("You have already submitted feedback for this course");
   }
 
   const feedback = await Feedback.create({
-    tenantId,
+    tenantId: resolvedTenantId,
     courseId,
     reviewerId,
     rating,
@@ -39,7 +39,7 @@ const createFeedback = async (tenantId, feedbackData) => {
   });
 
   // Update course rating
-  await updateCourseRating(courseId, tenantId);
+  await updateCourseRating(courseId, resolvedTenantId);
 
   return feedback;
 };
@@ -71,11 +71,14 @@ const getCourseFeedback = async (tenantId, courseId) => {
 };
 
 const getUserFeedback = async (tenantId, reviewerId) => {
-  if (!tenantId || !reviewerId) {
-    throw new Error("Tenant ID and Reviewer ID are required");
+  if (!reviewerId) {
+    throw new Error("Reviewer ID is required");
   }
 
-  const feedbacks = await Feedback.find({ tenantId, reviewerId })
+  const query = { reviewerId };
+  if (tenantId) query.tenantId = tenantId;
+
+  const feedbacks = await Feedback.find(query)
     .populate("courseId", "title")
     .sort({ createdAt: -1 });
 

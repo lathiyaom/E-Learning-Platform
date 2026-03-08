@@ -1,62 +1,51 @@
 import React from "react";
-import {
-  Medal,
-  Sparkles,
-  Palette,
-  Terminal,
-  Zap,
-  PlusCircle,
-} from "lucide-react";
+import { Medal, Sparkles, Terminal, Zap } from "lucide-react";
+import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
+import { useProfile } from "./useProfile";
 
 function AcademicHonors() {
+  const { data: enrollmentsData } = useGetMyEnrollmentsQuery();
+  const { formData } = useProfile();
+  const enrollments = enrollmentsData?.data || [];
+
+  const completedCount = enrollments.filter(
+    (item) => Number(item.progressPercent || item.progress || 0) >= 100,
+  ).length;
+  const avgProgress = enrollments.length
+    ? Math.round(
+        enrollments.reduce(
+          (sum, item) => sum + Number(item.progressPercent || item.progress || 0),
+          0,
+        ) / enrollments.length,
+      )
+    : 0;
+
   const honors = [
     {
-      label: "Top 1%",
-      icon: Medal,
-      color: "text-amber-600",
-      bg: "bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-900/10 dark:to-amber-900/20",
-      border: "border border-amber-200/50 dark:border-amber-700/30",
-    },
-    {
-      label: "Genesis",
+      label: "Starter",
+      unlocked: enrollments.length > 0,
       icon: Sparkles,
       color: "text-blue-600",
-      bg: "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/10 dark:to-blue-900/20",
-      border: "border border-blue-200/50 dark:border-blue-700/30",
     },
     {
-      label: "Creative",
-      icon: Palette,
-      color: "text-purple-600",
-      bg: "bg-gradient-to-br from-purple-50 to-fuchsia-100 dark:from-purple-900/10 dark:to-purple-900/20",
-      border: "border border-purple-200/50 dark:border-purple-700/30",
-    },
-    {
-      label: "Architect",
+      label: "Focused Learner",
+      unlocked: avgProgress >= 50,
       icon: Terminal,
       color: "text-green-600",
-      bg: "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/10 dark:to-green-900/20",
-      border: "border border-green-200/50 dark:border-green-700/30",
     },
     {
-      label: "Speed",
+      label: "Finisher",
+      unlocked: completedCount > 0,
+      icon: Medal,
+      color: "text-amber-600",
+    },
+    {
+      label: "Profile Ready",
+      unlocked: Boolean(formData?.about && String(formData.about).trim().length > 0),
       icon: Zap,
       color: "text-orange-600",
-      bg: "bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/10 dark:to-orange-900/20",
-      border: "border border-orange-200/50 dark:border-orange-700/30",
     },
   ];
-
-  const HonorBadge = ({ label, icon: Icon, color, bg, border }) => (
-    <div
-      className={` group badge-3d aspect-square ${bg} rounded-2xl flex flex-col items-center justify-center ${color} ${border} cursor-pointer p-3 group animate-fade-in  dark:border-slate-700`}
-    >
-      <Icon className="mb-1 drop-shadow-md" size={28} />
-      <span className="text-[9px] font-extrabold uppercase tracking-widest text-center opacity-70 group-hover:opacity-100">
-        {label}
-      </span>
-    </div>
-  );
 
   return (
     <section className="bg-white dark:dark-glass rounded-2xl md:rounded-[2.5rem] p-8 md:p-10 border border-slate-200 dark:border-white/5 shadow-md dark:shadow-2xl transition-all duration-300">
@@ -66,18 +55,30 @@ function AcademicHonors() {
           Achievements
         </h3>
       </div>
-      <div className="grid grid-cols-3 gap-5 md:gap-6">
+
+      <div className="grid grid-cols-2 gap-5 md:gap-6">
         {honors.map((honor) => (
           <div
             key={honor.label}
-            className={`aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center ${honor.color} dark:${honor.color}/20 border border-slate-200 dark:border-white/20 shadow-sm hover:-translate-y-1 hover:border-studprimary dark:hover:border-premium-gold transition-all cursor-pointer group`}
+            className={`rounded-2xl p-5 border transition-all ${
+              honor.unlocked
+                ? "bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/20"
+                : "bg-slate-50/50 dark:bg-white/5 border-slate-200/60 dark:border-white/10 opacity-60"
+            }`}
           >
-            <honor.icon className="w-6 h-6 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${honor.color} bg-white dark:bg-slate-900`}>
+                <honor.icon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900 dark:text-white">{honor.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {honor.unlocked ? "Unlocked" : "Not unlocked yet"}
+                </p>
+              </div>
+            </div>
           </div>
         ))}
-        <div className="aspect-square bg-slate-50/50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-200 dark:border-white/10 hover:text-studprimary dark:hover:text-premium-gold transition-all cursor-pointer">
-          <PlusCircle className="w-6 h-6" />
-        </div>
       </div>
     </section>
   );

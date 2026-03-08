@@ -2,12 +2,12 @@ const mongoose = require("mongoose");
 
 const courseSchema = new mongoose.Schema(
   {
-    tenantId: {
+    organization_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Tenant",
       required: true,
     },
-    createdBy: {
+    teacher_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -16,11 +16,11 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    image: {
+    description: {
       type: String,
       required: true,
     },
-    description: {
+    video_url: {
       type: String,
       required: true,
     },
@@ -28,17 +28,7 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    rating: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
-    },
-    reviewCount: {
-      type: Number,
-      default: 0,
-    },
-    videoUrl: {
+    image: {
       type: String,
       required: true,
     },
@@ -46,7 +36,12 @@ const courseSchema = new mongoose.Schema(
       type: [String],
       default: ["Popular", "New"],
     },
-    priceUSD: {
+    pricing: {
+      type: Number,
+      default: 0.0,
+      min: 0,
+    },
+    price: {
       type: Number,
       default: 0.0,
       min: 0,
@@ -60,6 +55,28 @@ const courseSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+    // Legacy fields for backward compatibility
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    videoUrl: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -67,6 +84,10 @@ const courseSchema = new mongoose.Schema(
 );
 
 // Indexes for efficient queries
+courseSchema.index({ organization_id: 1 });
+courseSchema.index({ teacher_id: 1 });
+courseSchema.index({ organization_id: 1, teacher_id: 1 });
+// Legacy indexes for backward compatibility
 courseSchema.index({ tenantId: 1 });
 courseSchema.index({ createdBy: 1 });
 courseSchema.index({ tenantId: 1, createdBy: 1 });

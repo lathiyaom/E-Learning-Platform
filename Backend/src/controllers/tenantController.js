@@ -1,6 +1,7 @@
 const tenantService = require("../services/tenantService");
 const { Tenant } = require("../models");
 const { generateTokens } = require("../utils/jwtHelper");
+const logger = require("../utils/logger");
 
 /**
  * Smart Registration:
@@ -8,13 +9,27 @@ const { generateTokens } = require("../utils/jwtHelper");
  *  - If tenants exist → only accessible by superadmin (route-level middleware handles auth)
  */
 const createTenant = async (req, res) => {
+  const startTime = Date.now();
+  const { email, name } = req.body;
+
   try {
+    logger.info("Tenant registration attempt", { email, name });
+
     if (!req.body || Object.keys(req.body).length === 0) {
+      logger.warn("Tenant registration failed: Empty request body", { email });
       return res.status(400).json({
         message: "Request body is empty or not properly parsed",
         success: false,
       });
     }
+
+    const tenantCount = await Tenant.countDocuments();
+    const isFirstTenant = tenantCount === 0;
+
+    logger.info(`Tenant registration mode: ${isFirstTenant ? "Bootstrap (first tenant)" : "Standard"}`, { 
+      email,
+      tenantCount 
+    });
 
     const newTenant = await tenantService.createTenant(req.body);
 
@@ -46,6 +61,16 @@ const createTenant = async (req, res) => {
     });
 
     const isSuperAdmin = newTenant.userType === "superadmin";
+    const duration = Date.now() - startTime;
+
+    logger.logSuccess("Tenant registered", newTenant.id, { 
+      email: newTenant.email,
+      name: newTenant.name,
+      userType: newTenant.userType,
+      code: newTenant.code,
+      isFirstTenant,
+      duration: `${duration}ms`
+    });
 
     return res.status(201).json({
       message: isSuperAdmin
@@ -57,7 +82,7 @@ const createTenant = async (req, res) => {
       ...tokens,
     });
   } catch (error) {
-    console.error("Error creating tenant:", error.message);
+    logger.logFailure("Tenant registration", email, error, { name });
     return res.status(400).json({
       message: error.message || "Internal server error",
       success: false,
@@ -161,7 +186,7 @@ const assignTeacherToTenant = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found", success: false });
 
     // Prevent reassigning across tenants unless superadmin
-    if (user.tenantId && user.tenantId.toString() !== tenantId && !requesterIsSuperadmin) {
+    if (user.tenant_id && user.tenant_id.toString() !== tenantId && !requesterIsSuperadmin) {
       return res.status(400).json({ message: "User already belongs to another tenant", success: false });
     }
 

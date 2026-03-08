@@ -17,6 +17,11 @@ import UserUpdateForm from "./pages/Profile/Admin/UserUpdateForm.jsx";
 import Settings from "./pages/Profile/Admin/settings.jsx";
 import UserComments from "./pages/Profile/Admin/UserComments.jsx";
 import AssignTeachers from "./pages/Dashboard/Admin/AssignTeachers.jsx";
+import AdminEventsManagement from "./pages/Dashboard/Admin/AdminEventsManagement.jsx";
+import AdminHolidaysManagement from "./pages/Dashboard/Admin/AdminHolidaysManagement.jsx";
+import EventManager from "./pages/Admin/EventManager/index.jsx";
+import HolidayManager from "./pages/Admin/HolidayManager/index.jsx";
+import TeacherMarketplace from "./pages/Admin/TeacherMarketplace/index.jsx";
 import Resources from "./pages/resources/index.jsx";
 import Schedule from "./pages/schedule/index.jsx";
 import Help from "./pages/help/index.jsx";
@@ -37,10 +42,14 @@ import MyCourses from "./pages/Dashboard/Teacher/MyCourses.jsx";
 import TeacherAttendance from "./pages/Dashboard/Teacher/Attendance.jsx";
 import TeacherExams from "./pages/Dashboard/Teacher/Exams.jsx";
 import TeacherStudents from "./pages/Dashboard/Teacher/Students.jsx";
+import TeacherLectureManagement from "./pages/Dashboard/Teacher/TeacherLectureManagement.jsx";
+import TeacherTimetableView from "./pages/Dashboard/Teacher/TeacherTimetableView.jsx";
+import TeacherAnalyticsDashboard from "./pages/Dashboard/Teacher/TeacherAnalyticsDashboard.jsx";
 import Enrollments from "./pages/Dashboard/student/Enrollments.jsx";
 import ExamResults from "./pages/Dashboard/student/ExamResults.jsx";
 import StudentAttendance from "./pages/Dashboard/student/StudentAttendance.jsx";
 import RateCourse from "./pages/Dashboard/student/RateCourse.jsx";
+import StudentFeedbackSystem from "./pages/Dashboard/student/StudentFeedbackSystem.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Unauthorized from "./pages/Unauthorized.jsx";
@@ -113,6 +122,11 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/assign-teachers" element={<ProtectedRoute requiredRole="admin"><AssignTeachers /></ProtectedRoute>} />
+            <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><AdminEventsManagement /></ProtectedRoute>} />
+            <Route path="/admin/holidays" element={<ProtectedRoute requiredRole="admin"><AdminHolidaysManagement /></ProtectedRoute>} />
+            <Route path="/admin/event-manager" element={<ProtectedRoute requiredRole="admin"><EventManager /></ProtectedRoute>} />
+            <Route path="/admin/holiday-manager" element={<ProtectedRoute requiredRole="admin"><HolidayManager /></ProtectedRoute>} />
+            <Route path="/admin/teacher-marketplace" element={<ProtectedRoute requiredRole="admin"><TeacherMarketplace /></ProtectedRoute>} />
             <Route path="/ActiveUsers" element={<ProtectedRoute requiredRole="admin"><ActiveUsers /></ProtectedRoute>} />
             <Route path="/managecourses" element={<ProtectedRoute requiredRole="admin"><DeleteCourses /></ProtectedRoute>} />
             <Route path="/AddCourse" element={<ProtectedRoute requiredRole="admin"><AddCourse /></ProtectedRoute>} />
@@ -127,6 +141,10 @@ function App() {
             <Route path="/teacher/attendance" element={<ProtectedRoute requiredRole="teacher"><TeacherAttendance /></ProtectedRoute>} />
             <Route path="/teacher/exams" element={<ProtectedRoute requiredRole="teacher"><TeacherExams /></ProtectedRoute>} />
             <Route path="/teacher/students" element={<ProtectedRoute requiredRole="teacher"><TeacherStudents /></ProtectedRoute>} />
+            <Route path="/teacher/lectures" element={<ProtectedRoute requiredRole="teacher"><TeacherLectureManagement /></ProtectedRoute>} />
+            <Route path="/teacher/timetable" element={<ProtectedRoute requiredRole="teacher"><TeacherTimetableView /></ProtectedRoute>} />
+            <Route path="/teacher/analytics" element={<ProtectedRoute requiredRole="teacher"><TeacherAnalyticsDashboard /></ProtectedRoute>} />
+            <Route path="/teacher/add-course" element={<ProtectedRoute requiredRole="teacher"><AddCourse /></ProtectedRoute>} />
             
             {/* Student Routes - Protected */}
             <Route path="/Dashboard" element={<ProtectedRoute requiredRole="student"><Dashboard /></ProtectedRoute>} />
@@ -138,7 +156,9 @@ function App() {
             <Route path="/student/attendance" element={<ProtectedRoute requiredRole="student"><StudentAttendance /></ProtectedRoute>} />
             <Route path="/student/exam-results" element={<ProtectedRoute requiredRole="student"><ExamResults /></ProtectedRoute>} />
             <Route path="/student/rate-course" element={<ProtectedRoute requiredRole="student"><RateCourse /></ProtectedRoute>} />
-            <Route path="/Chat" element={<ProtectedRoute requiredRole="student"><ChatInterface /></ProtectedRoute>} />
+            <Route path="/student/feedback" element={<ProtectedRoute requiredRole="student"><StudentFeedbackSystem /></ProtectedRoute>} />
+            <Route path="/Chat" element={<ProtectedRoute><ChatInterface /></ProtectedRoute>} />
+            <Route path="/teacher/chat" element={<ProtectedRoute requiredRole="teacher"><ChatInterface /></ProtectedRoute>} />
             
             {/* NEW Unified Dashboard Router - All roles */}
             <Route 

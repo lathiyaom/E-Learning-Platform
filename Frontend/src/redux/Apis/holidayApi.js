@@ -37,7 +37,7 @@ export const holidayApi = createApi({
     }),
     updateHoliday: builder.mutation({
       query: ({ id, ...data }) => ({
-        url: `/Holiday/update/${id}`,
+        url: `/Holiday/${id}`,
         method: "PATCH",
         body: data,
       }),
@@ -45,7 +45,7 @@ export const holidayApi = createApi({
     }),
     deleteHoliday: builder.mutation({
       query: (id) => ({
-        url: `/Holiday/delete/${id}`,
+        url: `/Holiday/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Holiday"],

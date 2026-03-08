@@ -3,6 +3,12 @@ const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
+    // ✅ Primary tenant for this user (for multi-tenant isolation)
+    tenant_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+      required: true,
+    },
     // ✅ Organizations/tenants this user is assigned to (for multi-tenant support)
     organizations: [
       {
@@ -21,6 +27,10 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "teacher", "admin"],
       required: true,
     },
+    available_for_org: {
+      type: Boolean,
+      default: true,
+    },
     firstName: {
       type: String,
       required: true,
@@ -31,16 +41,16 @@ const userSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
-      required: true,
+      required: false,
     },
     gender: {
       type: String,
       enum: ["male", "female"],
-      required: true,
+      required: false,
     },
     phoneNo: {
       type: String,
-      required: true,
+      required: false,
     },
     email: {
       type: String,
@@ -66,6 +76,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    avatar: {
+      type: String,
+      default: null,
+    },
     token: {
       type: String,
       default: null,
@@ -79,6 +93,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Index for tenant-scoped queries
+userSchema.index({ tenant_id: 1, email: 1 });
 
 // Hash password before saving
 userSchema.pre("save", async function () {

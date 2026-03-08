@@ -5,8 +5,8 @@ import {
   Book,
   BookOpen,
   Calendar,
+  ClipboardList,
   HelpCircle,
-  Settings,
   User,
   Users2,
   Menu,
@@ -57,50 +57,64 @@ const AdminLayout = ({
           id: "dashboard",
           icon: LayoutDashboard,
           label: "Dashboard",
-          link: "/dashboard",
+          link: "/teacher/dashboard",
           breadcrumb: "Dashboard",
-        },
-        {
-          id: "profile",
-          icon: User,
-          label: "Profile",
-          link: "/profile",
-          breadcrumb: "Profile",
         },
         {
           id: "courses",
           icon: BookOpen,
           label: "My Courses",
-          link: "/managecourses",
-          breadcrumb: "Manage Courses",
+          link: "/teacher/courses",
+          breadcrumb: "My Courses",
         },
         {
-          id: "addcourse",
+          id: "lectures",
           icon: Book,
-          label: "Add Course",
-          link: "/AddCourse",
-          breadcrumb: "Add New Course",
+          label: "Lectures",
+          link: "/teacher/lectures",
+          breadcrumb: "Lectures",
         },
         {
-          id: "users",
+          id: "attendance",
+          icon: Calendar,
+          label: "Attendance",
+          link: "/teacher/attendance",
+          breadcrumb: "Attendance",
+        },
+        {
+          id: "students",
           icon: Users2,
-          label: "Active Users",
-          link: "/ActiveUsers",
-          breadcrumb: "Active Users",
+          label: "Students",
+          link: "/teacher/students",
+          breadcrumb: "Students",
         },
         {
-          id: "Comments",
+          id: "exams",
+          icon: ClipboardList,
+          label: "Exams",
+          link: "/teacher/exams",
+          breadcrumb: "Exams",
+        },
+        {
+          id: "timetable",
+          icon: Calendar,
+          label: "Timetable",
+          link: "/teacher/timetable",
+          breadcrumb: "Timetable",
+        },
+        {
+          id: "analytics",
+          icon: Compass,
+          label: "Analytics",
+          link: "/teacher/analytics",
+          breadcrumb: "Analytics",
+        },
+        {
+          id: "chat",
           icon: MessageCircle,
-          label: "Student Comments",
-          link: "/Comments",
-          breadcrumb: "Student Comments",
-        },
-        {
-          id: "settings",
-          icon: Settings,
-          label: "Settings",
-          link: "/settings",
-          breadcrumb: "Settings",
+          label: "Chat",
+          link: "/teacher/chat",
+          breadcrumb: "Messages",
         },
         {
           id: "help",
@@ -112,17 +126,17 @@ const AdminLayout = ({
       ];
     }
 
-    return [
-      {
-        id: "dashboard",
-        icon: LayoutDashboard,
-        label: "Dashboard",
-        link: "/dashboard",
-        breadcrumb: "Dashboard",
-      },
-      {
-        id: "Explore Courses",
-        icon: Compass,
+      return [
+        {
+          id: "dashboard",
+          icon: LayoutDashboard,
+          label: "Dashboard",
+          link: "/student/dashboard",
+          breadcrumb: "Dashboard",
+        },
+        {
+          id: "Explore Courses",
+          icon: Compass,
         label: "Explore Courses",
         link: "/Explorecourses",
         breadcrumb: "Explore Courses",
@@ -134,18 +148,39 @@ const AdminLayout = ({
         link: "/Mylearning",
         breadcrumb: "My Learning",
       },
-      {
-        id: "chat",
-        icon: MessageCircle,
-        label: "Chat",
-        link: "/chat",
-        breadcrumb: "Messages",
-      },
-      {
-        id: "profile",
-        icon: User,
-        label: "Profile",
-        link: "/profile",
+        {
+          id: "chat",
+          icon: MessageCircle,
+          label: "Chat",
+          link: "/Chat",
+          breadcrumb: "Messages",
+        },
+        {
+          id: "enrollments",
+          icon: ClipboardList,
+          label: "Enrollments",
+          link: "/student/enrollments",
+          breadcrumb: "My Enrollments",
+        },
+        {
+          id: "attendance",
+          icon: Calendar,
+          label: "Attendance",
+          link: "/student/attendance",
+          breadcrumb: "Attendance",
+        },
+        {
+          id: "feedback",
+          icon: MessageCircle,
+          label: "Feedback",
+          link: "/student/feedback",
+          breadcrumb: "Feedback",
+        },
+        {
+          id: "profile",
+          icon: User,
+          label: "Profile",
+          link: "/profile",
         breadcrumb: "My Profile",
       },
       // {
@@ -162,18 +197,11 @@ const AdminLayout = ({
         link: "/resources",
         breadcrumb: "Learning Resources",
       },
-      {
-        id: "settings",
-        icon: Settings,
-        label: "Settings",
-        link: "/settings",
-        breadcrumb: "Settings",
-      },
-      {
-        id: "help",
-        icon: HelpCircle,
-        label: "Help Center",
-        link: "/help",
+        {
+          id: "help",
+          icon: HelpCircle,
+          label: "Help Center",
+          link: "/help",
         breadcrumb: "Help & Support",
       },
     ];
@@ -430,7 +458,7 @@ const AdminLayout = ({
               <div className="flex items-center gap-3">
                 <div className="hidden md:block text-right">
                   <p className="text-sm font-bold leading-none text-slate-900 dark:text-white">
-                    {`${user?.firstName} ${user.lastName}` ||
+                    {`${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
                       user?.email?.split("@")[0] ||
                       "User"}
                   </p>

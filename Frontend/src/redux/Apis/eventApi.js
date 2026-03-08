@@ -44,7 +44,7 @@ export const registerForEvent = createAsyncThunk(
   "event/register",
   async (eventId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(`/Event/register/${eventId}`);
+      const response = await axiosInstance.post(`/Event/${eventId}/register`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to register");
@@ -70,7 +70,7 @@ export const updateEvent = createAsyncThunk(
   "event/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/Event/update/${id}`, data);
+      const response = await axiosInstance.patch(`/Event/${id}`, data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update event");
@@ -83,7 +83,7 @@ export const deleteEvent = createAsyncThunk(
   "event/delete",
   async (id, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`/Event/delete/${id}`);
+      await axiosInstance.delete(`/Event/${id}`);
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to delete event");

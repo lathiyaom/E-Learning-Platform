@@ -3,6 +3,9 @@ const validators = require("../utils/validators");
 
 const createUser = async (userData) => {
   const {
+    tenant_id,
+    organizations,
+    currentOrganization,
     userType,
     firstName,
     lastName,
@@ -16,7 +19,7 @@ const createUser = async (userData) => {
   } = userData;
 
   // Validate all required fields
-  if (!userType || !firstName || !lastName || !age || !gender || !phoneNo || !email || !password || !confirmPassword) {
+  if (!tenant_id || !userType || !firstName || !lastName || !age || !gender || !phoneNo || !email || !password || !confirmPassword) {
     throw new Error("All fields are required");
   }
 
@@ -56,6 +59,9 @@ const createUser = async (userData) => {
   }
 
   const newUser = await User.create({
+    tenant_id,
+    organizations: Array.isArray(organizations) ? organizations : [tenant_id],
+    currentOrganization: currentOrganization !== undefined ? currentOrganization : tenant_id,
     userType,
     firstName,
     lastName,

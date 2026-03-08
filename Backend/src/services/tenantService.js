@@ -172,10 +172,15 @@ const assignTeacher = async (tenantId, userId) => {
   if (!user) throw new Error("User not found");
 
   // Prevent assigning users already belonging to another tenant
-  if (user.tenantId && user.tenantId.toString() !== tenantId)
+  if (user.tenant_id && user.tenant_id.toString() !== tenantId)
     throw new Error("User already assigned to another organization");
 
-  user.tenantId = tenantId;
+  user.tenant_id = tenantId;
+  user.organizations = Array.isArray(user.organizations)
+    ? Array.from(new Set([...user.organizations.map((id) => id.toString()), tenantId]))
+    : [tenantId];
+  user.currentOrganization = tenantId;
+  user.available_for_org = false;
   user.userType = "teacher";
   await user.save();
 

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const organizationController = require("../controllers/organizationController");
 const { authenticate, authorize } = require("../middlewares/authMiddleware");
+const tenantScope = require("../middlewares/tenantScope.middleware");
 
 // ✅ Get all unassigned teachers - Admin only
 router.get(
@@ -57,6 +58,53 @@ router.get(
   authenticate,
   authorize("teacher"),
   organizationController.getOrganizationData
+);
+
+// ✅ Teacher Application Management Routes
+
+// ✅ Get pending applications for organization - Tenant admin only
+router.get(
+  "/applications/pending",
+  authenticate,
+  tenantScope,
+  authorize("admin"),
+  organizationController.getPendingApplications
+);
+
+// ✅ Approve teacher application - Tenant admin only
+router.post(
+  "/applications/:application_id/approve",
+  authenticate,
+  tenantScope,
+  authorize("admin"),
+  organizationController.approveApplication
+);
+
+// ✅ Reject teacher application - Tenant admin only
+router.post(
+  "/applications/:application_id/reject",
+  authenticate,
+  tenantScope,
+  authorize("admin"),
+  organizationController.rejectApplication
+);
+
+// ✅ Invite teacher to organization - Tenant admin only
+router.post(
+  "/teachers/invite",
+  authenticate,
+  tenantScope,
+  authorize("admin"),
+  organizationController.inviteTeacher
+);
+
+// ✅ Search available teachers to invite - Tenant admin only
+router.get(
+  "/teachers/search",
+  authenticate,
+  tenantScope,
+  authorize("admin"),
+  organizationController.searchTeachers
 );
 
 module.exports = router;

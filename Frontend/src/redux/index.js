@@ -22,6 +22,7 @@ export {
 // Course exports
 export {
   useGetAllCoursesQuery,
+  useGetMarketplaceCoursesQuery,
   useLazyGetAllCoursesQuery,
   useGetCourseByIdQuery,
   useLazyGetCourseByIdQuery,

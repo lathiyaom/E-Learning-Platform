@@ -22,16 +22,22 @@ const tenantScope = async (req, res, next) => {
 
     // Extract tenantId based on user role
     if (req.user.userType === "teacher") {
-      // ✅ Teachers: Use their currentOrganization
-      const teacher = await User.findById(req.user.id).select("currentOrganization");
-      req.tenantId = teacher?.currentOrganization;
+      // ✅ Teachers: prefer currentOrganization, fallback to primary tenant
+      const teacher = await User.findById(req.user.id).select("currentOrganization tenant_id organizations");
+      req.tenantId =
+        teacher?.currentOrganization ||
+        teacher?.tenant_id ||
+        teacher?.organizations?.[0];
     } else if (req.user.userType === "admin" || req.user.userType === "superadmin") {
       // Admin/superadmin: They ARE the tenant (from Tenant table)
       req.tenantId = req.user.id;
     } else {
-      // Student or other user: Use first organization if available
-      const user = await User.findById(req.user.id).select("organizations");
-      req.tenantId = user?.organizations?.[0];
+      // Student or other user: use current org, then organization list, then primary tenant_id
+      const user = await User.findById(req.user.id).select("currentOrganization organizations tenant_id");
+      req.tenantId =
+        user?.currentOrganization ||
+        user?.organizations?.[0] ||
+        user?.tenant_id;
     }
 
     if (!req.tenantId) {

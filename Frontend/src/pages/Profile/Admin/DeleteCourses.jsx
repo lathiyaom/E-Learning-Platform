@@ -22,7 +22,7 @@ function DeleteCourses() {
   // RTK Query hooks
   const { data: coursesResponse, isLoading, error } = useGetAllCoursesQuery();
 
-  const courses = coursesResponse;
+  const courses = coursesResponse?.data || [];
 
   const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
 
@@ -134,8 +134,8 @@ function DeleteCourses() {
               </div>
             </section>
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 bg-[#F9F9F9]  rounded-lg py-6 px-4">
-              {courses.data.map((course) => (
-                <React.Fragment key={course.id}>
+              {courses.map((course) => (
+                <React.Fragment key={course._id || course.id}>
                   <CourseCard
                     title={course.title}
                     image={course.image}
@@ -143,9 +143,9 @@ function DeleteCourses() {
                     category={course.category}
                     videoUrl={course.videoUrl}
                     tags={course.tags}
-                    id={course.id}
-                    onDelete={() => removeCourse(course.id)}
-                    onEdit={() => handleEditCourse(course.id)}
+                    id={course._id || course.id}
+                    onDelete={() => removeCourse(course._id || course.id)}
+                    onEdit={() => handleEditCourse(course._id || course.id)}
                   />
                 </React.Fragment>
               ))}

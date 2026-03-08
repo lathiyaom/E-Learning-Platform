@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Building, Shield, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import API from "../../utils/axiosintence";
 import { toast } from "react-toastify";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 function OrganizationRegister() {
   const navigate = useNavigate();
@@ -137,13 +138,10 @@ function OrganizationRegister() {
       }
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error(
-        error.response?.data?.message || "Registration failed. Please try again.",
-        {
-          position: "top-center",
-          duration: 4000,
-        }
-      );
+      toast.error(getApiErrorMessage(error, "Registration failed. Please try again."), {
+        position: "top-center",
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }
@@ -170,10 +168,9 @@ function OrganizationRegister() {
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-blue-800">
-              <p className="font-semibold mb-1">First Registration = SuperAdmin</p>
+              <p className="font-semibold mb-1">Platform owner is pre-configured</p>
               <p>
-                The first organization registered becomes the platform SuperAdmin. 
-                Subsequent registrations require SuperAdmin approval and become regular Admins.
+                The platform owner account is auto-created by backend startup. This form creates organization admin accounts.
               </p>
             </div>
           </div>

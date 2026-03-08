@@ -125,10 +125,61 @@ class Logger {
     this.info(`${req.method} ${req.path}`, {
       method: req.method,
       path: req.path,
-      ip: req.ip,
+      query: req.query,
+      ip: req.ip || req.connection?.remoteAddress,
       userId: req.user?.id || "anonymous",
+      userType: req.user?.userType || "anonymous",
+      tenantId: req.tenantId || req.user?.tenantId || null,
       ...meta,
     });
+  }
+
+  /**
+   * Log successful operation
+   */
+  logSuccess(operation, userId, meta = {}) {
+    this.info(`✅ ${operation}`, {
+      operation,
+      userId,
+      status: "success",
+      ...meta,
+    });
+  }
+
+  /**
+   * Log failed operation
+   */
+  logFailure(operation, userId, error, meta = {}) {
+    this.error(`❌ ${operation}`, error, {
+      operation,
+      userId,
+      status: "failure",
+      ...meta,
+    });
+  }
+
+  /**
+   * Log authentication events
+   */
+  logAuth(event, userId, success, meta = {}) {
+    const message = `${success ? "✅" : "❌"} Auth: ${event}`;
+    if (success) {
+      this.info(message, { event, userId, success, ...meta });
+    } else {
+      this.warn(message, { event, userId, success, ...meta });
+    }
+  }
+
+  /**
+   * Log security events
+   */
+  logSecurity(event, severity, meta = {}) {
+    const message = `🔒 Security: ${event}`;
+    if (severity === "high") {
+      this.error(message, null, { event, severity, ...meta });
+    } else {
+      this.warn(message, { event, severity, ...meta });
+    }
   }
 
   /**

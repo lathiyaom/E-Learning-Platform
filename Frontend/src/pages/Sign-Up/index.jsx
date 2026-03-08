@@ -1,11 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../../components/Button";
 import ilus2 from "../../assets/imgs/ilustrator2.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSignupMutation } from "../../redux/Apis/authApi";
 import { toast } from "react-toastify";
+import { useSelector, useDispatch } from "react-redux";
+import { setCredentials } from "../../redux";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 function SignUp() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
+  // Get auth state from Redux
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  
   const [signup, { isLoading: signupLoading }] = useSignupMutation();
   const [Data, setData] = useState({
     userType: "",
@@ -18,10 +27,64 @@ function SignUp() {
     password: "",
     confirmPassword: "",
     agreeTerms: false,
+    organizationCode: "", // Optional organization code for teachers
   });
 
   const [Loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+
+  // ✅ Check if user is already logged in (even if Redux state is lost)
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      // First check Redux state
+      if (isAuthenticated && user) {
+        const userType = user.userType?.toLowerCase();
+        const dashboardMap = {
+          superadmin: "/superadmin/dashboard",
+          admin: "/admin/dashboard",
+          teacher: "/teacher/dashboard",
+          student: "/student/dashboard",
+        };
+        const redirectPath = dashboardMap[userType] || "/";
+        console.log("✅ User already logged in (Redux), redirecting to:", redirectPath);
+        navigate(redirectPath, { replace: true });
+        return;
+      }
+
+      // Check localStorage for persisted auth
+      try {
+        const storedAuth = localStorage.getItem("authUser");
+        if (storedAuth) {
+          const { user: storedUser, accessToken } = JSON.parse(storedAuth);
+          if (storedUser && accessToken) {
+            // Restore Redux state
+            dispatch(setCredentials({ 
+              user: storedUser, 
+              accessToken,
+              refreshToken: JSON.parse(storedAuth).refreshToken 
+            }));
+            
+            const userType = storedUser.userType?.toLowerCase();
+            const dashboardMap = {
+              superadmin: "/superadmin/dashboard",
+              admin: "/admin/dashboard",
+              teacher: "/teacher/dashboard",
+              student: "/student/dashboard",
+            };
+            const redirectPath = dashboardMap[userType] || "/";
+            console.log("✅ Session restored from localStorage, redirecting to:", redirectPath);
+            navigate(redirectPath, { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking existing session:", error);
+        // Clear invalid localStorage data
+        localStorage.removeItem("authUser");
+      }
+    };
+
+    checkExistingSession();
+  }, [isAuthenticated, user, navigate, dispatch]);
 
   // Calculate password strength
   const calculatePasswordStrength = (password) => {
@@ -165,6 +228,7 @@ function SignUp() {
         password: Data.password,
         confirmPassword: Data.confirmPassword,
         agreeTerms: Data.agreeTerms,
+        organizationCode: Data.organizationCode, // Include organization code
       }).unwrap();
 
       if (response?.success) {
@@ -183,6 +247,7 @@ function SignUp() {
           password: "",
           confirmPassword: "",
           agreeTerms: false,
+          organizationCode: "", // Reset organization code
         });
         setPasswordStrength(0);
         setLoading(false);
@@ -192,13 +257,30 @@ function SignUp() {
       }
     } catch (error) {
       setLoading(false);
-      toast.error(
-        error?.data?.message || error?.message || "Sign Up Failed. Please try again",
-        {
-          position: "top-center",
-          duration: 4000,
-        },
-      );
+      
+      // Handle different types of errors
+      let errorMessage = getApiErrorMessage(error, "Sign up failed. Please try again.");
+      
+      if (error?.status === 400) {
+        if (error?.data?.errors && Array.isArray(error.data.errors)) {
+          // Handle validation errors
+          const validationErrors = error.data.errors.map(err => err.message).join(', ');
+          errorMessage = `Validation Error: ${validationErrors}`;
+        } else {
+          errorMessage = error?.data?.message || "Invalid request. Please check your input.";
+        }
+      } else if (error?.status === 403) {
+        errorMessage = "Access denied. You cannot register with this role.";
+      } else if (error?.status === 409) {
+        errorMessage = "Email already exists. Please use a different email.";
+      } else if (error?.status === 429) {
+        errorMessage = "Too many signup attempts. Please try again later.";
+      }
+
+      toast.error(errorMessage, {
+        position: "top-center",
+        duration: 4000,
+      });
       console.error("Sign Up error:", error?.data || error?.message);
     }
   };
@@ -249,6 +331,38 @@ function SignUp() {
                       <option value="student">Student</option>
                       <option value="teacher">Teacher</option>
                     </select>
+                  </div>
+
+                  {/* Organization Code - Optional for both student and teacher */}
+                  <div>
+                    <label
+                      htmlFor="organizationCode"
+                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
+                    >
+                      Organization Code (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      id="organizationCode"
+                      name="organizationCode"
+                      value={Data.organizationCode}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
+                      focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                      transition-all duration-200 font-sans text-gray-900
+                      placeholder:text-gray-400"
+                      placeholder="Enter organization code if you have one"
+                    />
+                    {Data.userType === "student" && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        If left blank, your account will be created under platform learner space.
+                      </p>
+                    )}
+                    {Data.userType === "teacher" && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optional: Join an existing organization or create your own
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-row gap-3 justify-between items-center">

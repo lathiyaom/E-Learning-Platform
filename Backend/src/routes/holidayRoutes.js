@@ -1,27 +1,28 @@
 const express = require("express");
 const router = express.Router();
 const holidayController = require("../controllers/holidayController");
-const { authenticate } = require("../middlewares/authMiddleware");
+const { authenticate, authorize, isTenantOwner } = require("../middlewares/authMiddleware");
+const tenantScope = require("../middlewares/tenantScope.middleware");
 
-// All holiday routes require authentication
-router.use(authenticate);
-
-// Create holiday (admin/superadmin only)
-router.post("/create", holidayController.createHoliday);
+// Create holiday (admin only)
+router.post("/create", authenticate, isTenantOwner, authorize("admin"), tenantScope, holidayController.createHoliday);
 
 // Get all holidays
-router.get("/all", holidayController.getAllHolidays);
+router.get("/all", authenticate, tenantScope, holidayController.getAllHolidays);
 
 // Get upcoming holidays
-router.get("/upcoming", holidayController.getUpcomingHolidays);
+router.get("/upcoming", authenticate, tenantScope, holidayController.getUpcomingHolidays);
+
+// Get calendar holidays by year/month
+router.get("/calendar/:year/:month", authenticate, tenantScope, holidayController.getCalendarHolidays);
 
 // Get holiday by ID
-router.get("/:id", holidayController.getHolidayById);
+router.get("/:id", authenticate, tenantScope, holidayController.getHolidayById);
 
-// Update holiday (admin/superadmin only)
-router.patch("/update/:id", holidayController.updateHoliday);
+// Update holiday (admin only)
+router.patch("/:id", authenticate, isTenantOwner, authorize("admin"), tenantScope, holidayController.updateHoliday);
 
-// Delete holiday (admin/superadmin only)
-router.delete("/delete/:id", holidayController.deleteHoliday);
+// Delete holiday (admin only)
+router.delete("/:id", authenticate, isTenantOwner, authorize("admin"), tenantScope, holidayController.deleteHoliday);
 
 module.exports = router;

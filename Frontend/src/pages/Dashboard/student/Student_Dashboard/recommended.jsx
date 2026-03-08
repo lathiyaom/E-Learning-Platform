@@ -2,12 +2,12 @@ import React, { useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { gsap } from "gsap";
 import RecommendedCourseCard from "./RecommendedCourseCard";
-import { useGetAllCoursesQuery } from "../../../../redux/Apis/courseApi";
+import { useGetMarketplaceCoursesQuery } from "../../../../redux/Apis/courseApi";
 
 function RecommendedSection() {
   const scrollContainerRef = useRef(null);
   const cardRefs = useRef([]);
-  const { data: coursesData, isLoading } = useGetAllCoursesQuery();
+  const { data: coursesData, isLoading } = useGetMarketplaceCoursesQuery("popular");
 
   const courses = coursesData?.data || [];
 
@@ -90,12 +90,12 @@ function RecommendedSection() {
         className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar scroll-smooth"
       >
         {courses.map((course, index) => (
-          <div key={course.id} ref={(el) => (cardRefs.current[index] = el)}>
+          <div key={course._id || course.id} ref={(el) => (cardRefs.current[index] = el)}>
             <RecommendedCourseCard
               course={{
-                id: course.id,
+                id: course._id || course.id,
                 title: course.title,
-                image: course.imageUrl || "https://via.placeholder.com/400x300",
+                image: course.image || course.imageUrl || "https://via.placeholder.com/400x300",
                 category: course.category || "General",
                 categoryIcon: "code",
                 badge: course.isFeatured ? { text: "Featured", bgColor: "bg-studprimary" } : null,
@@ -113,7 +113,7 @@ function RecommendedSection() {
               showButton={false}
               buttonText="View Details"
               onButtonClick={() =>
-                console.log("View Details clicked for course:", course.id)
+                console.log("View Details clicked for course:", course._id || course.id)
               }
             />
           </div>

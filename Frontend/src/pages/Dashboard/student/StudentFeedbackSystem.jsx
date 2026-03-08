@@ -6,9 +6,11 @@ import {
   useGetUserFeedbackQuery,
 } from "../../../redux/Apis/feedbackApi";
 import {
-  useGetStudentEnrollmentsQuery,
+  useGetMyEnrollmentsQuery,
 } from "../../../redux/Apis/enrollmentApi";
 import { SuccessToster, ErrorToster } from "../../../components/toster";
+import AdminLayout from "../../../utils/Adminlayoute";
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 export default function StudentFeedbackSystem() {
   const { user } = useSelector((state) => state.auth);
@@ -21,7 +23,7 @@ export default function StudentFeedbackSystem() {
 
   // Fetch student's enrolled courses
   const { data: enrollmentsData, isLoading: loadingEnrollments } =
-    useGetStudentEnrollmentsQuery(studentId, {
+    useGetMyEnrollmentsQuery(undefined, {
       skip: !studentId,
     });
 
@@ -38,12 +40,22 @@ export default function StudentFeedbackSystem() {
   // Extract courses from enrollments
   const enrolledCourses = useMemo(() => {
     if (!enrollmentsData?.data) return [];
-    return enrollmentsData.data
-      .filter((enrollment) => enrollment.courseId)
-      .map((enrollment) => ({
-        id: enrollment.courseId._id,
-        name: enrollment.courseId.title,
-      }));
+    const courseMap = new Map();
+    enrollmentsData.data
+      .filter((enrollment) => enrollment.courseId || enrollment.course_id)
+      .forEach((enrollment) => {
+        const id =
+          enrollment.courseId?._id ||
+          enrollment.course_id?._id ||
+          enrollment.courseId ||
+          enrollment.course_id;
+        if (!id || courseMap.has(String(id))) return;
+        courseMap.set(String(id), {
+        id: enrollment.courseId?._id || enrollment.course_id?._id || enrollment.courseId || enrollment.course_id,
+        name: enrollment.courseId?.title || enrollment.course_id?.title || "Course",
+        });
+      });
+    return Array.from(courseMap.values());
   }, [enrollmentsData]);
 
   // Extract feedbacks
@@ -69,17 +81,16 @@ export default function StudentFeedbackSystem() {
       ErrorToster("Please write your feedback", 3000);
       return;
     }
-    if (activeTab === "courses" && !selectedCourse) {
+    if (!selectedCourse) {
       ErrorToster("Please select a course", 3000);
       return;
     }
 
     try {
       const payload = {
-        courseId: activeTab === "courses" ? selectedCourse : null,
+        courseId: selectedCourse,
         rating,
         comment: feedback.trim(),
-        reviewerId: studentId,
       };
 
       await createFeedback(payload).unwrap();
@@ -90,10 +101,7 @@ export default function StudentFeedbackSystem() {
       setFeedback("");
       setSelectedCourse("");
     } catch (error) {
-      ErrorToster(
-        error?.data?.message || "Failed to submit feedback",
-        3000
-      );
+      ErrorToster(getApiErrorMessage(error, "Failed to submit feedback"), 3000);
     }
   };
 
@@ -119,13 +127,16 @@ export default function StudentFeedbackSystem() {
 
   if (loadingEnrollments || loadingFeedback) {
     return (
-      <div className="p-10 min-h-screen bg-slate-100 flex items-center justify-center">
-        <Loader2 className="animate-spin" size={48} />
-      </div>
+      <AdminLayout>
+        <div className="p-10 min-h-screen bg-slate-100 flex items-center justify-center">
+          <Loader2 className="animate-spin" size={48} />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
+    <AdminLayout>
     <div className="p-10 min-h-screen bg-slate-100">
       <h1 className="text-3xl font-bold mb-6">Student Feedback</h1>
 
@@ -139,25 +150,23 @@ export default function StudentFeedbackSystem() {
               setActiveTab(e.target.value);
               setSelectedCourse("");
             }}
+            disabled
           >
             <option value="courses">Course Feedback</option>
-            <option value="general">General Feedback</option>
           </select>
 
-          {activeTab === "courses" && (
-            <select
-              className="border w-full mb-3 p-2 rounded"
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-            >
-              <option value="">Select Course</option>
-              {enrolledCourses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            className="border w-full mb-3 p-2 rounded"
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+          >
+            <option value="">Select Course</option>
+            {enrolledCourses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
           {/* Stars */}
           <div className="flex gap-2 mb-3">
@@ -266,5 +275,6 @@ export default function StudentFeedbackSystem() {
         </div>
       </div>
     </div>
+    </AdminLayout>
   );
 }

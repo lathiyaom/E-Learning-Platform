@@ -5,11 +5,13 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
 
 // Import config and utilities
 const { config, validateEnvironment } = require("./src/config/env");
 const logger = require("./src/utils/logger");
 const { errorHandler, notFoundHandler, asyncHandler } = require("./src/middlewares/errorHandler.middleware");
+const { requestLogger, errorLogger } = require("./src/middlewares/requestLogger.middleware");
 
 // Validate environment variables
 validateEnvironment();
@@ -19,6 +21,7 @@ const { connectDB } = require("./src/Db/mongoose");
 // const { testConnection, syncDatabase } = require("./src/Db/sequelize");
 // const supabase = require("./src/Db/supabase");
 require("./src/models/index");
+const { Tenant } = require("./src/models");
 
 // Initialize database connection
 const initializeDatabase = async () => {
@@ -26,6 +29,34 @@ const initializeDatabase = async () => {
     // Connect to MongoDB
     await connectDB();
     logger.info("✅ Database connected successfully");
+
+    // Auto-create platform owner (superadmin) on first run
+    const superadminEmail = process.env.SUPERADMIN_EMAIL || "superadmin@gmail.com";
+    const superadminPassword = process.env.SUPERADMIN_PASSWORD || "superadmin123";
+    const existingSuperadmin = await Tenant.findOne({
+      $or: [{ userType: "superadmin" }, { email: superadminEmail }],
+    });
+
+    if (!existingSuperadmin) {
+      await Tenant.create({
+        name: "Platform Owner",
+        code: "PLATFM",
+        phoneNo: "9999999999",
+        userType: "superadmin",
+        OrgOwnerName: "Platform Owner",
+        OrgOwnerEmail: superadminEmail,
+        OrgOwnerPhone: "9999999999",
+        email: superadminEmail,
+        password: superadminPassword,
+        status: "active",
+        agreeTerms: true,
+        about: "Platform owner account",
+      });
+
+      logger.info("Superadmin auto-created", { email: superadminEmail });
+    } else {
+      logger.info("Superadmin already exists", { email: existingSuperadmin.email });
+    }
   } catch (error) {
     logger.error("Database initialization failed", error);
     process.exit(1);
@@ -64,7 +95,6 @@ const initializeDatabase = async () => {
 //   }
 // };
 
-initializeDatabase();
 
 // Import Routes
 const userRoutes = require("./src/routes/userRoutes");
@@ -73,6 +103,8 @@ const contactRoutes = require("./src/routes/contactRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const tenantRoutes = require("./src/routes/tenantRoutes");
 const superAdminRoutes = require("./src/routes/superAdminRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
+const activityLogRoutes = require("./src/routes/activityLogRoutes");
 const bookmarkRoutes = require("./src/routes/bookmarkRoutes");
 const newsletterRoutes = require("./src/routes/newsletterRoutes");
 const attendanceRoutes = require("./src/routes/attendanceRoutes");
@@ -92,6 +124,12 @@ const analyticsRoutes = require("./src/routes/analyticsRoutes");
 const profileRoutes = require("./src/routes/profileRoutes");
 const uploadRoutes = require("./src/routes/uploadRoutes");
 const organizationRoutes = require("./src/routes/organizationRoutes");
+const chatRoutes = require("./src/routes/chatRoutes");
+const courseMaterialRoutes = require("./src/routes/courseMaterialRoutes");
+const lectureProgressRoutes = require("./src/routes/lectureProgressRoutes");
+const teacherAssignmentRoutes = require("./src/routes/teacherAssignmentRoutes");
+const superAdminTeachersRoute = require("./src/routes/superAdminTeachersRoute");
+const teacherApplicationRoutes = require("./src/routes/teacherApplicationRoutes");
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -155,18 +193,33 @@ const superAdminLimiter = rateLimit({
 });
 
 // Middleware
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "res.cloudinary.com"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
 app.use(cors(corsOptions));
 app.use(limiter); // Apply rate limiting to all routes
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // Request size limit
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 
-// Request logging middleware
-app.use((req, res, next) => {
-  logger.logRequest(req);
-  next();
-});
+// Request logging middleware (logs all requests/responses)
+app.use(requestLogger);
 
 // Health check
 app.get("/", (req, res) => {
@@ -207,6 +260,8 @@ authRoutesWithLimits.use("/", authRoutes);
 app.use("/Auth", authRoutesWithLimits);
 app.use("/Tenant", tenantRoutes);
 app.use("/SuperAdmin", superAdminLimiter, superAdminRoutes); // ✅ Rate limit all superadmin routes
+app.use("/Admin", adminRoutes);
+app.use("/ActivityLog", activityLogRoutes);
 app.use("/Bookmark", bookmarkRoutes);
 app.use("/Newsletter", newsletterRoutes);
 app.use("/Attendance", attendanceRoutes);
@@ -224,16 +279,30 @@ app.use("/Analytics", analyticsRoutes);
 app.use("/Profile", profileRoutes);
 app.use("/Upload", uploadRoutes);
 app.use("/Organization", organizationRoutes);
+app.use("/Chat", chatRoutes);
+app.use("/Material", courseMaterialRoutes);
+app.use("/Progress", lectureProgressRoutes);
+app.use("/Admin", teacherAssignmentRoutes);
+app.use("/SuperAdmin", superAdminTeachersRoute);
+app.use("/TeacherApplication", teacherApplicationRoutes);
 
 // 404 Handler
 app.use(notFoundHandler);
+
+// Error logger (logs errors before handling)
+app.use(errorLogger);
 
 // Global Error Handler (MUST be last)
 app.use(errorHandler);
 
 const PORT = config.port;
-app.listen(PORT, () => {
-  logger.info(
-    `🚀 Server is running on port http://localhost:${PORT} in ${config.nodeEnv} mode`
-  );
-});
+initializeDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      logger.info(`Server is running on port http://localhost:${PORT} in ${config.nodeEnv} mode`);
+    });
+  })
+  .catch((error) => {
+    logger.error("Server startup failed", error);
+    process.exit(1);
+  });

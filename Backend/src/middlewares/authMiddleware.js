@@ -54,7 +54,7 @@ const authenticate = async (req, res, next) => {
       firstName: decoded.firstName,
       lastName: decoded.lastName,
       role,
-      ...(role === "user" && { tenantId: account.tenantId }),
+      ...(role === "user" && { tenantId: account.tenant_id }),
     };
 
     next();

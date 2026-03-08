@@ -1,13 +1,37 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { BookOpen, BarChart3, Users, Calendar, FileText, MessageSquare, ArrowRight } from "lucide-react";
+import {
+  BookOpen,
+  BarChart3,
+  Users,
+  Calendar,
+  FileText,
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
+import { useGetMyEnrollmentsQuery } from "../../redux/Apis/enrollmentApi";
+import { useGetAllCoursesQuery } from "../../redux/Apis/courseApi";
+import { useGetAllUsersQuery } from "../../redux";
+import { useGetPlatformStatsQuery } from "../../redux/Apis/superAdminApi";
 
 const DashboardHome = () => {
   const { user } = useSelector((state) => state.auth || { user: null });
   const userRole = user?.userType || "student";
 
-  // Admin Dashboard Cards
+  const { data: myEnrollmentsData } = useGetMyEnrollmentsQuery(undefined, {
+    skip: userRole !== "student",
+  });
+  const { data: allCoursesData } = useGetAllCoursesQuery(undefined, {
+    skip: userRole !== "teacher" && userRole !== "admin",
+  });
+  const { data: allUsersData } = useGetAllUsersQuery(undefined, {
+    skip: userRole !== "teacher" && userRole !== "admin",
+  });
+  const { data: platformStats } = useGetPlatformStatsQuery(undefined, {
+    skip: userRole !== "superadmin",
+  });
+
   const adminCards = [
     {
       title: "Lectures",
@@ -39,7 +63,6 @@ const DashboardHome = () => {
     },
   ];
 
-  // Teacher Dashboard Cards
   const teacherCards = [
     {
       title: "Lectures",
@@ -64,28 +87,27 @@ const DashboardHome = () => {
     },
   ];
 
-  // Student Dashboard Cards
   const studentCards = [
     {
-      title: "Calendar",
-      description: "View your lectures, exams, and events",
-      icon: Calendar,
+      title: "Explore Courses",
+      description: "Browse courses from all organizations",
+      icon: BookOpen,
       color: "from-blue-500 to-blue-600",
-      link: "/dashboard/student/calendar",
+      link: "/Explorecourses",
     },
     {
-      title: "Courses",
+      title: "My Enrollments",
       description: "View all your enrolled courses",
-      icon: BookOpen,
+      icon: Users,
       color: "from-purple-500 to-purple-600",
-      link: "/dashboard/student/courses",
+      link: "/student/enrollments",
     },
     {
       title: "Feedback",
       description: "Share feedback about courses",
       icon: MessageSquare,
       color: "from-green-500 to-green-600",
-      link: "/dashboard/student/feedback",
+      link: "/student/feedback",
     },
   ];
 
@@ -96,10 +118,69 @@ const DashboardHome = () => {
   };
 
   const cards = getCards();
+  const enrollments = myEnrollmentsData?.data || [];
+  const courses = allCoursesData?.data || [];
+  const users = allUsersData?.users || [];
+
+  const completedEnrollments = enrollments.filter(
+    (item) => Number(item.progressPercent || item.progress || 0) >= 100,
+  ).length;
+  const avgProgress = enrollments.length
+    ? Math.round(
+        enrollments.reduce(
+          (sum, item) => sum + Number(item.progressPercent || item.progress || 0),
+          0,
+        ) / enrollments.length,
+      )
+    : 0;
+
+  const statsByRole = {
+    student: [
+      { label: "Enrolled Courses", value: enrollments.length, detail: "Active learning" },
+      { label: "Completed", value: completedEnrollments, detail: "Finished courses" },
+      { label: "Avg Progress", value: `${avgProgress}%`, detail: "Across enrollments" },
+    ],
+    teacher: [
+      { label: "Courses", value: courses.length, detail: "Available courses" },
+      {
+        label: "Students",
+        value: users.filter((u) => u.userType === "student").length,
+        detail: "Visible in tenant",
+      },
+      {
+        label: "Teachers",
+        value: users.filter((u) => u.userType === "teacher").length,
+        detail: "Team size",
+      },
+    ],
+    admin: [
+      { label: "Courses", value: courses.length, detail: "Tenant courses" },
+      { label: "Users", value: users.length, detail: "Tenant users" },
+      {
+        label: "Teachers",
+        value: users.filter((u) => u.userType === "teacher").length,
+        detail: "Assignable teachers",
+      },
+    ],
+    superadmin: [
+      {
+        label: "Tenants",
+        value: platformStats?.data?.totalTenants ?? 0,
+        detail: "Total organizations",
+      },
+      { label: "Users", value: platformStats?.data?.totalUsers ?? 0, detail: "Platform users" },
+      {
+        label: "Courses",
+        value: platformStats?.data?.totalCourses ?? 0,
+        detail: "Published courses",
+      },
+    ],
+  };
+
+  const stats = statsByRole[userRole] || [];
 
   return (
     <div className="p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 min-h-screen">
-      {/* Header */}
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
           Welcome back, {user?.firstName || "User"}!
@@ -112,41 +193,18 @@ const DashboardHome = () => {
         </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-          <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">Active</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">12</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            {userRole === "student" ? "Enrolled Courses" : "Active Items"}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-          <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">Pending</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">3</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            {userRole === "student" ? "Assignments" : "Tasks"}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-          <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">Completed</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">42</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            {userRole === "student" ? "Modules" : "Completed"}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-          <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">Rating</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">4.7</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">⭐ Excellent</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        {stats.map((stat) => (
+          <div key={stat.label} className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
+            <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">{stat.label}</p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{stat.detail}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Dashboard Modules */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-          Dashboard Modules
-        </h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Dashboard Modules</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cards.map((card, idx) => {
             const Icon = card.icon;
@@ -160,12 +218,8 @@ const DashboardHome = () => {
                   <Icon className="w-12 h-12 text-white absolute bottom-2 right-2 opacity-50" />
                 </div>
                 <div className="p-6">
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-2 text-lg">
-                    {card.title}
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
-                    {card.description}
-                  </p>
+                  <h3 className="font-bold text-slate-900 dark:text-white mb-2 text-lg">{card.title}</h3>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">{card.description}</p>
                   <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium group-hover:gap-3 transition-all">
                     <span>Access</span>
                     <ArrowRight className="w-4 h-4" />
@@ -177,36 +231,11 @@ const DashboardHome = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-          Recent Activity
-        </h2>
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700 last:border-0 last:pb-0"
-              >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 dark:text-white truncate">
-                    {userRole === "student"
-                      ? `Completed Assignment ${i}`
-                      : `New Feedback Received`}
-                  </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {i} hour{i > 1 ? "s" : ""} ago
-                  </p>
-                </div>
-                <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium rounded-full">
-                  {userRole === "student" ? "Done" : "New"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="mt-12 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Activity</h2>
+        <p className="text-slate-600 dark:text-slate-400">
+          Live activity appears here as users interact with courses, enrollments, and events.
+        </p>
       </div>
     </div>
   );

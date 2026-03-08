@@ -1,33 +1,31 @@
 const express = require("express");
 const router = express.Router();
 const eventController = require("../controllers/eventController");
-const { authenticate } = require("../middlewares/authMiddleware");
-
-// All event routes require authentication
-router.use(authenticate);
+const { authenticate, authorize, isTenantOwner } = require("../middlewares/authMiddleware");
+const tenantScope = require("../middlewares/tenantScope.middleware");
 
 // Create event (admin only)
-router.post("/create", eventController.createEvent);
+router.post("/create", authenticate, isTenantOwner, authorize("admin"), tenantScope, eventController.createEvent);
 
 // Get all events
-router.get("/all", eventController.getAllEvents);
-
-// Get event by ID
-router.get("/:id", eventController.getEventById);
+router.get("/all", authenticate, tenantScope, eventController.getAllEvents);
 
 // Get upcoming events
-router.get("/upcoming", eventController.getUpcomingEvents);
+router.get("/upcoming", authenticate, tenantScope, eventController.getUpcomingEvents);
+
+// Get event by ID
+router.get("/:id", authenticate, tenantScope, eventController.getEventById);
 
 // Register for event
-router.post("/register/:id", eventController.registerForEvent);
+router.post("/:id/register", authenticate, tenantScope, eventController.registerForEvent);
 
 // Unregister from event
-router.post("/unregister/:id", eventController.unregisterFromEvent);
+router.post("/:id/unregister", authenticate, tenantScope, eventController.unregisterFromEvent);
 
 // Update event (admin only)
-router.patch("/update/:id", eventController.updateEvent);
+router.patch("/:id", authenticate, isTenantOwner, authorize("admin"), tenantScope, eventController.updateEvent);
 
 // Delete event (admin only)
-router.delete("/delete/:id", eventController.deleteEvent);
+router.delete("/:id", authenticate, isTenantOwner, authorize("admin"), tenantScope, eventController.deleteEvent);
 
 module.exports = router;
