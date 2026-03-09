@@ -1,17 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-// Helper to safely parse JSON from localStorage
+// Helper to safely parse JSON from sessionStorage
 const getStoredUser = () => {
   try {
-    const stored = localStorage.getItem("authUser");
+    const stored = sessionStorage.getItem("authUser");
     return stored ? JSON.parse(stored) : null;
   } catch {
-    localStorage.removeItem("authUser");
+    sessionStorage.removeItem("authUser");
     return null;
   }
 };
 
-// Get initial state from localStorage - ONLY uses authUser
+// Get initial state from sessionStorage - ONLY uses authUser
 const getInitialState = () => {
   const storedUser = getStoredUser();
 
@@ -27,9 +27,9 @@ const getInitialState = () => {
 // Helper to persist auth state
 const persistAuth = (user, accessToken, refreshToken) => {
   if (user) {
-    localStorage.setItem("authUser", JSON.stringify({ user, accessToken, refreshToken }));
+    sessionStorage.setItem("authUser", JSON.stringify({ user, accessToken, refreshToken }));
   } else {
-    localStorage.removeItem("authUser");
+    sessionStorage.removeItem("authUser");
   }
 };
 
@@ -67,7 +67,7 @@ const authSlice = createSlice({
       state.refreshToken = null;
       state.isAuthenticated = false;
       
-      localStorage.removeItem("authUser");
+      sessionStorage.removeItem("authUser");
     },
 
     setLoading: (state, action) => {

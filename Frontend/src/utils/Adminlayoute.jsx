@@ -17,6 +17,7 @@ import {
   BookOpenText,
   LayoutDashboard,
   Compass,
+  Clock,
 } from "lucide-react";
 import AvatarDropdown from "../components/Avatar";
 import DarkModeToggle from "../components/DarkModeToggle";
@@ -126,6 +127,7 @@ const AdminLayout = ({
       ];
     }
 
+    if (userRole === "STUDENT") {
       return [
         {
           id: "dashboard",
@@ -137,17 +139,52 @@ const AdminLayout = ({
         {
           id: "Explore Courses",
           icon: Compass,
-        label: "Explore Courses",
-        link: "/Explorecourses",
-        breadcrumb: "Explore Courses",
-      },
-      {
-        id: "courses",
-        icon: BookOpenText,
-        label: "My Learning",
-        link: "/Mylearning",
-        breadcrumb: "My Learning",
-      },
+          label: "Explore Courses",
+          link: "/Explorecourses",
+          breadcrumb: "Explore Courses",
+        },
+        {
+          id: "courses",
+          icon: BookOpenText,
+          label: "My Learning",
+          link: "/Mylearning",
+          breadcrumb: "My Learning",
+        },
+        {
+          id: "lectures",
+          icon: Book,
+          label: "Today's Lectures",
+          link: "/student/conducted-lectures",
+          breadcrumb: "Today's Lectures",
+        },
+        {
+          id: "upcoming-lectures",
+          icon: Clock,
+          label: "Upcoming Lectures",
+          link: "/student/upcoming-lectures",
+          breadcrumb: "Upcoming Lectures",
+        },
+        {
+          id: "exams",
+          icon: ClipboardList,
+          label: "Exams",
+          link: "/student/upcoming-exams",
+          breadcrumb: "Upcoming Exams",
+        },
+        {
+          id: "exam-results",
+          icon: ClipboardList,
+          label: "Exam Results",
+          link: "/student/exam-results",
+          breadcrumb: "Exam Results",
+        },
+        {
+          id: "timetable",
+          icon: Calendar,
+          label: "Timetable",
+          link: "/student/timetable",
+          breadcrumb: "My Timetable",
+        },
         {
           id: "chat",
           icon: MessageCircle,
@@ -185,26 +222,22 @@ const AdminLayout = ({
       },
       // {
       //   id: "schedule",
-      //   icon: Calendar,
-      //   label: "Schedule",
-      //   link: "/schedule",
-      //   breadcrumb: "My Schedule",
-      // },
-      {
-        id: "resources",
-        icon: Book,
-        label: "Resources",
-        link: "/resources",
-        breadcrumb: "Learning Resources",
-      },
+        {
+          id: "resources",
+          icon: Book,
+          label: "Resources",
+          link: "/resources",
+          breadcrumb: "Learning Resources",
+        },
         {
           id: "help",
           icon: HelpCircle,
           label: "Help Center",
           link: "/help",
-        breadcrumb: "Help & Support",
-      },
-    ];
+          breadcrumb: "Help & Support",
+        },
+      ];
+    }
   }, [userRole, customNavItems]);
 
   const toggleMobileSidebar = useCallback(() => {

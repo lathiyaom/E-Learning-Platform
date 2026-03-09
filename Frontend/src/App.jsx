@@ -41,14 +41,21 @@ import TeacherDashboard from "./pages/Dashboard/Teacher/TeacherDashboard.jsx";
 import MyCourses from "./pages/Dashboard/Teacher/MyCourses.jsx";
 import TeacherAttendance from "./pages/Dashboard/Teacher/Attendance.jsx";
 import TeacherExams from "./pages/Dashboard/Teacher/Exams.jsx";
+import ExamCreation from "./pages/Dashboard/Teacher/ExamCreation.jsx";
 import TeacherStudents from "./pages/Dashboard/Teacher/Students.jsx";
 import TeacherLectureManagement from "./pages/Dashboard/Teacher/TeacherLectureManagement.jsx";
 import TeacherTimetableView from "./pages/Dashboard/Teacher/TeacherTimetableView.jsx";
 import TeacherAnalyticsDashboard from "./pages/Dashboard/Teacher/TeacherAnalyticsDashboard.jsx";
+import CourseForm from "./pages/Dashboard/Teacher/CourseForm.jsx";
 import Enrollments from "./pages/Dashboard/student/Enrollments.jsx";
-import ExamResults from "./pages/Dashboard/student/ExamResults.jsx";
 import StudentAttendance from "./pages/Dashboard/student/StudentAttendance.jsx";
+import ExamResults from "./pages/Dashboard/student/ExamResults.jsx";
+import StudentConductedLectures from "./pages/Dashboard/student/StudentConductedLectures.jsx";
+import StudentUpcomingLectures from "./pages/Dashboard/student/StudentUpcomingLectures.jsx";
+import StudentUpcomingExams from "./pages/Dashboard/student/StudentUpcomingExams.jsx";
+import StudentExamTaking from "./pages/Dashboard/student/StudentExamTaking.jsx";
 import RateCourse from "./pages/Dashboard/student/RateCourse.jsx";
+import StudentTimetableView from "./pages/Dashboard/student/StudentTimetableView.jsx";
 import StudentFeedbackSystem from "./pages/Dashboard/student/StudentFeedbackSystem.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -140,9 +147,11 @@ function App() {
             <Route path="/teacher/courses" element={<ProtectedRoute requiredRole="teacher"><MyCourses /></ProtectedRoute>} />
             <Route path="/teacher/attendance" element={<ProtectedRoute requiredRole="teacher"><TeacherAttendance /></ProtectedRoute>} />
             <Route path="/teacher/exams" element={<ProtectedRoute requiredRole="teacher"><TeacherExams /></ProtectedRoute>} />
+            <Route path="/teacher/exam-create" element={<ProtectedRoute requiredRole="teacher"><ExamCreation /></ProtectedRoute>} />
             <Route path="/teacher/students" element={<ProtectedRoute requiredRole="teacher"><TeacherStudents /></ProtectedRoute>} />
             <Route path="/teacher/lectures" element={<ProtectedRoute requiredRole="teacher"><TeacherLectureManagement /></ProtectedRoute>} />
             <Route path="/teacher/timetable" element={<ProtectedRoute requiredRole="teacher"><TeacherTimetableView /></ProtectedRoute>} />
+            <Route path="/teacher/course-form" element={<ProtectedRoute requiredRole="teacher"><CourseForm /></ProtectedRoute>} />
             <Route path="/teacher/analytics" element={<ProtectedRoute requiredRole="teacher"><TeacherAnalyticsDashboard /></ProtectedRoute>} />
             <Route path="/teacher/add-course" element={<ProtectedRoute requiredRole="teacher"><AddCourse /></ProtectedRoute>} />
             
@@ -154,9 +163,14 @@ function App() {
             <Route path="/profile" element={<ProtectedRoute requiredRole="student"><Userprofile /></ProtectedRoute>} />
             <Route path="/student/enrollments" element={<ProtectedRoute requiredRole="student"><Enrollments /></ProtectedRoute>} />
             <Route path="/student/attendance" element={<ProtectedRoute requiredRole="student"><StudentAttendance /></ProtectedRoute>} />
+            <Route path="/student/conducted-lectures" element={<ProtectedRoute requiredRole="student"><StudentConductedLectures /></ProtectedRoute>} />
+            <Route path="/student/upcoming-lectures" element={<ProtectedRoute requiredRole="student"><StudentUpcomingLectures /></ProtectedRoute>} />
+            <Route path="/student/upcoming-exams" element={<ProtectedRoute requiredRole="student"><StudentUpcomingExams /></ProtectedRoute>} />
+            <Route path="/student/exam-taking/:examId" element={<ProtectedRoute requiredRole="student"><StudentExamTaking /></ProtectedRoute>} />
             <Route path="/student/exam-results" element={<ProtectedRoute requiredRole="student"><ExamResults /></ProtectedRoute>} />
             <Route path="/student/rate-course" element={<ProtectedRoute requiredRole="student"><RateCourse /></ProtectedRoute>} />
             <Route path="/student/feedback" element={<ProtectedRoute requiredRole="student"><StudentFeedbackSystem /></ProtectedRoute>} />
+            <Route path="/student/timetable" element={<ProtectedRoute requiredRole="student"><StudentTimetableView /></ProtectedRoute>} />
             <Route path="/Chat" element={<ProtectedRoute><ChatInterface /></ProtectedRoute>} />
             <Route path="/teacher/chat" element={<ProtectedRoute requiredRole="teacher"><ChatInterface /></ProtectedRoute>} />
             

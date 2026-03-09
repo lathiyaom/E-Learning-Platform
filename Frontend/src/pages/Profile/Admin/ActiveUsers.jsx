@@ -46,7 +46,7 @@ function ActiveUsers() {
     );
   }
 
-  if (!Userdata || Userdata.length === 0) {
+  if (!Userdata?.users || Userdata.users.length === 0) {
     return (
       <AdminLayout showSearch={false} breadcrumbItems={breadcrumbItems}>
         <div className="flex items-center justify-center h-96">
@@ -83,9 +83,9 @@ function ActiveUsers() {
 
             {/* ***********       User List Section *********** */}
             <div className="  h-auto w-full  rounded-lg p-4 flex flex-col gap-2">
-              {Userdata.users.map((user) => (
+              {(Userdata?.users || []).map((user) => (
                 <Userlist
-                  key={user.id}
+                  key={user.id || user._id}
                   name={`${user.firstName} ${user.lastName}`}
                   email={user.email}
                   role={user.userType}

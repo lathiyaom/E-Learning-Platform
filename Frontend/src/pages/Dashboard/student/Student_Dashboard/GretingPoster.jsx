@@ -1,7 +1,9 @@
 import React, { useRef } from "react";
 import HellowUserImg from "../../../../assets/imgs/HellowUser.png";
 import { getAuth } from "../../../../utils/users";
+import { useNavigate } from "react-router-dom";
 function GretingPoster() {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const imageRef = useRef(null);
@@ -33,7 +35,10 @@ function GretingPoster() {
           </span>{" "}
           of your weekly goal. Keep pushing to reach your target!
         </p>
-        <button className="bg-studprimary dark:bg-premium-gold hover:brightness-110 text-white dark:text-deep-charcoal font-bold py-3.5 px-10 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20 duration-300">
+        <button
+          onClick={() => navigate("/Mylearning")}
+          className="bg-studprimary dark:bg-premium-gold hover:brightness-110 text-white dark:text-deep-charcoal font-bold py-3.5 px-10 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20 duration-300"
+        >
           Resume Learning
         </button>
       </div>

@@ -55,13 +55,27 @@ export const ProfileProvider = ({ children }) => {
 
   const handleSave = async () => {
     try {
-      await updateUser({
+      const userId = userData?._id || userData?.id;
+      if (!userId) {
+        ErrorToster("Unable to update profile. User ID not found.", 3000);
+        return;
+      }
+
+      const normalizedPhone = String(formData.phoneNo || "").trim();
+      const updatePayload = {
         email: userData?.email,
-        id: userData?.id,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNo: formData.phoneNo,
-        about: formData.about,
+        id: userId,
+        firstName: String(formData.firstName || "").trim(),
+        lastName: String(formData.lastName || "").trim(),
+        about: String(formData.about || "").trim(),
+      };
+
+      if (normalizedPhone) {
+        updatePayload.phoneNo = normalizedPhone;
+      }
+
+      await updateUser({
+        ...updatePayload,
       }).unwrap();
 
       SuccessToster("Profile updated successfully!", 3000);

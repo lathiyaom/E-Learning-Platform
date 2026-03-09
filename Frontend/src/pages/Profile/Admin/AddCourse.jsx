@@ -28,6 +28,9 @@ function AddCourse() {
     reviewCount: 0,
     videoUrl: "",
     tags: [],
+    price: 0,
+    isPaid: true,
+    currency: "USD",
   });
 
   const [newTag, setNewTag] = useState("");
@@ -41,6 +44,14 @@ function AddCourse() {
     setCourseData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setCourseData((prev) => ({
+      ...prev,
+      [name]: checked,
     }));
   };
 
@@ -343,6 +354,62 @@ function AddCourse() {
                       >
                         <Plus size={16} />
                       </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <label className="flex items-center text-sm font-semibold text-[#343131] mb-3">
+                    <Hash size={18} className="mr-2 text-[#D8A25E]" />
+                    Pricing
+                  </label>
+
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="isPaid"
+                        checked={courseData.isPaid}
+                        onChange={handleCheckboxChange}
+                        className="mr-2"
+                      />
+                      Paid Course
+                    </label>
+                  </div>
+
+                  {courseData.isPaid && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#343131]">
+                          Price
+                        </label>
+                        <input
+                          type="number"
+                          name="price"
+                          value={courseData.price}
+                          onChange={handleInputChange}
+                          min="0"
+                          step="0.01"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300 text-[#343131]"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#343131]">
+                          Currency
+                        </label>
+                        <select
+                          name="currency"
+                          value={courseData.currency}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300 text-[#343131]"
+                        >
+                          <option value="USD">USD</option>
+                          <option value="INR">INR</option>
+                          <option value="EUR">EUR</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>

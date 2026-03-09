@@ -41,9 +41,9 @@ function Login() {
         return;
       }
 
-      // Check localStorage for persisted auth
+      // Check sessionStorage for persisted auth
       try {
-        const storedAuth = localStorage.getItem("authUser");
+        const storedAuth = sessionStorage.getItem("authUser");
         if (storedAuth) {
           const { user: storedUser, accessToken } = JSON.parse(storedAuth);
           if (storedUser && accessToken) {
@@ -62,14 +62,14 @@ function Login() {
               student: "/student/dashboard",
             };
             const redirectPath = dashboardMap[userType] || "/";
-            console.log("✅ Session restored from localStorage, redirecting to:", redirectPath);
+            console.log("✅ Session restored from sessionStorage, redirecting to:", redirectPath);
             navigate(redirectPath, { replace: true });
           }
         }
       } catch (error) {
         console.error("Error checking existing session:", error);
-        // Clear invalid localStorage data
-        localStorage.removeItem("authUser");
+        // Clear invalid sessionStorage data
+        sessionStorage.removeItem("authUser");
       }
     };
 

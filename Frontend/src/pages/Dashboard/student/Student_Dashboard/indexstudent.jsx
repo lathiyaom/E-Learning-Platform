@@ -3,7 +3,8 @@ import GretingPoster from "./GretingPoster";
 import MyProgress from "./myProgress";
 import RecommendedSection from "./recommended";
 import ChartSection from "./chartsection";
-import Instructures from "./instructures"; 
+import Instructures from "./instructures";
+import QuickAccess from "./QuickAccess"; 
 import AdminLayout from './../../../../utils/Adminlayoute';
 import { getBreadcrumbs } from "../../../../utils/breadcrumbs";
 
@@ -16,6 +17,7 @@ function IndexStud() {
       breadcrumbItems={breadcrumbItems}
     >
       <GretingPoster />
+      <QuickAccess />
       <MyProgress />
       <RecommendedSection/>
       <ChartSection/>

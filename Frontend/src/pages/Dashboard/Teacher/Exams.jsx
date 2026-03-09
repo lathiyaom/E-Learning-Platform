@@ -45,9 +45,8 @@ const Exams = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Manage Exams</h1>
         <button
-          onClick={() => navigate("/teacher/exams")}
+          onClick={() => navigate("/teacher/exam-create")}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          disabled={!selectedCourse}
         >
           Create New Exam
         </button>
@@ -107,13 +106,13 @@ const Exams = () => {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => navigate(`/teacher/exams`)}
+                        onClick={() => navigate(`/teacher/exam-create?edit=${exam._id || exam.id}`)}
                         className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
                       >
                         View
                       </button>
                       <button
-                        onClick={() => navigate(`/teacher/exams`)}
+                        onClick={() => navigate(`/teacher/exam-create?edit=${exam._id || exam.id}`)}
                         className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-300"
                       >
                         Edit

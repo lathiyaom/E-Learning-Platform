@@ -1,10 +1,21 @@
 import React from "react";
-import { Camera, MapPin, Mail, Globe, Link } from "lucide-react";
+import { Camera, MapPin, Mail, Globe } from "lucide-react";
 import profileImg from "../../../../assets/imgs/profile-placeholder.jpg";
 import { useProfile } from "./useProfile";
 
 function Display() {
-  const { user, handleSave, isUpdating } = useProfile();
+  const { user, formData, handleSave, isUpdating } = useProfile();
+
+  const handlePreview = () => {
+    const previewDetails = [
+      `Name: ${formData.firstName || ""} ${formData.lastName || ""}`.trim(),
+      `Email: ${formData.email || user?.email || "Not provided"}`,
+      `Phone: ${formData.phoneNo || "Not provided"}`,
+      `Location: ${formData.campus || "Not provided"}`,
+      `About: ${formData.about || "Not provided"}`,
+    ];
+    window.alert(previewDetails.join("\n"));
+  };
 
   return (
     <section className="relative bg-white dark:bg-navy-charcoal rounded-2xl md:rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-2xl">
@@ -82,7 +93,10 @@ function Display() {
           >
             {isUpdating ? "Saving..." : "Save Profile"}
           </button>
-          <button className="px-4 sm:px-6 py-2.5 sm:py-3 md:py-4 bg-white dark:bg-white/5 text-slate-600 dark:text-white font-bold rounded-xl md:rounded-2xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all text-xs">
+          <button
+            onClick={handlePreview}
+            className="px-4 sm:px-6 py-2.5 sm:py-3 md:py-4 bg-white dark:bg-white/5 text-slate-600 dark:text-white font-bold rounded-xl md:rounded-2xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all text-xs"
+          >
             Preview
           </button>
         </div>

@@ -42,7 +42,7 @@ const MyCourses = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">My Courses</h1>
         <button 
-          onClick={() => navigate("/teacher/add-course")}
+          onClick={() => navigate("/teacher/course-form")}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Create New Course
@@ -53,7 +53,7 @@ const MyCourses = () => {
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg mb-4">You haven't created any courses yet.</p>
           <button 
-            onClick={() => navigate("/teacher/add-course")}
+            onClick={() => navigate("/teacher/course-form")}
             className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
           >
             Create Your First Course
@@ -98,7 +98,7 @@ const MyCourses = () => {
                   View Details
                 </button>
                 <button 
-                  onClick={() => navigate(`/teacher/add-course?edit=${course._id || course.id}`)}
+                  onClick={() => navigate(`/teacher/course-form?edit=${course._id || course.id}`)}
                   className="w-full bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-300"
                 >
                   Edit Course

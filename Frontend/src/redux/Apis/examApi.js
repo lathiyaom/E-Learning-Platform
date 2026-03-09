@@ -63,6 +63,10 @@ export const examApi = createApi({
       }),
       invalidatesTags: ["Submission"],
     }),
+    getStudentExams: builder.query({
+      query: () => "/Exam/student/upcoming",
+      providesTags: ["Exam"],
+    }),
     getStudentSubmissions: builder.query({
       query: ({ studentId, courseId }) => ({
         url: `/Exam/submissions/${studentId}`,
@@ -82,4 +86,5 @@ export const {
   useSubmitExamMutation,
   useGradeSubmissionMutation,
   useGetStudentSubmissionsQuery,
+  useGetStudentExamsQuery,
 } = examApi;
