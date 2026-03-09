@@ -7,6 +7,7 @@ import {
 } from "../../../../redux/Apis/enrollmentApi";
 import { ErrorToster, SuccessToster } from "../../../../components/toster";
 import { getApiErrorMessage } from "../../../../utils/apiError";
+import { getBreadcrumbs } from "../../../../utils/breadcrumbs";
 
 const ExploreCourses = () => {
   const [search, setSearch] = useState("");
@@ -49,7 +50,7 @@ const ExploreCourses = () => {
   };
 
   return (
-    <AdminLayout showSearch={false}>
+    <AdminLayout showSearch={false} breadcrumbItems={getBreadcrumbs("EXPLORE_COURSES")}>
       <div className="space-y-6">
         <div className="rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-700 text-white p-6">
           <h1 className="text-2xl font-bold">Explore Courses</h1>

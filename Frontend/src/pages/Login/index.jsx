@@ -45,13 +45,14 @@ function Login() {
       try {
         const storedAuth = sessionStorage.getItem("authUser");
         if (storedAuth) {
-          const { user: storedUser, accessToken } = JSON.parse(storedAuth);
+          const { user: storedUser, accessToken, refreshToken, sessionId } = JSON.parse(storedAuth);
           if (storedUser && accessToken) {
             // Restore Redux state
             dispatch(setCredentials({ 
               user: storedUser, 
               accessToken,
-              refreshToken: JSON.parse(storedAuth).refreshToken 
+              refreshToken,
+              sessionId,
             }));
             
             const userType = storedUser.userType?.toLowerCase();
@@ -107,15 +108,35 @@ function Login() {
       }).unwrap();
 
       if (response.success) {
+        const authData = response.data || response;
+        const authUser = authData.user;
+        const accessToken = authData.accessToken || authData.token;
+        const refreshToken = authData.refreshToken;
+        const sessionId = authData.sessionId;
+
+        if (!authUser || !accessToken) {
+          throw new Error("Login response missing auth payload");
+        }
+
+        // ✅ Store in sessionStorage immediately for instant persistence
+        sessionStorage.setItem("authUser", JSON.stringify({
+          user: authUser,
+          accessToken,
+          refreshToken,
+          sessionId,
+        }));
+
+        // ✅ Update Redux state
         dispatch(
           setCredentials({
-            user: response.data.user,
-            accessToken: response.data.accessToken,
-            refreshToken: response.data.refreshToken,
+            user: authUser,
+            accessToken,
+            refreshToken,
+            sessionId,
           }),
         );
 
-        SuccessToster("Logged In Successfully", 3000);
+        SuccessToster("Logged In Successfully", 800);
 
         setData({
           email: "",
@@ -124,7 +145,7 @@ function Login() {
         });
 
         // Role-based routing using userType (case-insensitive)
-        const userType = response.data.user.userType?.toLowerCase();
+        const userType = authUser.userType?.toLowerCase();
         let redirectPath = "/";
 
         switch (userType) {
@@ -144,9 +165,8 @@ function Login() {
             redirectPath = "/";
         }
 
-        setTimeout(() => {
-          navigate(redirectPath);
-        }, 2000);
+        // ✅ Minimal delay (50ms) to ensure state is committed before navigation
+        navigate(redirectPath, { replace: true });
       }
     } catch (error) {
       console.error("Login error:", error);

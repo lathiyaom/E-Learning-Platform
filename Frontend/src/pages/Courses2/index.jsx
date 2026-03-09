@@ -4,7 +4,7 @@ import CoursesHero from "./components/CoursesHero";
 import CoursesFilter from "./components/CoursesFilter";
 import CoursesGrid from "./components/CoursesGrid";
 import CoursesPagination from "./components/CoursesPagination";
-import { useGetAllCoursesQuery } from "../../redux/Apis/courseApi";
+import { useGetMarketplaceCoursesQuery } from "../../redux/Apis/courseApi";
 
 const COURSES_PER_PAGE = 8;
 
@@ -17,7 +17,7 @@ function Courses() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch courses from API
-  const { data: coursesData } = useGetAllCoursesQuery();
+  const { data: coursesData } = useGetMarketplaceCoursesQuery("popular");
   const courses = coursesData?.data || [];
 
   // Reset to page 1 whenever filters change

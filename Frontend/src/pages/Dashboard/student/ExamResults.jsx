@@ -11,11 +11,11 @@ const ExamResults = () => {
 
   const { data: enrollmentsData, isLoading: enrollmentsLoading } = useGetMyEnrollmentsQuery(
     undefined,
-    { skip: !user?.id }
+    { skip: !(user?._id || user?.id) }
   );
   const { data: submissionsData, isLoading: submissionsLoading } = useGetStudentSubmissionsQuery(
-    { studentId: user?.id, courseId: selectedCourse || undefined },
-    { skip: !user?.id }
+    { studentId: user?._id || user?.id, courseId: selectedCourse || undefined },
+    { skip: !(user?._id || user?.id) }
   );
 
   const enrollments = enrollmentsData?.data || [];
@@ -27,7 +27,7 @@ const ExamResults = () => {
 
   const calculateAverageScore = () => {
     if (filteredSubmissions.length === 0) return 0;
-    const total = filteredSubmissions.reduce((sum, s) => sum + (s.score || 0), 0);
+    const total = filteredSubmissions.reduce((sum, s) => sum + (s.totalScore || s.score || 0), 0);
     return (total / filteredSubmissions.length).toFixed(1);
   };
 
@@ -120,23 +120,23 @@ const ExamResults = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-3 py-1 text-sm font-semibold rounded ${getGradeColor(
-                          submission.score || 0
+                          submission.totalScore || submission.score || 0
                         )}`}
                       >
-                        {submission.score !== null && submission.score !== undefined
-                          ? `${submission.score}%`
+                        {submission.totalScore !== null && submission.totalScore !== undefined
+                          ? `${submission.totalScore}%`
                           : "N/A"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 text-xs rounded ${
-                          submission.isGraded
+                          submission.status === "graded"
                             ? "bg-green-100 text-green-800"
                             : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
-                        {submission.isGraded ? "Graded" : "Pending"}
+                        {submission.status === "graded" ? "Graded" : "Pending"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">

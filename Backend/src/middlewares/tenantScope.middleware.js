@@ -41,10 +41,15 @@ const tenantScope = async (req, res, next) => {
     }
 
     if (!req.tenantId) {
-      return res.status(403).json({
-        message: "Tenant context not available. User not assigned to any organization.",
-        success: false,
-      });
+      // For teachers without organization, allow access but set tenantId to null
+      if (req.user.userType === "teacher") {
+        req.tenantId = null;
+      } else {
+        return res.status(403).json({
+          message: "Tenant context not available. User not assigned to any organization.",
+          success: false,
+        });
+      }
     }
 
     // Log tenant context for debugging

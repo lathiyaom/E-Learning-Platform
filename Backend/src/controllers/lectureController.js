@@ -9,12 +9,12 @@ const lectureController = {
   createLecture: async (req, res) => {
     try {
       const { courseId, title, description, lectureDate, startTime, endTime, room, type, videoUrl, conductedBy } = req.body;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
       const resolvedConductedBy = conductedBy || (userType === "teacher" ? req.user.id : null);
 
-      // Only admin and teacher can create lectures
-      if (!["admin", "teacher"].includes(userType)) {
+      // Only admin, teacher, and superadmin can create lectures
+      if (!["admin", "teacher", "superadmin"].includes(userType)) {
         return res.status(403).json({
           success: false,
           message: "Unauthorized to create lecture",
@@ -64,7 +64,7 @@ const lectureController = {
   getLectureById: async (req, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
 
       const lecture = await lectureService.getLectureById(tenantId, id);
 
@@ -89,7 +89,7 @@ const lectureController = {
     try {
       const { courseId } = req.params;
       const { status, startDate, endDate, page = 1, limit = 10 } = req.query;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
 
       const filters = {};
       if (status) filters.status = status;
@@ -129,7 +129,7 @@ const lectureController = {
    */
   getTodayLectures: async (req, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userId = req.user.id;
       const userType = req.user.userType;
 
@@ -155,7 +155,7 @@ const lectureController = {
   getUpcomingLectures: async (req, res) => {
     try {
       const { days = 7, page = 1, limit = 10 } = req.query;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userId = req.user.id;
       const userType = req.user.userType;
 
@@ -191,7 +191,7 @@ const lectureController = {
   updateLecture: async (req, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
 
       // Verify lecture exists and user has permission
@@ -244,7 +244,7 @@ const lectureController = {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
 
       if (!["scheduled", "ongoing", "completed", "cancelled"].includes(status)) {
@@ -294,7 +294,7 @@ const lectureController = {
   deleteLecture: async (req, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
 
       const lecture = await Lecture.findOne({ _id: id, tenantId });
@@ -339,7 +339,7 @@ const lectureController = {
     try {
       const { id } = req.params;
       const { name, url, type } = req.body;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
 
       if (!name || !url) {
         return res.status(400).json({
@@ -389,7 +389,7 @@ const lectureController = {
   removeLectureMaterial: async (req, res) => {
     try {
       const { id, materialIndex } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
 
       const lecture = await Lecture.findOne({ _id: id, tenantId });
       if (!lecture) {

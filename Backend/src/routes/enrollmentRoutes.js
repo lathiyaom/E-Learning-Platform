@@ -8,6 +8,7 @@ const enrollmentController = require("../controllers/enrollmentController");
 router.post(
   "/enroll",
   authenticate,
+  tenantScope,
   authorize("student", "admin"),
   enrollmentController.enrollStudent
 );

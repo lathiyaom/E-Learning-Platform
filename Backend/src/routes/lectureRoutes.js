@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const lectureController = require("../controllers/lectureController");
 const { authenticate } = require("../middlewares/authMiddleware");
+const tenantScope = require("../middlewares/tenantScope.middleware");
 
 // All lecture routes require authentication
 router.use(authenticate);
+router.use(tenantScope);
 
 // Create lecture (POST)
 router.post("/create", lectureController.createLecture);

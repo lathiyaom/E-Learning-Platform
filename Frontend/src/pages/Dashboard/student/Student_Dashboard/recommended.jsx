@@ -1,10 +1,12 @@
 import React, { useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { gsap } from "gsap";
 import RecommendedCourseCard from "./RecommendedCourseCard";
 import { useGetMarketplaceCoursesQuery } from "../../../../redux/Apis/courseApi";
 
 function RecommendedSection() {
+  const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
   const cardRefs = useRef([]);
   const { data: coursesData, isLoading } = useGetMarketplaceCoursesQuery("popular");
@@ -112,9 +114,7 @@ function RecommendedSection() {
               showReviews={false}
               showButton={false}
               buttonText="View Details"
-              onButtonClick={() =>
-                console.log("View Details clicked for course:", course._id || course.id)
-              }
+              onButtonClick={() => navigate(`/card/${course._id || course.id}`)}
             />
           </div>
         ))}

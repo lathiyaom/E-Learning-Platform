@@ -6,21 +6,27 @@ const lectureService = {
    */
   createLecture: async (tenantId, lectureData) => {
     try {
-      // Verify course exists and belongs to tenant
-      const course = await Course.findOne({ _id: lectureData.courseId, organization_id: tenantId });
+      // Verify course exists (skip tenant check if tenantId is null for unassigned teachers)
+      const courseQuery = tenantId
+        ? { _id: lectureData.courseId, $or: [{ organization_id: tenantId }, { tenantId }] }
+        : { _id: lectureData.courseId };
+      const course = await Course.findOne(courseQuery);
       if (!course) {
         throw new Error("Course not found or access denied");
       }
 
-      // Verify teacher exists
-      const teacher = await User.findOne({ _id: lectureData.conductedBy, tenant_id: tenantId, userType: "teacher" });
+      // Verify teacher exists (skip tenant check if tenantId is null)
+      const teacherQuery = tenantId
+        ? { _id: lectureData.conductedBy, userType: "teacher", $or: [{ tenant_id: tenantId }, { organizations: tenantId }] }
+        : { _id: lectureData.conductedBy, userType: "teacher" };
+      const teacher = await User.findOne(teacherQuery);
       if (!teacher) {
         throw new Error("Teacher not found");
       }
 
       const lecture = await Lecture.create({
         ...lectureData,
-        tenantId,
+        tenantId: tenantId || course.tenantId || course.organization_id, // Use course's tenant if null
       });
 
       return await lecture.populate([
@@ -132,7 +138,12 @@ const lectureService = {
       } else if (userType === "student") {
         // Get courses where student is enrolled
         const { Enrollment } = require("../models");
-        const enrollments = await Enrollment.find({ studentId: userId });
+        const enrollments = await Enrollment.find({
+          $and: [
+            { $or: [{ studentId: userId }, { student_id: userId }] },
+            { $or: [{ tenantId }, { organization_id: tenantId }] },
+          ],
+        });
         const courseIds = enrollments.map((e) => e.courseId || e.course_id);
         query.courseId = { $in: courseIds };
       }

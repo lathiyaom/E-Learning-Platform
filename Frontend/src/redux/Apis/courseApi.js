@@ -10,7 +10,7 @@ export const courseApi = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ id }) => ({ type: "Course", id })),
+              ...result.data.map((course) => ({ type: "Course", id: course._id || course.id })),
               { type: "Course", id: "LIST" },
             ]
           : [{ type: "Course", id: "LIST" }],

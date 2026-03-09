@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const timetableController = require("../controllers/timetableController");
 const { authenticate } = require("../middlewares/authMiddleware");
+const tenantScope = require("../middlewares/tenantScope.middleware");
 
 // All timetable routes require authentication
 router.use(authenticate);
+router.use(tenantScope);
 
 // Create timetable entry
 router.post("/create", timetableController.createTimetable);

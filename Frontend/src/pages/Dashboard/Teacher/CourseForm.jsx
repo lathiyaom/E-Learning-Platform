@@ -77,7 +77,7 @@ const CourseForm = () => {
         await createCourse(coursePayload).unwrap();
         alert("Course created successfully!");
       }
-      navigate("/teacher/my-courses");
+      navigate("/teacher/courses");
     } catch (error) {
       alert("Failed to save course: " + (error.data?.message || error.message));
     }
@@ -259,7 +259,7 @@ const CourseForm = () => {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/teacher/my-courses")}
+              onClick={() => navigate("/teacher/courses")}
               className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded hover:bg-gray-300"
             >
               Cancel

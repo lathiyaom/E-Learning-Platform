@@ -105,17 +105,10 @@ const allPlatformCourses = async (req, res) => {
 
     const courses = await courseService.getPlatformCourses(sortBy);
 
-    if (!courses || courses.length === 0) {
-      return res.status(404).json({
-        message: "No Courses Found",
-        success: false,
-      });
-    }
-
     return res.status(200).json({
       message: "Platform courses retrieved successfully",
       success: true,
-      data: courses,
+      data: courses || [],
       count: courses.length,
     });
   } catch (error) {
@@ -192,7 +185,8 @@ const DeleteCourse = async (req, res) => {
 const getcourseById = async (req, res) => {
   try {
     const { id } = req.params;
-    const course = await courseService.getCourseById(id, req.tenantId);
+    const tenantId = req.tenantId || req.user?.tenantId || null;
+    const course = await courseService.getCourseById(id, tenantId);
 
     return res.status(200).json({
       message: "Course Retrieved Successfully",

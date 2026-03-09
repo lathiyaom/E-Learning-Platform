@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Plus, Edit, Trash2, Search, FileUp, Play } from "lucide-react";
 import { getLecturesByCourse, createLecture, updateLecture, deleteLecture } from "../../../redux/Apis/lectureApi";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
+import AdminLayout from "../../../utils/Adminlayoute";
 
 const TeacherLectureManagement = () => {
     const dispatch = useDispatch();
@@ -117,6 +118,7 @@ const TeacherLectureManagement = () => {
     };
 
     return (
+        <AdminLayout showSearch={false} className="p-0">
         <div className="p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-navy-charcoal dark:to-deep-charcoal min-h-screen">
             {/* Header */}
             <div className="mb-8">
@@ -523,6 +525,7 @@ const TeacherLectureManagement = () => {
                 </div>
             )}
         </div>
+        </AdminLayout>
     );
 };
 

@@ -39,12 +39,47 @@ const authenticate = async (req, res, next) => {
       role = "user";
     }
 
-    // ✅ SECURITY: Verify token matches database (prevents using revoked tokens)
-    if (!account || account.token !== token) {
+    if (!account) {
       return res.status(401).json({
         message: "Session expired or token revoked. Please login again.",
         success: false,
       });
+    }
+
+    const sessionId = decoded.sid;
+    const hasSessionToken =
+      Array.isArray(account.sessions) &&
+      sessionId &&
+      account.sessions.some((session) => session.sid === sessionId && session.accessToken === token);
+
+    // Check if session is expired
+    let sessionExpired = false;
+    if (hasSessionToken && sessionId) {
+      const activeSession = account.sessions.find((session) => session.sid === sessionId);
+      if (activeSession && activeSession.expiresAt <= new Date()) {
+        sessionExpired = true;
+        // Remove expired session
+        account.sessions = account.sessions.filter((session) => session.sid !== sessionId);
+        await account.save();
+      }
+    }
+
+    const hasLegacyToken = account.token === token;
+
+    // SECURITY: token must match an active session (or legacy token for backward compatibility)
+    if ((!hasSessionToken || sessionExpired) && !hasLegacyToken) {
+      return res.status(401).json({
+        message: "Session expired or token revoked. Please login again.",
+        success: false,
+      });
+    }
+
+    if (hasSessionToken && !sessionExpired && sessionId) {
+      const activeSession = account.sessions.find((session) => session.sid === sessionId);
+      if (activeSession) {
+        activeSession.lastUsedAt = new Date();
+        await account.save();
+      }
     }
 
     req.user = {
@@ -53,8 +88,10 @@ const authenticate = async (req, res, next) => {
       userType: decoded.userType,
       firstName: decoded.firstName,
       lastName: decoded.lastName,
+      sessionId,
       role,
       ...(role === "user" && { tenantId: account.tenant_id }),
+      ...(role === "tenant" && { tenantId: account.id }),
     };
 
     next();

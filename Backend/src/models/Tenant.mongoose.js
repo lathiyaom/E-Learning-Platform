@@ -69,6 +69,34 @@ const tenantSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    sessions: [
+      {
+        sid: {
+          type: String,
+          required: true,
+        },
+        accessToken: {
+          type: String,
+          required: true,
+        },
+        refreshToken: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        lastUsedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        expiresAt: {
+          type: Date,
+          default: () => new Date(Date.now() + 60 * 60 * 1000), // 1 hour default
+        },
+      },
+    ],
     // ✅ Teachers assigned to this organization
     teachers: [
       {
@@ -81,6 +109,8 @@ const tenantSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+tenantSchema.index({ "sessions.sid": 1 });
 
 // Hash password before saving
 tenantSchema.pre("save", async function () {

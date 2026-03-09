@@ -49,7 +49,7 @@ export default function StudentCourseDetails() {
     <div className="p-8 min-h-screen bg-slate-100">
       <h1 className="text-3xl font-bold mb-1">{course.title || "Course Details"}</h1>
       <p className="mb-6">
-        Instructor: <b>{course.instructor || "N/A"}</b>
+        Instructor: <b>{`${course.teacher_id?.firstName || ""} ${course.teacher_id?.lastName || ""}`.trim() || "N/A"}</b>
       </p>
 
       {/* STATS */}
@@ -74,7 +74,7 @@ export default function StudentCourseDetails() {
           </div>
           <div className="aspect-video">
             <iframe
-              src={`https://www.youtube.com/embed/${getYouTubeVideoId(selectedLecture.videoUrl)}`}
+              src={selectedLecture.videoUrl ? `https://www.youtube.com/embed/${getYouTubeVideoId(selectedLecture.videoUrl)}` : ""}
               title={selectedLecture.title}
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -138,7 +138,7 @@ export default function StudentCourseDetails() {
                     <div>
                       <b>{l.title}</b>
                       <p className="text-sm">
-                        {new Date(l.date).toLocaleDateString()} - {l.duration || 0} min
+                        {new Date(l.lectureDate).toLocaleDateString()} - {l.startTime} to {l.endTime}
                       </p>
                     </div>
                     <button

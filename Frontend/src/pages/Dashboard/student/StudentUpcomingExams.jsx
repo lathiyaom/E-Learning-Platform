@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Clock, Calendar, BookOpen, Loader2, AlertCircle, Play } from "lucide-react";
 import { useGetStudentExamsQuery } from "../../../redux/Apis/examApi";
+import AdminLayout from "../../../utils/Adminlayoute";
+import { getBreadcrumbs } from "../../../utils/breadcrumbs";
 
 const StudentUpcomingExams = () => {
   const navigate = useNavigate();
@@ -40,6 +42,7 @@ const StudentUpcomingExams = () => {
   }
 
   return (
+    <AdminLayout showSearch={false} breadcrumbItems={getBreadcrumbs("DASHBOARD")}>
     <div className="p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-navy-charcoal dark:to-deep-charcoal min-h-screen">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
@@ -151,6 +154,7 @@ const StudentUpcomingExams = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

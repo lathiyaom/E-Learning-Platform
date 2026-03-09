@@ -18,8 +18,17 @@ const timetableService = {
         throw new Error("Teacher not found");
       }
 
+      const recurrenceStart =
+        timetableData.recurrenceStart ? new Date(timetableData.recurrenceStart) : new Date();
+      const recurrenceEnd =
+        timetableData.recurrenceEnd
+          ? new Date(timetableData.recurrenceEnd)
+          : new Date(new Date().setMonth(new Date().getMonth() + 4));
+
       const timetable = await Timetable.create({
         ...timetableData,
+        recurrenceStart,
+        recurrenceEnd,
         tenantId,
       });
 
@@ -71,9 +80,11 @@ const timetableService = {
           .sort({ dayOfWeek: 1, startTime: 1 });
       } else if (userType === "student") {
         // Get courses where student is enrolled
-        const enrollments = await Enrollment.find({ 
-          $or: [{ studentId: userId }, { student_id: userId }],
-          $or: [{ tenantId }, { organization_id: tenantId }]
+        const enrollments = await Enrollment.find({
+          $and: [
+            { $or: [{ studentId: userId }, { student_id: userId }] },
+            { $or: [{ tenantId }, { organization_id: tenantId }] },
+          ],
         });
         
         const courseIds = enrollments.map((e) => e.courseId || e.course_id);
@@ -125,9 +136,11 @@ const timetableService = {
           .sort({ startTime: 1 });
       } else if (userType === "student") {
         // Get courses where student is enrolled
-        const enrollments = await Enrollment.find({ 
-          $or: [{ studentId: userId }, { student_id: userId }],
-          $or: [{ tenantId }, { organization_id: tenantId }]
+        const enrollments = await Enrollment.find({
+          $and: [
+            { $or: [{ studentId: userId }, { student_id: userId }] },
+            { $or: [{ tenantId }, { organization_id: tenantId }] },
+          ],
         });
         
         const courseIds = enrollments.map((e) => e.courseId || e.course_id);
@@ -167,9 +180,11 @@ const timetableService = {
           .sort({ dayOfWeek: 1, startTime: 1 });
       } else if (userType === "student") {
         // Get courses where student is enrolled
-        const enrollments = await Enrollment.find({ 
-          $or: [{ studentId: userId }, { student_id: userId }],
-          $or: [{ tenantId }, { organization_id: tenantId }]
+        const enrollments = await Enrollment.find({
+          $and: [
+            { $or: [{ studentId: userId }, { student_id: userId }] },
+            { $or: [{ tenantId }, { organization_id: tenantId }] },
+          ],
         });
         
         const courseIds = enrollments.map((e) => e.courseId || e.course_id);

@@ -86,7 +86,9 @@ const MyCourses = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Price:</span>
                   <span className="font-medium">
-                    {course.price ? `$${course.price}` : "Free"}
+                    {Number(course.price ?? course.priceUSD ?? course.pricing ?? 0) > 0
+                      ? `$${course.price ?? course.priceUSD ?? course.pricing}`
+                      : "Free"}
                   </span>
                 </div>
               </div>

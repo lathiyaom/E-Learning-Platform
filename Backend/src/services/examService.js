@@ -190,16 +190,18 @@ const getStudentExams = async (tenantId, userId) => {
   try {
     // Get courses where student is enrolled
     const { Enrollment } = require("../models");
-    const enrollments = await Enrollment.find({ 
-      $or: [{ studentId: userId }, { student_id: userId }],
-      $or: [{ tenantId }, { organization_id: tenantId }]
+    const enrollments = await Enrollment.find({
+      $and: [
+        { $or: [{ studentId: userId }, { student_id: userId }] },
+        { $or: [{ tenantId }, { organization_id: tenantId }] },
+      ],
     });
     
     const courseIds = enrollments.map((e) => e.courseId || e.course_id);
     
     // Get exams for enrolled courses
     const exams = await Exam.find({
-      tenantId,
+      $or: [{ tenantId }, { organization_id: tenantId }],
       courseId: { $in: courseIds },
       status: "published",
       startDate: { $gt: new Date() },

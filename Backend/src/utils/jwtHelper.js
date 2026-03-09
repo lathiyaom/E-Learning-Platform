@@ -16,7 +16,7 @@ if (JWT_SECRET.length < 32 || JWT_REFRESH_SECRET.length < 32) {
 }
 
 // Token expiration times
-const ACCESS_TOKEN_EXPIRY = "15m"; // 15 minutes (reduced from 3 days for security)
+const ACCESS_TOKEN_EXPIRY = "1h"; // 1 hour (increased from 15 minutes)
 const REFRESH_TOKEN_EXPIRY = "7d"; // 7 days
 
 /**
@@ -40,20 +40,23 @@ const generateRefreshToken = (payload) => {
 /**
  * Generate both tokens
  * @param {Object} user - User object from database
+ * @param {string} [sessionId] - Unique session identifier for multi-session support
  * @returns {Object} { accessToken, refreshToken }
  */
-const generateTokens = (user) => {
+const generateTokens = (user, sessionId = null) => {
+  const sid = sessionId || `${user.id}-${Date.now()}`;
   const payload = {
     id: user.id,
     email: user.email,
     userType: user.userType,
     firstName: user.firstName,
     lastName: user.lastName,
+    sid,
   };
 
   return {
     accessToken: generateAccessToken(payload),
-    refreshToken: generateRefreshToken({ id: user.id, email: user.email }),
+    refreshToken: generateRefreshToken({ id: user.id, email: user.email, sid }),
   };
 };
 

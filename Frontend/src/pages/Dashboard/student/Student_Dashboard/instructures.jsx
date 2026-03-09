@@ -10,16 +10,17 @@ function Instructures() {
     const byName = new Map();
 
     for (const course of courses) {
-      const teacherName = `${course.teacherId?.firstName || ""} ${course.teacherId?.lastName || ""}`.trim();
+      const teacherObj = course.teacher_id || course.teacherId;
+      const teacherName = `${teacherObj?.firstName || ""} ${teacherObj?.lastName || ""}`.trim();
       const name = course.instructorName || course.teacherName || teacherName || null;
 
       if (!name || byName.has(name)) continue;
 
       byName.set(name, {
-        id: course.instructorId || course.teacherId?._id || name,
+        id: course.instructorId || teacherObj?._id || name,
         name,
         specialty: course.category || "Instructor",
-        image: course.instructorImage || course.teacherId?.profilePic || null,
+        image: course.instructorImage || teacherObj?.profilePic || null,
         icon: "person",
       });
     }

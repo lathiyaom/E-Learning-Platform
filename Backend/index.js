@@ -151,6 +151,7 @@ const corsOptions = {
     "Cache-Control",
     "Pragma",
     "Expires",
+    "X-Session-Id",
   ],
 };
 

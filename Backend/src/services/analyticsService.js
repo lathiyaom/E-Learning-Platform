@@ -1,20 +1,26 @@
-const { Course, User, Enrollment, Attendance, Exam, ExamSubmission, Rating, Feedback } = require("../models");
+const { Course, User, Enrollment, Attendance, ExamSubmission, Rating, Feedback } = require("../models");
+
+const byTenant = (tenantId) => ({ $or: [{ tenantId }, { organization_id: tenantId }, { tenant_id: tenantId }] });
 
 const analyticsService = {
-  /**
-   * Get admin dashboard statistics
-   */
   getAdminDashboard: async (tenantId) => {
     try {
-      const totalUsers = await User.countDocuments({ tenantId });
-      const totalStudents = await User.countDocuments({ tenantId, userType: "student" });
-      const totalTeachers = await User.countDocuments({ tenantId, userType: "teacher" });
-      const totalCourses = await Course.countDocuments({ tenantId });
-      const totalEnrollments = await Enrollment.countDocuments({ tenantId });
+      const totalUsers = await User.countDocuments(byTenant(tenantId));
+      const totalStudents = await User.countDocuments({ ...byTenant(tenantId), userType: "student" });
+      const totalTeachers = await User.countDocuments({ ...byTenant(tenantId), userType: "teacher" });
+      const totalCourses = await Course.countDocuments({
+        $or: [{ tenantId }, { organization_id: tenantId }],
+      });
+      const totalEnrollments = await Enrollment.countDocuments({
+        $or: [{ tenantId }, { organization_id: tenantId }],
+      });
 
-      // Monthly enrollment trend
       const enrollmentTrend = await Enrollment.aggregate([
-        { $match: { tenantId } },
+        {
+          $match: {
+            $or: [{ tenantId }, { organization_id: tenantId }],
+          },
+        },
         {
           $group: {
             _id: {
@@ -27,26 +33,21 @@ const analyticsService = {
         { $sort: { "_id.year": 1, "_id.month": 1 } },
       ]);
 
-      // Top courses by enrollment
       const topCourses = await Enrollment.aggregate([
-        { $match: { tenantId } },
-        { $group: { _id: "$courseId", count: { $sum: 1 } } },
+        {
+          $match: {
+            $or: [{ tenantId }, { organization_id: tenantId }],
+          },
+        },
+        { $group: { _id: { $ifNull: ["$courseId", "$course_id"] }, count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $limit: 5 },
         { $lookup: { from: "courses", localField: "_id", foreignField: "_id", as: "course" } },
       ]);
 
       return {
-        stats: {
-          totalUsers,
-          totalStudents,
-          totalTeachers,
-          totalCourses,
-          totalEnrollments,
-        },
-        trends: {
-          enrollmentTrend,
-        },
+        stats: { totalUsers, totalStudents, totalTeachers, totalCourses, totalEnrollments },
+        trends: { enrollmentTrend },
         topCourses,
       };
     } catch (error) {
@@ -54,34 +55,23 @@ const analyticsService = {
     }
   },
 
-  /**
-   * Get teacher dashboard statistics
-   */
   getTeacherDashboard: async (tenantId, teacherId) => {
     try {
-      // Courses taught (supports both legacy and new field shapes)
       const myCourses = await Course.find({
         $and: [
           { $or: [{ tenantId }, { organization_id: tenantId }] },
-          {
-            $or: [
-              { createdBy: teacherId },
-              { teacher_id: teacherId },
-            ],
-          },
+          { $or: [{ createdBy: teacherId }, { teacher_id: teacherId }] },
         ],
       });
-      const courseIds = myCourses.map((c) => c._id);
+      const courseIds = myCourses.map((course) => course._id);
 
-      // Total students
       const totalStudents = await Enrollment.countDocuments({
         $or: [{ courseId: { $in: courseIds } }, { course_id: { $in: courseIds } }],
       });
 
-      // Get average rating
       const averageRating =
         myCourses.length > 0
-          ? myCourses.reduce((sum, c) => sum + Number(c.rating || 0), 0) / myCourses.length
+          ? myCourses.reduce((sum, course) => sum + Number(course.rating || 0), 0) / myCourses.length
           : 0;
 
       return {
@@ -97,37 +87,29 @@ const analyticsService = {
     }
   },
 
-  /**
-   * Get student dashboard statistics
-   */
   getStudentDashboard: async (tenantId, studentId) => {
     try {
-      // Courses enrolled
       const enrolledCourses = await Enrollment.find({
-        tenantId,
-        studentId,
-      }).populate("courseId", "title instructor");
+        $and: [
+          { $or: [{ tenantId }, { organization_id: tenantId }] },
+          { $or: [{ studentId }, { student_id: studentId }] },
+        ],
+      })
+        .populate("courseId", "title")
+        .populate("course_id", "title");
 
-      const courseIds = enrolledCourses.map((e) => e.courseId._id);
-
-      // Attendance percentage
-      const attendanceData = await Attendance.aggregate([
-        { $match: { courseId: { $in: courseIds }, "attendanceRecords.studentId": studentId } },
-        {
-          $group: {
-            _id: "$courseId",
-            attended: { $sum: 1 },
-          },
-        },
-      ]);
+      const courseIds = enrolledCourses.map((enrollment) => enrollment.courseId?._id || enrollment.course_id?._id);
 
       const totalClasses = await Attendance.countDocuments({
         courseId: { $in: courseIds },
       });
+      const attendedClasses = await Attendance.countDocuments({
+        courseId: { $in: courseIds },
+        "attendanceRecords.studentId": studentId,
+      });
 
-      // Exam performance
       const examResults = await ExamSubmission.aggregate([
-        { $match: { studentId, courseId: { $in: courseIds } } },
+        { $match: { studentId } },
         {
           $lookup: {
             from: "exams",
@@ -136,25 +118,30 @@ const analyticsService = {
             as: "exam",
           },
         },
+        { $unwind: { path: "$exam", preserveNullAndEmptyArrays: false } },
+        {
+          $match: {
+            "exam.courseId": { $in: courseIds },
+          },
+        },
         {
           $group: {
-            _id: "$courseId",
-            averageScore: { $avg: "$score" },
+            _id: "$exam.courseId",
+            averageScore: { $avg: "$totalScore" },
             totalExams: { $sum: 1 },
           },
         },
       ]);
 
-      // Course progress
-      const courseProgress = enrolledCourses.map((e) => ({
-        courseId: e.courseId._id,
-        courseName: e.courseId.title,
-        progress: e.progress || 0,
+      const courseProgress = enrolledCourses.map((enrollment) => ({
+        courseId: enrollment.courseId?._id || enrollment.course_id?._id,
+        courseName: enrollment.courseId?.title || enrollment.course_id?.title,
+        progress: enrollment.progressPercent ?? enrollment.progress ?? 0,
       }));
 
       return {
         enrolledCoursesCount: enrolledCourses.length,
-        attendancePercentage: totalClasses > 0 ? (attendanceData.length / totalClasses) * 100 : 0,
+        attendancePercentage: totalClasses > 0 ? Math.round((attendedClasses / totalClasses) * 100) : 0,
         examResults,
         courseProgress,
       };
@@ -163,19 +150,20 @@ const analyticsService = {
     }
   },
 
-  /**
-   * Get course analytics
-   */
   getCourseAnalytics: async (tenantId, courseId) => {
     try {
       const courseData = await Course.findOne({
         _id: courseId,
-        tenantId,
-      }).populate("instructors", "firstName lastName");
+        $or: [{ tenantId }, { organization_id: tenantId }],
+      });
 
-      const enrollmentCount = await Enrollment.countDocuments({ courseId });
+      const enrollmentCount = await Enrollment.countDocuments({
+        $or: [
+          { tenantId, courseId },
+          { organization_id: tenantId, course_id: courseId },
+        ],
+      });
 
-      // Attendance
       const attendanceInfo = await Attendance.aggregate([
         { $match: { courseId } },
         {
@@ -187,7 +175,6 @@ const analyticsService = {
         },
       ]);
 
-      // Ratings
       const ratingInfo = await Rating.aggregate([
         { $match: { courseId } },
         {
@@ -199,7 +186,6 @@ const analyticsService = {
         },
       ]);
 
-      // Feedback
       const feedbackCount = await Feedback.countDocuments({ courseId });
 
       return {
@@ -214,9 +200,6 @@ const analyticsService = {
     }
   },
 
-  /**
-   * Get enrollment trends
-   */
   getEnrollmentTrends: async (tenantId, days = 30) => {
     try {
       const startDate = new Date();
@@ -225,7 +208,7 @@ const analyticsService = {
       const trends = await Enrollment.aggregate([
         {
           $match: {
-            tenantId,
+            $or: [{ tenantId }, { organization_id: tenantId }],
             createdAt: { $gte: startDate },
           },
         },

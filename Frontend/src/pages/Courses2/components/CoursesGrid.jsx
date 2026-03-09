@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
+import { useGetMarketplaceCoursesQuery } from "../../../redux/Apis/courseApi";
 
 // ── Course Card ────────────────────────────────────────────────────────────────
 const CourseCard = ({ course, viewMode }) => {
   const [bookmarked, setBookmarked] = useState(false);
+  const courseId = course._id || course.id;
+  const price = course.priceUSD ?? course.price ?? course.pricing ?? 0;
 
   if (viewMode === "list") {
     return (
@@ -51,11 +53,11 @@ const CourseCard = ({ course, viewMode }) => {
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
             <div>
               <span className="text-xl font-black text-slate-900 dark:text-white">
-                {course.isPaid ? `$${course.priceUSD}` : 'FREE'}
+                {course.isPaid ? `$${price}` : "FREE"}
               </span>
             </div>
             <Link
-              to={`/card/${course._id}`}
+              to={`/card/${courseId}`}
               className="text-sm font-bold px-5 py-2 bg-primary/10 dark:bg-premium-gold/10 text-primary dark:text-premium-gold rounded-xl hover:bg-primary dark:hover:bg-premium-gold hover:text-slate-900 border border-primary/20 dark:border-premium-gold/20 transition-all duration-200"
             >
               Details
@@ -138,11 +140,11 @@ const CourseCard = ({ course, viewMode }) => {
         <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-3">
           <div>
             <span className="text-xl font-black text-slate-900 dark:text-white">
-              {course.isPaid ? `$${course.priceUSD}` : 'FREE'}
+              {course.isPaid ? `$${price}` : "FREE"}
             </span>
           </div>
           <Link
-            to={`/card/${course._id}`}
+            to={`/card/${courseId}`}
             className="text-sm font-bold px-4 py-2 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-primary dark:hover:bg-premium-gold hover:text-slate-900 dark:hover:text-slate-900 border border-slate-200 dark:border-white/10 hover:border-primary dark:hover:border-premium-gold transition-all duration-200"
           >
             Details
@@ -163,7 +165,7 @@ const CoursesGrid = ({
   sortBy,
 }) => {
   // Fetch courses from API
-  const { data, isLoading, isError, error } = useGetAllCoursesQuery(sortBy);
+  const { data, isLoading, isError, error } = useGetMarketplaceCoursesQuery(sortBy);
 
   // Loading state
   if (isLoading) {
@@ -231,7 +233,7 @@ const CoursesGrid = ({
       }
     >
       {filtered.map((course) => (
-        <CourseCard key={course._id} course={course} viewMode={viewMode} />
+        <CourseCard key={course._id || course.id} course={course} viewMode={viewMode} />
       ))}
     </div>
   );

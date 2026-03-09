@@ -9,7 +9,7 @@ const timetableController = {
   createTimetable: async (req, res) => {
     try {
       const { courseId, dayOfWeek, startTime, endTime, room, type, conductedBy, recurrenceStart, recurrenceEnd } = req.body;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
 
       // Only admin, teacher and student can create timetable entries
@@ -62,7 +62,7 @@ const timetableController = {
   getCourseTimetable: async (req, res) => {
     try {
       const { courseId } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
 
       const timetables = await timetableService.getCourseTimetable(tenantId, courseId);
 
@@ -84,7 +84,7 @@ const timetableController = {
    */
   getMySchedule: async (req, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userId = req.user.id;
       const userType = req.user.userType;
 
@@ -109,7 +109,7 @@ const timetableController = {
    */
   getTodaySchedule: async (req, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userId = req.user.id;
       const userType = req.user.userType;
 
@@ -136,7 +136,7 @@ const timetableController = {
    */
   getWeekSchedule: async (req, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userId = req.user.id;
       const userType = req.user.userType;
 
@@ -162,7 +162,7 @@ const timetableController = {
   updateTimetable: async (req, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
 
       const timetable = await Timetable.findOne({ _id: id, tenantId });
@@ -217,7 +217,7 @@ const timetableController = {
   deleteTimetable: async (req, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
 
       // Only admin can delete

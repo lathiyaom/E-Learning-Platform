@@ -19,15 +19,16 @@ const getInitialState = () => {
     user: storedUser?.user || null,
     accessToken: storedUser?.accessToken || null,
     refreshToken: storedUser?.refreshToken || null,
+    sessionId: storedUser?.sessionId || null,
     isAuthenticated: !!storedUser?.user,
     isLoading: false,
   };
 };
 
 // Helper to persist auth state
-const persistAuth = (user, accessToken, refreshToken) => {
+const persistAuth = (user, accessToken, refreshToken, sessionId) => {
   if (user) {
-    sessionStorage.setItem("authUser", JSON.stringify({ user, accessToken, refreshToken }));
+    sessionStorage.setItem("authUser", JSON.stringify({ user, accessToken, refreshToken, sessionId }));
   } else {
     sessionStorage.removeItem("authUser");
   }
@@ -38,7 +39,7 @@ const authSlice = createSlice({
   initialState: getInitialState(),
   reducers: {
     setCredentials: (state, action) => {
-      const { user, accessToken, refreshToken } = action.payload;
+      const { user, accessToken, refreshToken, sessionId } = action.payload;
       
       if (user) {
         state.user = user;
@@ -53,18 +54,23 @@ const authSlice = createSlice({
         state.refreshToken = refreshToken;
       }
 
-      persistAuth(state.user, state.accessToken, state.refreshToken);
+      if (sessionId) {
+        state.sessionId = sessionId;
+      }
+
+      persistAuth(state.user, state.accessToken, state.refreshToken, state.sessionId);
     },
 
     updateAccessToken: (state, action) => {
       state.accessToken = action.payload;
-      persistAuth(state.user, state.accessToken, state.refreshToken);
+      persistAuth(state.user, state.accessToken, state.refreshToken, state.sessionId);
     },
 
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
       state.refreshToken = null;
+      state.sessionId = null;
       state.isAuthenticated = false;
       
       sessionStorage.removeItem("authUser");
@@ -77,7 +83,7 @@ const authSlice = createSlice({
     updateUserProfile: (state, action) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
-        persistAuth(state.user, state.accessToken, state.refreshToken);
+        persistAuth(state.user, state.accessToken, state.refreshToken, state.sessionId);
       }
     },
   },

@@ -7,15 +7,14 @@ import {
   logout as logoutAction,
 } from "./../slice/authSlice";
 import { useLogoutMutation } from "../Apis/authApi";
-import { getAuth } from "../../utils/users";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const user = getAuth().user;
-  const isAuthenticated = getAuth().isAuthenticated;
-  const accessToken = getAuth().accessToken;
+  const user = useSelector(selectCurrentUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const accessToken = useSelector(selectAccessToken);
 
   const [logoutMutation, { isLoading: isLoggingOut }] = useLogoutMutation();
 

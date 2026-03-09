@@ -64,11 +64,11 @@ const createCourse = async (courseData) => {
   }
 
   // Handle multiple price field formats
-  const coursePrice = price || pricing || priceUSD || 0;
+  const coursePrice = price ?? pricing ?? priceUSD ?? 0;
   const courseVideoUrl = video_url || videoUrl;
 
   // Validate price for paid courses
-  if (isPaid && (!coursePrice || coursePrice < 0)) {
+  if (isPaid && (coursePrice <= 0 || Number.isNaN(Number(coursePrice)))) {
     throw new Error("Price must be greater than 0 for paid courses");
   }
 
@@ -107,12 +107,17 @@ const createCourse = async (courseData) => {
 };
 
 const getAllCourses = async (tenantId, sortBy = "popular") => {
-  if (!tenantId) throw new Error("Tenant ID required for course query");
   const sortClause = buildCourseSortClause(sortBy);
 
-  const courses = await Course.find({
-    $or: [{ tenantId }, { organization_id: tenantId }],
-  }).sort(sortClause);
+  let query = {};
+  if (tenantId) {
+    query = {
+      $or: [{ tenantId }, { organization_id: tenantId }],
+    };
+  }
+  // If no tenantId (e.g., teacher not assigned), return all courses
+
+  const courses = await Course.find(query).sort(sortClause);
 
   return courses;
 };
@@ -134,12 +139,17 @@ const getPlatformCourses = async (sortBy = "popular") => {
 
 const getCourseById = async (id, tenantId) => {
   if (!id) throw new Error("Course ID is required");
-  if (!tenantId) throw new Error("Tenant ID required");
 
-  const course = await Course.findOne({
-    _id: id,
-    $or: [{ tenantId }, { organization_id: tenantId }],
-  });
+  const query = tenantId
+    ? {
+        _id: id,
+        $or: [{ tenantId }, { organization_id: tenantId }],
+      }
+    : { _id: id };
+
+  const course = await Course.findOne(query)
+    .populate("teacher_id", "firstName lastName email")
+    .populate("createdBy", "firstName lastName email");
   if (!course) throw new Error("Course Not Found");
 
   return course;
@@ -178,7 +188,7 @@ const updateCourse = async (id, tenantId, updateData) => {
   if (tags) course.tags = tags;
   
   // Handle multiple price field formats
-  const coursePrice = price || pricing || priceUSD;
+  const coursePrice = price ?? pricing ?? priceUSD;
   if (coursePrice !== undefined) {
     course.price = coursePrice;
     course.pricing = coursePrice;

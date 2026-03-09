@@ -88,6 +88,34 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    sessions: [
+      {
+        sid: {
+          type: String,
+          required: true,
+        },
+        accessToken: {
+          type: String,
+          required: true,
+        },
+        refreshToken: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        lastUsedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        expiresAt: {
+          type: Date,
+          default: () => new Date(Date.now() + 60 * 60 * 1000), // 1 hour default
+        },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -96,6 +124,7 @@ const userSchema = new mongoose.Schema(
 
 // Index for tenant-scoped queries
 userSchema.index({ tenant_id: 1, email: 1 });
+userSchema.index({ "sessions.sid": 1 });
 
 // Hash password before saving
 userSchema.pre("save", async function () {

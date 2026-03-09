@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const courseController = require("../controllers/courseController");
-const { authorize, authenticate } = require("../middlewares/authMiddleware");
+const { authorize, authenticate, optionalAuth } = require("../middlewares/authMiddleware");
 const tenantScope = require("../middlewares/tenantScope.middleware");
 
 router.post(
@@ -21,15 +21,13 @@ router.get(
 
 router.get(
   "/Marketplace",
-  authenticate,
-  authorize("student", "admin", "teacher", "superadmin"),
+  optionalAuth,
   courseController.allPlatformCourses
 );
 
 router.get(
   "/:id",
-  authenticate,
-  tenantScope,
+  optionalAuth,
   courseController.getcourseById
 );
 

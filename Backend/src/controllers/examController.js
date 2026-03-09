@@ -166,7 +166,7 @@ const gradeSubmission = async (req, res) => {
 
 const getStudentExams = async (req, res) => {
   try {
-    const tenantId = req.user.tenantId;
+    const tenantId = req.tenantId;
     const userId = req.user.id;
 
     const exams = await examService.getStudentExams(tenantId, userId);

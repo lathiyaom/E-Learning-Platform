@@ -2,6 +2,8 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Clock, MapPin, Users, Loader2, BookOpen } from "lucide-react";
 import { getMySchedule } from "../../../redux/Apis/timetableApi";
+import AdminLayout from "../../../utils/Adminlayoute";
+import { getBreadcrumbs } from "../../../utils/breadcrumbs";
 
 const StudentTimetableView = () => {
   const dispatch = useDispatch();
@@ -26,6 +28,7 @@ const StudentTimetableView = () => {
   }
 
   return (
+    <AdminLayout showSearch={false} breadcrumbItems={getBreadcrumbs("DASHBOARD")}>
     <div className="p-8 bg-slate-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">My Timetable</h1>
 
@@ -77,6 +80,7 @@ const StudentTimetableView = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

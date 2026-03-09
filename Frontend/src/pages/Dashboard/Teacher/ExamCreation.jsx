@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
-import { useCreateExamMutation, useUpdateExamMutation } from "../../../redux/Apis/examApi";
+import { useCreateExamMutation, useGetExamByIdQuery, useUpdateExamMutation } from "../../../redux/Apis/examApi";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import AdminLayout from "../../../utils/Adminlayoute";
 
@@ -12,6 +12,7 @@ const ExamCreation = () => {
   const editId = searchParams.get("edit");
   const { user } = useSelector((state) => state.auth);
   const { data: coursesData } = useGetAllCoursesQuery();
+  const { data: editExamData } = useGetExamByIdQuery(editId, { skip: !editId });
   const [createExam, { isLoading: creating }] = useCreateExamMutation();
   const [updateExam, { isLoading: updating }] = useUpdateExamMutation();
 
@@ -41,6 +42,23 @@ const ExamCreation = () => {
     correctAnswer: "",
     marks: 1,
   });
+
+  React.useEffect(() => {
+    if (editId && editExamData?.data) {
+      const exam = editExamData.data;
+      setFormData({
+        courseId: exam.courseId?._id || exam.courseId || "",
+        title: exam.title || "",
+        description: exam.description || "",
+        startDate: exam.startDate ? new Date(exam.startDate).toISOString().slice(0, 16) : "",
+        endDate: exam.endDate ? new Date(exam.endDate).toISOString().slice(0, 16) : "",
+        duration: exam.duration || 60,
+        totalMarks: exam.totalMarks || 100,
+        status: exam.status || "draft",
+        questions: exam.questions || [],
+      });
+    }
+  }, [editId, editExamData]);
 
   const handleAddQuestion = () => {
     if (!currentQuestion.text || !currentQuestion.marks) {

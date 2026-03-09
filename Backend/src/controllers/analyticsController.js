@@ -7,7 +7,7 @@ const analyticsController = {
    */
   getAdminDashboard: async (req, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userType = req.user.userType;
 
       if (userType !== "admin") {
@@ -38,7 +38,7 @@ const analyticsController = {
    */
   getTeacherDashboard: async (req, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userId = req.user.id;
       const userType = req.user.userType;
 
@@ -70,7 +70,7 @@ const analyticsController = {
    */
   getStudentDashboard: async (req, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
       const userId = req.user.id;
       const userType = req.user.userType;
 
@@ -103,7 +103,7 @@ const analyticsController = {
   getCourseAnalytics: async (req, res) => {
     try {
       const { courseId } = req.params;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
 
       const analytics = await analyticsService.getCourseAnalytics(tenantId, courseId);
 
@@ -127,7 +127,7 @@ const analyticsController = {
   getEnrollmentTrends: async (req, res) => {
     try {
       const { days = 30 } = req.query;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenantId;
 
       const trends = await analyticsService.getEnrollmentTrends(tenantId, parseInt(days));
 

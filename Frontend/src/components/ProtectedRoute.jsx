@@ -28,12 +28,16 @@ const ProtectedRoute = ({ children, requiredRole }) => {
         try {
           await validateUser().unwrap();
         } catch (error) {
-          // ✅ Token invalid or expired
-          console.warn("Token validation failed:", error);
-          dispatch(logout());
-          setIsAuthorized(false);
-          setIsValidating(false);
-          return;
+          // Only force logout for explicit auth failures.
+          // Network / 5xx errors should not immediately throw user back to login.
+          const status = error?.status || error?.originalStatus;
+          if (status === 401 || status === 403) {
+            dispatch(logout());
+            setIsAuthorized(false);
+            setIsValidating(false);
+            return;
+          }
+          console.warn("Token validation transient failure, allowing local session:", error);
         }
 
         // ✅ Step 3: Check role if required

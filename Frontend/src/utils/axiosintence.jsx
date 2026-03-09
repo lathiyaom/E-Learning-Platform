@@ -17,9 +17,13 @@ API.interceptors.request.use(
     try {
       const state = store.getState();
       const token = state.auth?.accessToken;
+      const sessionId = state.auth?.sessionId;
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      if (sessionId) {
+        config.headers["X-Session-Id"] = sessionId;
       }
     } catch (error) {
       console.error("Error attaching token:", error);
