@@ -186,6 +186,34 @@ const gradeSubmission = async (submissionId, tenantId, gradedBy, gradedAnswers, 
   return submission;
 };
 
+const getStudentExams = async (tenantId, userId) => {
+  try {
+    // Get courses where student is enrolled
+    const { Enrollment } = require("../models");
+    const enrollments = await Enrollment.find({ 
+      $or: [{ studentId: userId }, { student_id: userId }],
+      $or: [{ tenantId }, { organization_id: tenantId }]
+    });
+    
+    const courseIds = enrollments.map((e) => e.courseId || e.course_id);
+    
+    // Get exams for enrolled courses
+    const exams = await Exam.find({
+      tenantId,
+      courseId: { $in: courseIds },
+      status: "published",
+      startDate: { $gt: new Date() },
+    })
+      .populate("courseId", "title category")
+      .populate("createdBy", "firstName lastName email")
+      .sort({ startDate: 1 });
+
+    return exams;
+  } catch (error) {
+    throw new Error(`Failed to get student exams: ${error.message}`);
+  }
+};
+
 const getStudentSubmissions = async (tenantId, studentId, courseId) => {
   if (!tenantId || !studentId) {
     throw new Error("Tenant ID and Student ID are required");
@@ -212,5 +240,6 @@ module.exports = {
   deleteExam,
   submitExam,
   gradeSubmission,
+  getStudentExams,
   getStudentSubmissions,
 };

@@ -7,13 +7,13 @@ const lectureService = {
   createLecture: async (tenantId, lectureData) => {
     try {
       // Verify course exists and belongs to tenant
-      const course = await Course.findOne({ _id: lectureData.courseId, tenantId });
+      const course = await Course.findOne({ _id: lectureData.courseId, organization_id: tenantId });
       if (!course) {
         throw new Error("Course not found or access denied");
       }
 
       // Verify teacher exists
-      const teacher = await User.findOne({ _id: lectureData.conductedBy, tenantId, userType: "teacher" });
+      const teacher = await User.findOne({ _id: lectureData.conductedBy, tenant_id: tenantId, userType: "teacher" });
       if (!teacher) {
         throw new Error("Teacher not found");
       }
@@ -129,6 +129,12 @@ const lectureService = {
 
       if (userType === "teacher") {
         query.conductedBy = userId;
+      } else if (userType === "student") {
+        // Get courses where student is enrolled
+        const { Enrollment } = require("../models");
+        const enrollments = await Enrollment.find({ studentId: userId });
+        const courseIds = enrollments.map((e) => e.courseId || e.course_id);
+        query.courseId = { $in: courseIds };
       }
 
       const lectures = await Lecture.find(query)

@@ -1,4 +1,5 @@
 const { Timetable, Course, User, Enrollment } = require("../models");
+const timetableService = require("../services/timetableService");
 
 const timetableController = {
   /**
@@ -11,8 +12,8 @@ const timetableController = {
       const tenantId = req.user.tenantId;
       const userType = req.user.userType;
 
-      // Only admin and teacher can create timetable entries
-      if (!["admin", "teacher"].includes(userType)) {
+      // Only admin, teacher and student can create timetable entries
+      if (!["admin", "teacher", "student"].includes(userType)) {
         return res.status(403).json({
           success: false,
           message: "Unauthorized to create timetable entry",
@@ -20,44 +21,31 @@ const timetableController = {
       }
 
       // Validate required fields
-      if (!courseId || !dayOfWeek || !startTime || !endTime || !conductedBy || !recurrenceStart || !recurrenceEnd) {
+      if (!courseId || !dayOfWeek || !startTime || !endTime) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields",
+          message: "Missing required fields: courseId, dayOfWeek, startTime, endTime",
         });
       }
 
-      // Verify course exists
-      const course = await Course.findOne({ _id: courseId, tenantId });
-      if (!course) {
-        return res.status(404).json({
-          success: false,
-          message: "Course not found",
-        });
-      }
-
-      const timetable = await Timetable.create({
-        tenantId,
+      const timetableData = {
         courseId,
-        dayOfWeek: dayOfWeek.toLowerCase(),
+        dayOfWeek,
         startTime,
         endTime,
         room,
         type,
-        conductedBy,
+        conductedBy: conductedBy || req.user.id,
         recurrenceStart,
         recurrenceEnd,
-      });
+      };
 
-      const populatedTimetable = await timetable.populate([
-        { path: "courseId", select: "title category" },
-        { path: "conductedBy", select: "firstName lastName email" },
-      ]);
+      const timetable = await timetableService.createTimetable(tenantId, timetableData);
 
       res.status(201).json({
         success: true,
         message: "Timetable entry created successfully",
-        data: populatedTimetable,
+        data: timetable,
       });
     } catch (error) {
       res.status(400).json({
@@ -76,10 +64,7 @@ const timetableController = {
       const { courseId } = req.params;
       const tenantId = req.user.tenantId;
 
-      const timetables = await Timetable.find({ tenantId, courseId, isActive: true })
-        .populate("courseId", "title category")
-        .populate("conductedBy", "firstName lastName email")
-        .sort({ dayOfWeek: 1, startTime: 1 });
+      const timetables = await timetableService.getCourseTimetable(tenantId, courseId);
 
       res.status(200).json({
         success: true,
@@ -95,8 +80,7 @@ const timetableController = {
   },
 
   /**
-   * Get user's full schedule
-   * GET /Timetable/my-schedule
+   * Get user's schedule
    */
   getMySchedule: async (req, res) => {
     try {
@@ -104,30 +88,7 @@ const timetableController = {
       const userId = req.user.id;
       const userType = req.user.userType;
 
-      let query = { tenantId, isActive: true };
-
-      if (userType === "teacher") {
-        query.conductedBy = userId;
-      } else if (userType === "student") {
-        // Get enrolled courses
-        const enrollments = await Enrollment.find({ studentId: userId });
-        const courseIds = enrollments.map((e) => e.courseId);
-        query.courseId = { $in: courseIds };
-      }
-
-      const timetables = await Timetable.find(query)
-        .populate("courseId", "title category")
-        .populate("conductedBy", "firstName lastName email")
-        .sort({ dayOfWeek: 1, startTime: 1 });
-
-      // Group by day of week
-      const schedule = {};
-      timetables.forEach((t) => {
-        if (!schedule[t.dayOfWeek]) {
-          schedule[t.dayOfWeek] = [];
-        }
-        schedule[t.dayOfWeek].push(t);
-      });
+      const schedule = await timetableService.getMySchedule(tenantId, userId, userType);
 
       res.status(200).json({
         success: true,
@@ -154,20 +115,7 @@ const timetableController = {
 
       const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][new Date().getDay()];
 
-      let query = { tenantId, dayOfWeek: dayName, isActive: true };
-
-      if (userType === "teacher") {
-        query.conductedBy = userId;
-      } else if (userType === "student") {
-        const enrollments = await Enrollment.find({ studentId: userId });
-        const courseIds = enrollments.map((e) => e.courseId);
-        query.courseId = { $in: courseIds };
-      }
-
-      const timetables = await Timetable.find(query)
-        .populate("courseId", "title category")
-        .populate("conductedBy", "firstName lastName email")
-        .sort({ startTime: 1 });
+      const timetables = await timetableService.getTodaySchedule(tenantId, userId, userType, dayName);
 
       res.status(200).json({
         success: true,
@@ -192,27 +140,7 @@ const timetableController = {
       const userId = req.user.id;
       const userType = req.user.userType;
 
-      let query = { tenantId, isActive: true };
-
-      if (userType === "teacher") {
-        query.conductedBy = userId;
-      } else if (userType === "student") {
-        const enrollments = await Enrollment.find({ studentId: userId });
-        const courseIds = enrollments.map((e) => e.courseId);
-        query.courseId = { $in: courseIds };
-      }
-
-      const timetables = await Timetable.find(query)
-        .populate("courseId", "title category")
-        .populate("conductedBy", "firstName lastName email")
-        .sort({ dayOfWeek: 1, startTime: 1 });
-
-      // Group by day
-      const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-      const schedule = {};
-      days.forEach((day) => {
-        schedule[day] = timetables.filter((t) => t.dayOfWeek === day);
-      });
+      const schedule = await timetableService.getWeekSchedule(tenantId, userId, userType);
 
       res.status(200).json({
         success: true,

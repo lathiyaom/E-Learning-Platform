@@ -90,8 +90,8 @@ router.post("/complete", authenticate, authorize("student"), async (req, res) =>
   }
 });
 
-// Get progress for a course
-router.get("/course/:courseId", authenticate, authorize("student"), async (req, res) => {
+// Update lecture progress (for video watching)
+router.patch("/:lectureId", authenticate, authorize("student"), async (req, res) => {
   try {
     const { courseId } = req.params;
     const studentId = req.user.id;
@@ -130,6 +130,37 @@ router.get("/course/:courseId", authenticate, authorize("student"), async (req, 
     res.status(500).json({
       success: false,
       message: "Failed to fetch progress",
+      error: error.message
+    });
+  }
+});
+
+// Get specific lecture progress
+router.get("/:lectureId", authenticate, authorize("student"), async (req, res) => {
+  try {
+    const { lectureId } = req.params;
+    const studentId = req.user.id;
+
+    const progress = await LectureProgress.findOne({
+      student_id: studentId,
+      lecture_id: lectureId
+    });
+
+    if (!progress) {
+      return res.status(200).json({
+        success: true,
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: progress
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch lecture progress",
       error: error.message
     });
   }

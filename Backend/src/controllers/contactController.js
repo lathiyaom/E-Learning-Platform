@@ -32,9 +32,10 @@ const GetComments = async (req, res) => {
     const contacts = await contactService.getAllContacts();
 
     if (!contacts || contacts.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No comments found",
-        success: false,
+        success: true,
+        contacts: [],
       });
     }
     return res.status(200).json({

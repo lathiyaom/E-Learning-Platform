@@ -5,7 +5,7 @@ const logger = require("../utils/logger");
 const CreateCourse = async (req, res) => {
   const startTime = Date.now();
   const userId = req.user?.id;
-  const tenantId = req.user?.role === "tenant" ? req.user.id : req.user?.tenantId;
+  const tenantId = req.tenantId || (req.user?.role === "tenant" ? req.user.id : req.user?.tenantId);
 
   try {
     logger.info("Course creation attempt", { userId, tenantId, title: req.body?.title });
@@ -67,9 +67,11 @@ const allCourses = async (req, res) => {
     
     if (!courses || courses.length === 0) {
       logger.debug("No courses found", { tenantId });
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No Courses Found",
-        success: false,
+        success: true,
+        data: [],
+        count: 0,
       });
     }
 

@@ -159,31 +159,9 @@ const lectureController = {
       const userId = req.user.id;
       const userType = req.user.userType;
 
-      const startDate = new Date();
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + parseInt(days));
+      const lectures = await lectureService.getUpcomingLectures(tenantId, userId, userType, parseInt(days));
 
-      let query = {
-        tenantId,
-        lectureDate: { $gte: startDate, $lte: endDate },
-        status: { $in: ["scheduled", "ongoing"] },
-      };
-
-      if (userType === "teacher") {
-        query.conductedBy = userId;
-      } else if (userType === "student") {
-        // Get courses where student is enrolled
-        const { Enrollment } = require("../models");
-        const enrollments = await Enrollment.find({ studentId: userId });
-        const courseIds = enrollments.map((e) => e.courseId);
-        query.courseId = { $in: courseIds };
-      }
-
-      const lectures = await Lecture.find(query)
-        .populate("courseId", "title category")
-        .populate("conductedBy", "firstName lastName email")
-        .sort({ lectureDate: 1, startTime: 1 });
-
+      // Pagination
       const skip = (page - 1) * limit;
       const paginatedLectures = lectures.slice(skip, skip + parseInt(limit));
 

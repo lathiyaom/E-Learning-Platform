@@ -164,6 +164,26 @@ const gradeSubmission = async (req, res) => {
   }
 };
 
+const getStudentExams = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const userId = req.user.id;
+
+    const exams = await examService.getStudentExams(tenantId, userId);
+
+    return res.status(200).json({
+      message: "Student exams retrieved successfully",
+      success: true,
+      data: exams,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
 const getStudentSubmissions = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -204,5 +224,6 @@ module.exports = {
   deleteExam,
   submitExam,
   gradeSubmission,
+  getStudentExams,
   getStudentSubmissions,
 };

@@ -13,6 +13,23 @@ router.post(
   examController.createExam
 );
 
+// Get student upcoming exams - MUST come before /:id route
+router.get(
+  "/student/upcoming",
+  authenticate,
+  tenantScope,
+  authorize("student"),
+  examController.getStudentExams
+);
+
+// Get student submissions - MUST come before /:id route
+router.get(
+  "/submissions/:studentId",
+  authenticate,
+  tenantScope,
+  examController.getStudentSubmissions
+);
+
 // Get exams by course
 router.get(
   "/course/:courseId",
@@ -21,7 +38,7 @@ router.get(
   examController.getExamsByCourse
 );
 
-// Get exam by ID
+// Get exam by ID - MUST come after all other GET routes
 router.get(
   "/:id",
   authenticate,
@@ -47,15 +64,6 @@ router.delete(
   examController.deleteExam
 );
 
-// Submit exam (student)
-router.post(
-  "/submit/:examId",
-  authenticate,
-  tenantScope,
-  authorize("student"),
-  examController.submitExam
-);
-
 // Grade submission (teacher/admin)
 router.post(
   "/grade/:submissionId",
@@ -65,12 +73,13 @@ router.post(
   examController.gradeSubmission
 );
 
-// Get student submissions
-router.get(
-  "/submissions/:studentId",
+// Submit exam (student)
+router.post(
+  "/submit/:examId",
   authenticate,
   tenantScope,
-  examController.getStudentSubmissions
+  authorize("student"),
+  examController.submitExam
 );
 
 module.exports = router;

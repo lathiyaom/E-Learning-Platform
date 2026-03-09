@@ -39,15 +39,19 @@ const createCourse = async (courseData) => {
     category,
     rating,
     reviewCount,
+    video_url,
     videoUrl,
     tags,
+    price,
+    pricing,
     priceUSD,
+    currency,
     isPaid,
     tenantId,
     createdBy,
   } = courseData;
 
-  if (!title || !image || !description || !category || !videoUrl) {
+  if (!title || !image || !description || !category) {
     throw new Error("Please enter necessary details");
   }
 
@@ -59,14 +63,19 @@ const createCourse = async (courseData) => {
     throw new Error("Creator ID is required");
   }
 
+  // Handle multiple price field formats
+  const coursePrice = price || pricing || priceUSD || 0;
+  const courseVideoUrl = video_url || videoUrl;
+
   // Validate price for paid courses
-  if (isPaid && (!priceUSD || priceUSD < 0)) {
+  if (isPaid && (!coursePrice || coursePrice < 0)) {
     throw new Error("Price must be greater than 0 for paid courses");
   }
 
-  // Check for duplicate course title within the same tenant
+  // Check for duplicate course title within same tenant (but exclude own updates)
   const existingCourse = await Course.findOne({
     title,
+    _id: { $ne: courseData.courseId }, // Exclude if updating
     $or: [{ tenantId }, { organization_id: tenantId }],
   });
   if (existingCourse) {
@@ -82,13 +91,14 @@ const createCourse = async (courseData) => {
     category,
     rating: rating || 0,
     reviewCount: reviewCount || 0,
-    video_url: videoUrl,
-    videoUrl,
+    video_url: courseVideoUrl,
+    videoUrl: courseVideoUrl,
     tags: tags || ["Popular"],
-    price: isPaid ? priceUSD : 0,
-    pricing: isPaid ? priceUSD : 0,
-    priceUSD: isPaid ? priceUSD : 0,
-    isPaid: isPaid !== undefined ? isPaid : false,
+    price: coursePrice,
+    pricing: coursePrice,
+    priceUSD: coursePrice,
+    currency: currency || "USD",
+    isPaid: isPaid !== undefined ? isPaid : coursePrice > 0,
     tenantId,
     createdBy,
   });
@@ -145,7 +155,7 @@ const updateCourse = async (id, tenantId, updateData) => {
   });
   if (!course) throw new Error("Course Not Found");
 
-  const { title, image, description, category, videoUrl, tags, priceUSD, isPaid, rating, reviewCount } = updateData;
+  const { title, image, description, category, videoUrl, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount } = updateData;
 
   if (title !== undefined && title.length === 0)
     throw new Error("Title is required");
@@ -155,17 +165,26 @@ const updateCourse = async (id, tenantId, updateData) => {
     throw new Error("Description is required");
   if (category !== undefined && category.length === 0)
     throw new Error("Category is required");
-  if (videoUrl !== undefined && videoUrl.length === 0)
-    throw new Error("Video URL is required");
 
   // Update fields
   if (title) course.title = title;
   if (image) course.image = image;
   if (description) course.description = description;
   if (category) course.category = category;
-  if (videoUrl) course.videoUrl = videoUrl;
+  if (videoUrl) {
+    course.video_url = videoUrl;
+    course.videoUrl = videoUrl;
+  }
   if (tags) course.tags = tags;
-  if (priceUSD !== undefined) course.priceUSD = priceUSD;
+  
+  // Handle multiple price field formats
+  const coursePrice = price || pricing || priceUSD;
+  if (coursePrice !== undefined) {
+    course.price = coursePrice;
+    course.pricing = coursePrice;
+    course.priceUSD = coursePrice;
+  }
+  if (currency !== undefined) course.currency = currency;
   if (isPaid !== undefined) course.isPaid = isPaid;
   if (rating !== undefined) course.rating = rating;
   if (reviewCount !== undefined) course.reviewCount = reviewCount;

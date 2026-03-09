@@ -8,7 +8,7 @@ router.post(
   "/Create",
   authenticate,
   tenantScope,
-  authorize("teacher"),
+  authorize("teacher", "admin", "superadmin"),
   courseController.CreateCourse,
 );
 
@@ -37,7 +37,7 @@ router.patch(
   "/Update/:id",
   authenticate,
   tenantScope,
-  authorize("teacher"),
+  authorize("teacher", "admin", "superadmin"),
   courseController.UpdateCourse,
 );
 
@@ -45,7 +45,7 @@ router.delete(
   "/Delete/:id",
   authenticate,
   tenantScope,
-  authorize("teacher"),
+  authorize("teacher", "admin", "superadmin"),
   courseController.DeleteCourse,
 );
 

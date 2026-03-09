@@ -193,9 +193,10 @@ const getAllUsers = async (req, res) => {
     
     if (!users || users.length === 0) {
       logger.debug("No users found", { tenantId });
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No users found",
-        success: false,
+        success: true,
+        users: [],
       });
     }
 
