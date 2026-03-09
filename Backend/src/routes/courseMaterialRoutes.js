@@ -45,7 +45,7 @@ const upload = multer({
 });
 
 // Upload course material
-router.post("/upload", authenticate, authorize("teacher"), upload.single("file"), async (req, res) => {
+router.post("/upload", authenticate, authorize("teacher"), tenantScope, upload.single("file"), async (req, res) => {
   try {
     const { course_id, title, description, type, is_downloadable } = req.body;
     const teacherId = req.user.id;
@@ -109,7 +109,7 @@ router.post("/upload", authenticate, authorize("teacher"), upload.single("file")
 });
 
 // Get materials for a course
-router.get("/course/:courseId", authenticate, async (req, res) => {
+router.get("/course/:courseId", authenticate, tenantScope, async (req, res) => {
   try {
     const { courseId } = req.params;
     const userId = req.user.id;
@@ -122,6 +122,7 @@ router.get("/course/:courseId", authenticate, async (req, res) => {
       materials = await CourseMaterial.find({
         course_id: courseId,
         teacher_id: userId,
+        organization_id: req.tenantId,
         status: "active"
       }).sort({ order: 1, createdAt: 1 });
     } else if (userType === "student") {
@@ -129,6 +130,7 @@ router.get("/course/:courseId", authenticate, async (req, res) => {
       // This would require checking enrollment - simplified for now
       materials = await CourseMaterial.find({
         course_id: courseId,
+        organization_id: req.tenantId,
         status: "active"
       }).sort({ order: 1, createdAt: 1 });
     } else {
@@ -155,7 +157,7 @@ router.get("/course/:courseId", authenticate, async (req, res) => {
 });
 
 // Update material
-router.patch("/:id", authenticate, authorize("teacher"), async (req, res) => {
+router.patch("/:id", authenticate, authorize("teacher"), tenantScope, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, is_downloadable, order } = req.body;
@@ -163,7 +165,8 @@ router.patch("/:id", authenticate, authorize("teacher"), async (req, res) => {
 
     const material = await CourseMaterial.findOne({
       _id: id,
-      teacher_id: teacherId
+      teacher_id: teacherId,
+      organization_id: req.tenantId
     });
 
     if (!material) {
@@ -196,14 +199,15 @@ router.patch("/:id", authenticate, authorize("teacher"), async (req, res) => {
 });
 
 // Delete material
-router.delete("/:id", authenticate, authorize("teacher"), async (req, res) => {
+router.delete("/:id", authenticate, authorize("teacher"), tenantScope, async (req, res) => {
   try {
     const { id } = req.params;
     const teacherId = req.user.id;
 
     const material = await CourseMaterial.findOne({
       _id: id,
-      teacher_id: teacherId
+      teacher_id: teacherId,
+      organization_id: req.tenantId
     });
 
     if (!material) {

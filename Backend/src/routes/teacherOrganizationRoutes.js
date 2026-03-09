@@ -5,7 +5,6 @@
 const express = require("express");
 const router = express.Router();
 const teacherOrganizationController = require("../controllers/teacherOrganizationController");
-const examController = require("../controllers/examController");
 const { authenticate, authorize } = require("../middlewares/authMiddleware");
 const tenantScope = require("../middlewares/tenantScope.middleware");
 
@@ -67,55 +66,6 @@ router.get(
   authenticate,
   authorize("teacher"),
   teacherOrganizationController.getOrgData
-);
-
-// Exam management routes for teachers
-router.post(
-  "/exams-create",
-  authenticate,
-  tenantScope,
-  authorize("teacher"),
-  examController.createExam
-);
-
-router.get(
-  "/exams/course/:courseId",
-  authenticate,
-  tenantScope,
-  authorize("teacher"),
-  examController.getExamsByCourse
-);
-
-router.get(
-  "/exams/:id",
-  authenticate,
-  tenantScope,
-  authorize("teacher"),
-  examController.getExamById
-);
-
-router.patch(
-  "/exams/:id",
-  authenticate,
-  tenantScope,
-  authorize("teacher"),
-  examController.updateExam
-);
-
-router.delete(
-  "/exams/:id",
-  authenticate,
-  tenantScope,
-  authorize("teacher"),
-  examController.deleteExam
-);
-
-router.post(
-  "/exams/grade/:submissionId",
-  authenticate,
-  tenantScope,
-  authorize("teacher"),
-  examController.gradeSubmission
 );
 
 module.exports = router;

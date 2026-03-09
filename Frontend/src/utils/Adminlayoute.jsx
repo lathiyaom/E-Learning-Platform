@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Compass,
   Clock,
+  Award,
 } from "lucide-react";
 import AvatarDropdown from "../components/Avatar";
 import DarkModeToggle from "../components/DarkModeToggle";
@@ -45,8 +46,6 @@ const AdminLayout = ({
 
   const { user, isAuthenticated, accessToken } = useAuth();
   const userRole = user?.userType?.toUpperCase();
-  console.log(userRole, "this is user role");
-  console.log(user, "this is in the profile page ");
   const email = user?.email;
 
   const navItems = useMemo(() => {
@@ -90,19 +89,13 @@ const AdminLayout = ({
           breadcrumb: "Students",
         },
         {
-          id: "exams",
+          id: "assignments",
           icon: ClipboardList,
-          label: "Exams",
-          link: "/teacher/exams",
-          breadcrumb: "Exams",
+          label: "Assignments",
+          link: "/teacher/assignments",
+          breadcrumb: "Assignments",
         },
-        {
-          id: "timetable",
-          icon: Calendar,
-          label: "Timetable",
-          link: "/teacher/timetable",
-          breadcrumb: "Timetable",
-        },
+
         {
           id: "analytics",
           icon: Compass,
@@ -164,27 +157,14 @@ const AdminLayout = ({
           link: "/student/upcoming-lectures",
           breadcrumb: "Upcoming Lectures",
         },
-        {
-          id: "exams",
+                {
+          id: "assignments",
           icon: ClipboardList,
-          label: "Exams",
-          link: "/student/upcoming-exams",
-          breadcrumb: "Upcoming Exams",
+          label: "Assignments",
+          link: "/student/assignments",
+          breadcrumb: "My Assignments",
         },
-        {
-          id: "exam-results",
-          icon: ClipboardList,
-          label: "Exam Results",
-          link: "/student/exam-results",
-          breadcrumb: "Exam Results",
-        },
-        {
-          id: "timetable",
-          icon: Calendar,
-          label: "Timetable",
-          link: "/student/timetable",
-          breadcrumb: "My Timetable",
-        },
+
         {
           id: "chat",
           icon: MessageCircle,
@@ -308,7 +288,7 @@ const AdminLayout = ({
 
   const SidebarContent = useCallback(
     ({ collapsed = false }) => (
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         <div className="p-6">
           <div
             className={`flex items-center ${
@@ -339,7 +319,7 @@ const AdminLayout = ({
 
         <div className="w-[85%] h-[1px] bg-[#e4e2e2bf] mx-auto"></div>
 
-        <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
+        <nav className="flex-1 min-h-0 px-4 pr-2 space-y-1 mt-4 overflow-y-auto">
           {navItems.map((item) => (
             <NavItem key={item.id} item={item} collapsed={collapsed} />
           ))}
@@ -398,7 +378,7 @@ const AdminLayout = ({
       {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:fixed lg:left-0 lg:top-0 lg:h-full lg:z-50 lg:flex lg:flex-col bg-white dark:bg-navy-charcoal border-r border-slate-200 dark:border-white/5
-          transition-all duration-300 ease-in-out
+          transition-all duration-300 ease-in-out overflow-hidden
           ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
       >
         {/* Collapse Toggle */}

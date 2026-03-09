@@ -69,21 +69,21 @@ const DashboardHome = () => {
       description: "Conduct lectures and upload materials",
       icon: BookOpen,
       color: "from-blue-500 to-blue-600",
-      link: "/dashboard/teacher/lectures",
+      link: "/teacher/lectures",
     },
     {
       title: "Timetable",
       description: "View your course schedule",
       icon: Calendar,
       color: "from-purple-500 to-purple-600",
-      link: "/dashboard/teacher/timetable",
+      link: "/teacher/timetable",
     },
     {
       title: "Analytics",
       description: "Student progress and performance metrics",
       icon: BarChart3,
       color: "from-green-500 to-green-600",
-      link: "/dashboard/teacher/analytics",
+      link: "/teacher/analytics",
     },
   ];
 

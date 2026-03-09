@@ -52,13 +52,13 @@ const CourseGrid = ({
         {courses.length > 0 ? (
           courses.map((course) => (
             <CourseCard
-              key={course.id}
+              key={course._id || course.id}
               course={course}
               showRating={true}
               showReviews={true}
               showButton={true}
               buttonText="View Details"
-              onButtonClick={() => onCourseClick?.(course.id)}
+              onButtonClick={() => onCourseClick?.(course._id || course.id)}
             />
           ))
         ) : (

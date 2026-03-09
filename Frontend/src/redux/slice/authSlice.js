@@ -101,5 +101,6 @@ export const selectCurrentUser = (state) => state.auth.user;
 export const selectAccessToken = (state) => state.auth.accessToken;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectIsLoading = (state) => state.auth.isLoading;
+export const getAuthState = (state) => state.auth;
 
 export default authSlice.reducer;

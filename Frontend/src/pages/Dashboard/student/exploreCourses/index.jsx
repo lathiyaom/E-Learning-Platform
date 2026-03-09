@@ -12,6 +12,9 @@ import { getBreadcrumbs } from "../../../../utils/breadcrumbs";
 const ExploreCourses = () => {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("popular");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [priceFilter, setPriceFilter] = useState("all");
+  const [minRating, setMinRating] = useState(0);
 
   const { data: coursesData, isLoading } = useGetMarketplaceCoursesQuery(sortBy);
   const { data: enrollmentsData, refetch: refetchEnrollments } = useGetMyEnrollmentsQuery();
@@ -31,13 +34,33 @@ const ExploreCourses = () => {
 
   const filteredCourses = useMemo(() => {
     const normalized = search.trim().toLowerCase();
-    if (!normalized) return courses;
     return courses.filter((course) => {
       const title = (course.title || "").toLowerCase();
       const category = (course.category || "").toLowerCase();
-      return title.includes(normalized) || category.includes(normalized);
+      const rating = Number(course.rating || 0);
+      const price = Number(course.priceUSD ?? course.price ?? course.pricing ?? 0);
+
+      const matchesSearch = !normalized || title.includes(normalized) || category.includes(normalized);
+      const matchesCategory = categoryFilter === "all" || category === categoryFilter.toLowerCase();
+      const matchesPrice =
+        priceFilter === "all" ||
+        (priceFilter === "free" && price <= 0) ||
+        (priceFilter === "paid" && price > 0);
+      const matchesRating = rating >= minRating;
+
+      return matchesSearch && matchesCategory && matchesPrice && matchesRating;
     });
-  }, [courses, search]);
+  }, [courses, search, categoryFilter, priceFilter, minRating]);
+
+  const categories = useMemo(
+    () => Array.from(new Set(courses.map((course) => course.category).filter(Boolean))),
+    [courses],
+  );
+
+  const getCurrencySymbol = (currency) => {
+    const map = { USD: "$", INR: "INR ", EUR: "EUR " };
+    return map[currency] || "";
+  };
 
   const handleEnroll = async (courseId) => {
     try {
@@ -78,6 +101,37 @@ const ExploreCourses = () => {
             <option value="price_low_to_high">Price Low to High</option>
             <option value="price_high_to_low">Price High to Low</option>
           </select>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+          <select
+            value={priceFilter}
+            onChange={(e) => setPriceFilter(e.target.value)}
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+          >
+            <option value="all">All Prices</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+          <select
+            value={minRating}
+            onChange={(e) => setMinRating(Number(e.target.value))}
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+          >
+            <option value={0}>All Ratings</option>
+            <option value={3}>3+ Stars</option>
+            <option value={4}>4+ Stars</option>
+            <option value={5}>5 Stars</option>
+          </select>
         </div>
 
         {isLoading ? (
@@ -114,7 +168,7 @@ const ExploreCourses = () => {
                     </p>
                     <div className="flex items-center justify-between mt-4">
                       <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {Number(price) > 0 ? `$${price}` : "Free"}
+                        {Number(price) > 0 ? `${getCurrencySymbol(course.currency)}${price}` : "Free"}
                       </span>
                       <button
                         onClick={() => handleEnroll(courseId)}

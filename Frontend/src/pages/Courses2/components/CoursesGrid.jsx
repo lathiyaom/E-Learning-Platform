@@ -7,6 +7,7 @@ const CourseCard = ({ course, viewMode }) => {
   const [bookmarked, setBookmarked] = useState(false);
   const courseId = course._id || course.id;
   const price = course.priceUSD ?? course.price ?? course.pricing ?? 0;
+  const currencySymbol = course.currency === "INR" ? "INR " : course.currency === "EUR" ? "EUR " : "$";
 
   if (viewMode === "list") {
     return (
@@ -53,7 +54,7 @@ const CourseCard = ({ course, viewMode }) => {
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
             <div>
               <span className="text-xl font-black text-slate-900 dark:text-white">
-                {course.isPaid ? `$${price}` : "FREE"}
+                {course.isPaid ? `${currencySymbol}${price}` : "FREE"}
               </span>
             </div>
             <Link
@@ -140,7 +141,7 @@ const CourseCard = ({ course, viewMode }) => {
         <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-3">
           <div>
             <span className="text-xl font-black text-slate-900 dark:text-white">
-              {course.isPaid ? `$${price}` : "FREE"}
+              {course.isPaid ? `${currencySymbol}${price}` : "FREE"}
             </span>
           </div>
           <Link

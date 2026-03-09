@@ -19,7 +19,7 @@ const eventSchema = new mongoose.Schema(
     },
     event_type: {
       type: String,
-      enum: ["holiday", "exam", "meeting", "workshop", "deadline", "celebration", "other"],
+      enum: ["holiday", "meeting", "workshop", "deadline", "celebration", "other"],
       required: true,
     },
     start_date: {

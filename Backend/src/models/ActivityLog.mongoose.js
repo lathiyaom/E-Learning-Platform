@@ -44,9 +44,7 @@ const activityLogSchema = new mongoose.Schema(
         "enrollment_created",
         "enrollment_completed",
         "attendance_marked",
-        "exam_created",
-        "exam_submitted",
-        "login_success",
+                "login_success",
         "login_failed",
         "logout",
         "password_changed",
@@ -61,7 +59,7 @@ const activityLogSchema = new mongoose.Schema(
     },
     target_type: {
       type: String,
-      enum: ["User", "Tenant", "Course", "Enrollment", "Exam", "Attendance"],
+      enum: ["User", "Tenant", "Course", "Enrollment", "Attendance"],
     },
     
     // Additional metadata

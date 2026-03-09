@@ -28,7 +28,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["assignment", "grade", "announcement", "event", "system", "course", "exam"],
+      enum: ["assignment", "grade", "announcement", "event", "system", "course"],
       default: "system",
       index: true,
     },

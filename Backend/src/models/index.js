@@ -8,8 +8,10 @@ const Newsletter = require("./Newsletter.mongoose");
 
 // New Feature Models
 const Attendance = require("./Attendance.mongoose");
-const Exam = require("./Exam.mongoose");
-const ExamSubmission = require("./ExamSubmission.mongoose");
+const Assignment = require("./Assignment.mongoose");
+const AssignmentSubmission = require("./AssignmentSubmission.mongoose");
+const CourseMaterial = require("./CourseMaterial.mongoose");
+
 const Enrollment = require("./Enrollment.mongoose");
 const Feedback = require("./Feedback.mongoose");
 const Notification = require("./Notification.mongoose");
@@ -18,7 +20,6 @@ const Notification = require("./Notification.mongoose");
 const Event = require("./Event.mongoose");
 const Holiday = require("./Holiday.mongoose");
 const Lecture = require("./Lecture.mongoose");
-const Timetable = require("./Timetable.mongoose");
 const Rating = require("./Rating.mongoose");
 
 // System Models
@@ -26,23 +27,6 @@ const ActivityLog = require("./ActivityLog.mongoose");
 const Conversation = require("./Conversation.mongoose");
 const Message = require("./Message.mongoose");
 
-// Sequelize Models (COMMENTED OUT)
-// const User = require("./User");
-// const Course = require("./Course");
-// const ContactUs = require("./ContactUs");
-// const Tenant = require("./tenants");
-// const Bookmark = require("./Bookmark");
-// const Newsletter = require("./Newsletter");
-
-// Sequelize relationships (COMMENTED OUT - MongoDB uses refs in schemas)
-// User.hasMany(Bookmark, { foreignKey: "userId", onDelete: "CASCADE" });
-// Bookmark.belongsTo(User);
-// Course.hasMany(Bookmark, { foreignKey: "courseId", onDelete: "CASCADE" });
-// Bookmark.belongsTo(Course);
-// Tenant.hasMany(User, { foreignKey: "tenantId", onDelete: "CASCADE" });
-// User.belongsTo(Tenant);
-// User.hasMany(ContactUs, { foreignKey: "userId", onDelete: "SET NULL" });
-// ContactUs.belongsTo(User);
 
 module.exports = {
   User,
@@ -52,15 +36,16 @@ module.exports = {
   Bookmark,
   Newsletter,
   Attendance,
-  Exam,
-  ExamSubmission,
+  Assignment,
+  AssignmentSubmission,
+  CourseMaterial,
+
   Enrollment,
   Feedback,
   Notification,
   Event,
   Holiday,
   Lecture,
-  Timetable,
   Rating,
   ActivityLog,
   Conversation,

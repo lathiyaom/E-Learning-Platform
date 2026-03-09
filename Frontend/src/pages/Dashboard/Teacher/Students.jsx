@@ -92,8 +92,8 @@ const Students = () => {
                               : enrollment.studentId}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {enrollment.enrollmentDate
-                              ? new Date(enrollment.enrollmentDate).toLocaleDateString()
+                            {enrollment.enrollmentDate || enrollment.enrolledAt || enrollment.enrolled_at
+                              ? new Date(enrollment.enrollmentDate || enrollment.enrolledAt || enrollment.enrolled_at).toLocaleDateString()
                               : "-"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -101,11 +101,11 @@ const Students = () => {
                               <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
                                 <div
                                   className="bg-blue-600 h-2 rounded-full"
-                                  style={{ width: `${enrollment.progressPercent}%` }}
+                                  style={{ width: `${enrollment.progressPercent ?? enrollment.progress ?? 0}%` }}
                                 ></div>
                               </div>
                               <span className="text-sm text-gray-600">
-                                {enrollment.progressPercent}%
+                                {enrollment.progressPercent ?? enrollment.progress ?? 0}%
                               </span>
                             </div>
                           </td>

@@ -4,7 +4,7 @@ import { Button } from "./../../components/Button";
 import ShinyText from "../../components/shyniText";
 import ReusableCard from "../Home/services/cards";
 import { useNavigate } from "react-router-dom";
-import { useGetAllCoursesQuery } from "../../redux";
+import { useGetMarketplaceCoursesQuery } from "../../redux";
 import { ErrorToster, InfoToster } from "../../components/toster";
 
 function CoursesGrids() {
@@ -37,11 +37,7 @@ function CoursesGrids() {
   ];
 
   // RTK Query hook with sort parameter
-  const {
-    data: courses,
-    isLoading,
-    error,
-  } = useGetAllCoursesQuery(selectedSort);
+  const { data: courses, isLoading, error } = useGetMarketplaceCoursesQuery(selectedSort);
 
   const showToggle = () => setOpen((prev) => !prev);
   const showSortToggle = () => setSortOpen((prev) => !prev);
@@ -216,7 +212,7 @@ function CoursesGrids() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 ">
                 {filteredCourses.map((course) => (
                   <ReusableCard
-                    key={course.id}
+                    key={course._id || course.id}
                     image={
                       course.image ||
                       "https://placehold.co/600x400?text=Course+Image"
@@ -229,8 +225,9 @@ function CoursesGrids() {
                     buttonText="View Course"
                     tags={course.tags || []}
                     onButtonClick={() => {
+                      const courseId = course._id || course.id;
                       const cleanCourse = {
-                        id: course.id,
+                        id: courseId,
                         image: course.image,
                         title: course.title,
                         content: course.description,
@@ -239,7 +236,7 @@ function CoursesGrids() {
                         tags: course.tags,
                         videoUrl: course.videoUrl,
                       };
-                      navigate(`/card/${course.id}`, { state: cleanCourse });
+                      navigate(`/card/${courseId}`, { state: cleanCourse });
                     }}
                     onCardClick={() =>
                       console.log(`${course.title} - Card clicked!`)

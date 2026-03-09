@@ -2,7 +2,12 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import { useGetCourseEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
-import { useMarkAttendanceMutation } from "../../../redux/Apis/attendanceApi";
+import {
+  useDeleteAttendanceMutation,
+  useGetAttendanceReportQuery,
+  useMarkAttendanceMutation,
+  useUpdateAttendanceMutation,
+} from "../../../redux/Apis/attendanceApi";
 import { selectCurrentUser } from "../../../redux/slice/authSlice";
 import AdminLayout from "../../../utils/Adminlayoute";
 
@@ -17,7 +22,12 @@ const Attendance = () => {
     selectedCourse,
     { skip: !selectedCourse }
   );
+  const { data: attendanceReportData, refetch: refetchAttendanceReport } = useGetAttendanceReportQuery(selectedCourse, {
+    skip: !selectedCourse,
+  });
   const [markAttendance, { isLoading: submitting }] = useMarkAttendanceMutation();
+  const [updateAttendance, { isLoading: updating }] = useUpdateAttendanceMutation();
+  const [deleteAttendance, { isLoading: deleting }] = useDeleteAttendanceMutation();
 
   const courseId = selectedCourse;
   const courseList = coursesData?.data || [];
@@ -28,6 +38,22 @@ const Attendance = () => {
       String(course?.teacher_id?._id || course?.teacher_id || "") === teacherId
   );
   const students = enrollmentsData?.data || [];
+  const attendanceReport = attendanceReportData?.data || [];
+
+  const existingAttendance = attendanceReport.find((record) => {
+    const recordDate = new Date(record.classDate).toISOString().split("T")[0];
+    return recordDate === selectedDate;
+  });
+
+  React.useEffect(() => {
+    if (existingAttendance?.attendanceRecords?.length) {
+      const next = {};
+      existingAttendance.attendanceRecords.forEach((record) => {
+        next[record.studentId] = record.status;
+      });
+      setAttendanceData(next);
+    }
+  }, [existingAttendance?._id]);
 
   const handleStatusChange = (studentId, newStatus) => {
     setAttendanceData((prev) => ({
@@ -51,17 +77,43 @@ const Attendance = () => {
         };
       });
 
-      await markAttendance({
-        courseId,
-        classDate: selectedDate,
-        attendanceRecords,
-      }).unwrap();
-
-      alert("Attendance marked successfully!");
+      if (existingAttendance?._id) {
+        await updateAttendance({
+          id: existingAttendance._id,
+          attendanceRecords,
+        }).unwrap();
+        alert("Attendance updated successfully!");
+      } else {
+        await markAttendance({
+          courseId,
+          classDate: selectedDate,
+          attendanceRecords,
+        }).unwrap();
+        alert("Attendance marked successfully!");
+      }
       setAttendanceData({});
+      refetchAttendanceReport();
     } catch (error) {
       console.error("Error marking attendance:", error);
       alert("Failed to mark attendance: " + (error?.data?.message || error?.message));
+    }
+  };
+
+  const handleDeleteAttendance = async () => {
+    if (!existingAttendance?._id) {
+      alert("No attendance record found for selected date.");
+      return;
+    }
+    if (!window.confirm("Delete attendance for selected date?")) {
+      return;
+    }
+    try {
+      await deleteAttendance(existingAttendance._id).unwrap();
+      alert("Attendance deleted successfully.");
+      setAttendanceData({});
+      refetchAttendanceReport();
+    } catch (error) {
+      alert("Failed to delete attendance: " + (error?.data?.message || error?.message));
     }
   };
 
@@ -173,13 +225,28 @@ const Attendance = () => {
                   </table>
                 </div>
 
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex justify-end gap-3">
+                  {existingAttendance && (
+                    <button
+                      onClick={handleDeleteAttendance}
+                      disabled={deleting}
+                      className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {deleting ? "Deleting..." : "Delete Attendance"}
+                    </button>
+                  )}
                   <button
                     onClick={handleSubmit}
-                    disabled={submitting}
+                    disabled={submitting || updating}
                     className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
                   >
-                    {submitting ? "Submitting..." : "Submit Attendance"}
+                    {submitting || updating
+                      ? existingAttendance
+                        ? "Updating..."
+                        : "Submitting..."
+                      : existingAttendance
+                        ? "Update Attendance"
+                        : "Submit Attendance"}
                   </button>
                 </div>
               </>

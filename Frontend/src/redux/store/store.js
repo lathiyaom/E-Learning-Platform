@@ -4,14 +4,14 @@ import { attendanceApi } from "../Apis/attendanceApi";
 import { notificationApi } from "../Apis/notificationApi";
 import { feedbackApi } from "../Apis/feedbackApi";
 import { enrollmentApi } from "../Apis/enrollmentApi";
-import { examApi } from "../Apis/examApi";
+import { assignmentApi } from "../Apis/assignmentApi";
+
 import { bookmarkApi } from "../Apis/bookmarkApi";
 import { holidayApi } from "../Apis/holidayApi";
 import { uploadApi } from "../Apis/uploadApi";
 import { newsletterApi } from "../Apis/newsletterApi";
 import authReducer from "../slice/authSlice";
 import lectureReducer from "../Apis/lectureApi";
-import timetableReducer from "../Apis/timetableApi";
 import eventReducer from "../Apis/eventApi";
 import analyticsReducer from "../Apis/analyticsApi";
 import calendarReducer from "../Apis/calendarApi";
@@ -27,8 +27,9 @@ export const store = configureStore({
     [notificationApi.reducerPath]: notificationApi.reducer,
     [feedbackApi.reducerPath]: feedbackApi.reducer,
     [enrollmentApi.reducerPath]: enrollmentApi.reducer,
-    [examApi.reducerPath]: examApi.reducer,
-    [bookmarkApi.reducerPath]: bookmarkApi.reducer,
+    [assignmentApi.reducerPath]: assignmentApi.reducer,
+
+        [bookmarkApi.reducerPath]: bookmarkApi.reducer,
     [holidayApi.reducerPath]: holidayApi.reducer,
     [uploadApi.reducerPath]: uploadApi.reducer,
     [newsletterApi.reducerPath]: newsletterApi.reducer,
@@ -38,8 +39,7 @@ export const store = configureStore({
     
     // Slice reducers (using createSlice with createAsyncThunk)
     lecture: lectureReducer,
-    timetable: timetableReducer,
-    event: eventReducer,
+        event: eventReducer,
     analytics: analyticsReducer,
     calendar: calendarReducer,
     profile: profileReducer,
@@ -52,8 +52,9 @@ export const store = configureStore({
       notificationApi.middleware,
       feedbackApi.middleware,
       enrollmentApi.middleware,
-      examApi.middleware,
-      bookmarkApi.middleware,
+      assignmentApi.middleware,
+
+            bookmarkApi.middleware,
       holidayApi.middleware,
       uploadApi.middleware,
       newsletterApi.middleware

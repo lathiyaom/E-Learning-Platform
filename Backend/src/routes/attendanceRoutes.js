@@ -44,7 +44,7 @@ router.delete(
   "/:id",
   authenticate,
   tenantScope,
-  authorize("admin"),
+  authorize("teacher", "admin"),
   attendanceController.deleteAttendance
 );
 

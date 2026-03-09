@@ -1,4 +1,4 @@
-const { Lecture, Timetable, Exam, Event, Holiday, Enrollment } = require("../models");
+const { Lecture, Event, Holiday, Enrollment } = require("../models");
 
 const calendarService = {
   /**
@@ -15,9 +15,7 @@ const calendarService = {
       for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
         const dateKey = date.toISOString().split("T")[0];
         calendarData[dateKey] = {
-          timetable: [],
           lectures: [],
-          exams: [],
           events: [],
           holidays: [],
         };
@@ -55,48 +53,7 @@ const calendarService = {
         }
       });
 
-      // Get timetable (recurring schedule)
-      const timetables = await Timetable.find({
-        ...baseQuery,
-        ...additionalQuery,
-        isActive: true,
-      }).populate("courseId", "title");
-
-      timetables.forEach((tt) => {
-        for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-          const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-          if (dayName === tt.dayOfWeek) {
-            const dateKey = date.toISOString().split("T")[0];
-            calendarData[dateKey].timetable.push({
-              id: tt._id,
-              title: tt.courseId.title,
-              time: `${tt.startTime} - ${tt.endTime}`,
-              room: tt.room,
-              type: tt.type,
-            });
-          }
-        }
-      });
-
-      // Get exams
-      const exams = await Exam.find({
-        ...baseQuery,
-        ...additionalQuery,
-        examDate: { $gte: startDate, $lte: endDate },
-      }).populate("courseId", "title");
-
-      exams.forEach((exam) => {
-        const dateKey = exam.examDate.toISOString().split("T")[0];
-        if (calendarData[dateKey]) {
-          calendarData[dateKey].exams.push({
-            id: exam._id,
-            title: `${exam.courseId.title} - ${exam.examType}`,
-            time: `${exam.startTime} - ${exam.endTime}`,
-            totalMarks: exam.totalMarks,
-          });
-        }
-      });
-
+      
       // Get events
       const eventQuery = {
         tenantId,
@@ -163,9 +120,7 @@ const calendarService = {
         const dateKey = date.toISOString().split("T")[0];
         weekData[dateKey] = {
           day: days[i],
-          timetable: [],
           lectures: [],
-          exams: [],
           events: [],
           holidays: [],
         };

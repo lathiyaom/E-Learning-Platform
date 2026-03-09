@@ -87,7 +87,7 @@ const MyCourses = () => {
                   <span className="text-gray-600">Price:</span>
                   <span className="font-medium">
                     {Number(course.price ?? course.priceUSD ?? course.pricing ?? 0) > 0
-                      ? `$${course.price ?? course.priceUSD ?? course.pricing}`
+                      ? `${course.currency === "INR" ? "INR " : course.currency === "EUR" ? "EUR " : "$"}${course.price ?? course.priceUSD ?? course.pricing}`
                       : "Free"}
                   </span>
                 </div>

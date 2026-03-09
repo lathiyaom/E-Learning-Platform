@@ -209,7 +209,7 @@ const removeTeacherFromOrganization = async (tenantId, teacherId) => {
 // ✅ Get organization's data with isolation (courses, students, events, etc.)
 const getOrganizationDataForTeacher = async (teacherId, organizationId) => {
   try {
-    const { Course, Enrollment, Event, Timetable } = require("../models");
+    const { Course, Enrollment, Event } = require("../models");
 
     // Verify teacher belongs to this organization
     const teacher = await User.findById(teacherId);
@@ -218,11 +218,10 @@ const getOrganizationDataForTeacher = async (teacherId, organizationId) => {
     }
 
     // Get isolated data for this organization
-    const [courses, enrollments, events, timetable] = await Promise.all([
+    const [courses, enrollments, events] = await Promise.all([
       Course.find({ tenantId: organizationId }).lean(),
       Enrollment.find({ tenantId: organizationId }).lean(),
       Event.find({ tenantId: organizationId }).lean(),
-      Timetable.find({ tenantId: organizationId }).lean(),
     ]);
 
     return {
@@ -231,7 +230,6 @@ const getOrganizationDataForTeacher = async (teacherId, organizationId) => {
         courses,
         enrollments,
         events,
-        timetable,
       },
     };
   } catch (error) {

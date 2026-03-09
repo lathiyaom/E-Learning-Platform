@@ -1,4 +1,4 @@
-const { User } = require("../models");
+const { User, Tenant } = require("../models");
 const validators = require("../utils/validators");
 
 const createUser = async (userData) => {
@@ -56,6 +56,11 @@ const createUser = async (userData) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new Error("User already exists with this email");
+  }
+
+  const existingTenant = await Tenant.findOne({ email });
+  if (existingTenant) {
+    throw new Error("Email already exists as organization account");
   }
 
   const newUser = await User.create({

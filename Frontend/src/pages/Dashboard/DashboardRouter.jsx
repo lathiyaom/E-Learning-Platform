@@ -10,7 +10,6 @@ import AdminAnalyticsDashboard from "./Admin/AdminAnalyticsDashboard";
 
 // Teacher Dashboard Pages
 import TeacherLectureManagement from "./Teacher/TeacherLectureManagement";
-import TeacherTimetableView from "./Teacher/TeacherTimetableView";
 import TeacherAnalyticsDashboard from "./Teacher/TeacherAnalyticsDashboard";
 
 // Student Dashboard Pages
@@ -44,8 +43,7 @@ const DashboardRouter = () => {
       {(userRole === "teacher" || userRole === "admin") && (
         <>
           <Route path="teacher/lectures" element={<TeacherLectureManagement />} />
-          <Route path="teacher/timetable" element={<TeacherTimetableView />} />
-          <Route path="teacher/analytics" element={<TeacherAnalyticsDashboard />} />
+                    <Route path="teacher/analytics" element={<TeacherAnalyticsDashboard />} />
         </>
       )}
 

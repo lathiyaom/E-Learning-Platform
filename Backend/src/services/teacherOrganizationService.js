@@ -3,7 +3,7 @@
  * Handles teacher assignment to multiple organizations and organization switching
  */
 
-const { User, Tenant, Course, Enrollment, Attendance, Exam, Rating, Feedback } = require("../models");
+const { User, Tenant, Course, Enrollment, Attendance, Rating, Feedback } = require("../models");
 
 const teacherOrganizationService = {
   /**
@@ -228,22 +228,13 @@ const teacherOrganizationService = {
         },
       ]);
 
-      // Get upcoming exams
-      const upcomingExams = await Exam.countDocuments({
-        tenantId: organizationId,
-        courseId: { $in: courseIds },
-        startDate: { $gte: new Date() },
-        status: "published",
-      });
-
       return {
         organizationId,
         totalCourses: courses.length,
         totalStudents: enrollments,
         averageRating: ratings[0]?.avgRating?.toFixed(2) || 0,
         totalRatings: ratings[0]?.totalRatings || 0,
-        upcomingExams,
-      };
+              };
     } catch (error) {
       throw new Error(`Failed to get teacher stats: ${error.message}`);
     }
@@ -279,12 +270,7 @@ const teacherOrganizationService = {
             .populate("studentId", "firstName lastName")
             .sort({ date: -1 });
 
-        case "exams":
-          query.createdBy = teacherId;
-          return await Exam.find(query)
-            .populate("courseId", "title")
-            .sort({ startDate: -1 });
-
+        
         case "ratings":
           const teacherCourses = await Course.find({ tenantId: organizationId, createdBy: teacherId });
           const teacherCourseIds = teacherCourses.map(c => c._id);

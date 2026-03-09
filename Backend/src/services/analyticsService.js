@@ -1,4 +1,4 @@
-const { Course, User, Enrollment, Attendance, ExamSubmission, Rating, Feedback } = require("../models");
+const { Course, User, Enrollment, Attendance, Rating, Feedback } = require("../models");
 
 const byTenant = (tenantId) => ({ $or: [{ tenantId }, { organization_id: tenantId }, { tenant_id: tenantId }] });
 
@@ -108,31 +108,7 @@ const analyticsService = {
         "attendanceRecords.studentId": studentId,
       });
 
-      const examResults = await ExamSubmission.aggregate([
-        { $match: { studentId } },
-        {
-          $lookup: {
-            from: "exams",
-            localField: "examId",
-            foreignField: "_id",
-            as: "exam",
-          },
-        },
-        { $unwind: { path: "$exam", preserveNullAndEmptyArrays: false } },
-        {
-          $match: {
-            "exam.courseId": { $in: courseIds },
-          },
-        },
-        {
-          $group: {
-            _id: "$exam.courseId",
-            averageScore: { $avg: "$totalScore" },
-            totalExams: { $sum: 1 },
-          },
-        },
-      ]);
-
+      
       const courseProgress = enrolledCourses.map((enrollment) => ({
         courseId: enrollment.courseId?._id || enrollment.course_id?._id,
         courseName: enrollment.courseId?.title || enrollment.course_id?.title,
@@ -142,8 +118,7 @@ const analyticsService = {
       return {
         enrolledCoursesCount: enrolledCourses.length,
         attendancePercentage: totalClasses > 0 ? Math.round((attendedClasses / totalClasses) * 100) : 0,
-        examResults,
-        courseProgress,
+                courseProgress,
       };
     } catch (error) {
       throw new Error(`Failed to get student dashboard: ${error.message}`);

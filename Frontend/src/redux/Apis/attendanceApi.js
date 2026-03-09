@@ -9,7 +9,9 @@ export const attendanceApi = createApi({
     credentials: "include",
     prepareHeaders: (headers, { getState }) => {
       const token = getState().auth?.accessToken;
+      const sessionId = getState().auth?.sessionId;
       if (token) headers.set("Authorization", `Bearer ${token}`);
+      if (sessionId) headers.set("X-Session-Id", sessionId);
       headers.set("Content-Type", "application/json");
       return headers;
     },
