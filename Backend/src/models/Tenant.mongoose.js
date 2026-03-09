@@ -69,6 +69,15 @@ const tenantSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Password reset fields
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+    passwordResetTokenExpiry: {
+      type: Date,
+      default: null,
+    },
     sessions: [
       {
         sid: {

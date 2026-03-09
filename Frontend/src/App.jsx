@@ -7,6 +7,8 @@ import About from "./pages/About2/index";
 import ContactUs from "./pages/CountectUs/index";
 import Index from "./pages/Courses2/index";
 import Login from "./pages/Login/index.jsx";
+import ForgotPassword from "./pages/ForgotPassword/index.jsx";
+import ResetPassword from "./pages/ResetPassword/index.jsx";
 import SignUp from "./pages/Sign-Up/index.jsx";
 import OrganizationRegister from "./pages/Register/OrganizationRegister.jsx";
 import CardDetail from "./pages/Courses/Videocard.jsx";
@@ -107,6 +109,8 @@ function App() {
             <Route path="/" element={<HomeNew />} />
             <Route path="/home-classic" element={<Home />} />
             <Route path="/Login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/Sign-Up" element={<SignUp />} />
             <Route path="/register-organization" element={<OrganizationRegister />} />
             <Route path="/courses" element={<Index />} />
