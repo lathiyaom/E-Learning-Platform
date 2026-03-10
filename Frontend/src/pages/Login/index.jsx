@@ -1,21 +1,60 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../../components/Button";
-import ilus from "../../assets/imgs/ilustrater.png";
-
+import logo from "../../assets/imgs/logo.png";
+import loginBanner from "../../assets/imgs/login-banner.jpg";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation, setCredentials } from "../../redux";
 import { SuccessToster, ErrorToster } from "../../components/toster";
 import { getApiErrorMessage } from "../../utils/apiError";
 
+// ─── Inline SVG icon primitives ────────────────────────────────────────────
+const IconMail = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+
+const IconLock = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+  </svg>
+);
+
+const IconEye = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);
+
+const IconEyeOff = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+  </svg>
+);
+
+const IconArrowRight = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+  </svg>
+);
+
+const IconBuilding = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+  </svg>
+);
+// ───────────────────────────────────────────────────────────────────────────
+
 function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  // Get auth state from Redux
+
   const { user, isAuthenticated } = useSelector((state) => state.auth);
 
   const [login, { isLoading }] = useLoginMutation();
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [data, setData] = useState({
     email: "",
@@ -23,7 +62,6 @@ function Login() {
     Rememberme: false,
   });
 
-  // ✅ Check if user is already logged in (even if Redux state is lost)
   useEffect(() => {
     const checkExistingSession = async () => {
       // First check Redux state
@@ -41,20 +79,19 @@ function Login() {
         return;
       }
 
-      // Check sessionStorage for persisted auth
       try {
         const storedAuth = sessionStorage.getItem("authUser");
         if (storedAuth) {
           const { user: storedUser, accessToken, refreshToken, sessionId } = JSON.parse(storedAuth);
           if (storedUser && accessToken) {
             // Restore Redux state
-            dispatch(setCredentials({ 
-              user: storedUser, 
+            dispatch(setCredentials({
+              user: storedUser,
               accessToken,
               refreshToken,
               sessionId,
             }));
-            
+
             const userType = storedUser.userType?.toLowerCase();
             const dashboardMap = {
               superadmin: "/superadmin/dashboard",
@@ -138,11 +175,7 @@ function Login() {
 
         SuccessToster("Logged In Successfully", 800);
 
-        setData({
-          email: "",
-          password: "",
-          Rememberme: false,
-        });
+        setData({ email: "", password: "", Rememberme: false });
 
         // Role-based routing using userType (case-insensitive)
         const userType = authUser.userType?.toLowerCase();
@@ -170,10 +203,10 @@ function Login() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      
+
       // Handle different types of errors
       let errorMessage = getApiErrorMessage(error, "Login failed. Please try again.");
-      
+
       if (error?.status === 400) {
         errorMessage = error?.data?.message || "Invalid request. Please check your input.";
       } else if (error?.status === 401) {
@@ -181,10 +214,8 @@ function Login() {
       } else if (error?.status === 403) {
         if (error?.data?.message?.includes("already logged in")) {
           errorMessage = "You are already logged in. Redirecting to dashboard...";
-          
-          // Force redirect to dashboard after showing message
+
           setTimeout(() => {
-            // Try to get user from Redux state
             const currentUser = user;
             if (currentUser) {
               const userType = currentUser.userType?.toLowerCase();
@@ -196,7 +227,6 @@ function Login() {
               };
               navigate(dashboardMap[userType] || "/", { replace: true });
             } else {
-              // If no user in state, redirect to home
               navigate("/", { replace: true });
             }
           }, 2000);
@@ -213,156 +243,276 @@ function Login() {
 
   return (
     <React.Fragment>
-      <section
-        className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 
-                              flex items-center justify-center px-4 sm:px-6 lg:px-8"
-      >
-        <div className="w-full max-w-6xl mx-auto">
-          <div className="text-center mb-8 lg:mb-12">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 font-serif tracking-tight">
-              Welcome Back
-            </h1>
-            <p className="mt-3 text-base sm:text-lg lg:text-xl text-gray-600 font-light">
-              Sign in to your account
-            </p>
+      {/* Full-viewport split layout */}
+      <main className="flex flex-col lg:flex-row w-full min-h-screen bg-white dark:bg-slate-900 overflow-hidden">
+
+        <aside
+          className="hidden lg:flex lg:w-1/2 relative p-12 flex-col justify-between overflow-hidden"
+          style={{ background: "radial-gradient(circle at top left, #f3e8ff 0%, #ffffff 100%)" }}
+        >
+          {/* Dark-mode override */}
+          <div className="absolute inset-0 bg-slate-800 opacity-0 dark:opacity-100 pointer-events-none" aria-hidden="true" />
+
+          {/* Decorative blobs */}
+          <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+
+          {/* Logo */}
+          <div className="relative z-10">
+            <div className="flex items-center gap-4 mb-5">
+              <img
+                src={logo}
+                alt="EduVerse logo"
+                className="h-14 w-14 object-contain shrink-0 drop-shadow-md"
+              />
+              <div className="flex flex-col">
+                <span className="text-3xl font-extrabold tracking-tight leading-none select-none">
+                  <span className="text-slate-800 dark:text-white">Edu</span><span className="text-primary select-none">Verse</span>
+                </span>
+                <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 select-none">
+                  Learn&nbsp;·&nbsp;Grow&nbsp;·&nbsp;Succeed
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 xl:gap-20">
-            <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl order-2 lg:order-1">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 lg:p-10">
-                <form className="space-y-6" onSubmit={handelsubmit}>
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={data.email}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm 
-                                                     focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                                                     transition-all duration-200 font-sans text-gray-900
-                                                     placeholder:text-gray-400"
-                      placeholder="Enter your email"
-                    />
-                  </div>
+          {/* Illustration + copy */}
+          <div className="relative z-10 flex flex-col items-center gap-8">
+            <img
+              src={loginBanner}
+              alt="Students learning online"
+              className="w-full max-w-sm h-auto rounded-3xl shadow-2xl object-cover
+                         transform transition-transform duration-500"
+            />
 
-                  <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                    >
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={data.password}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm 
-                                                     focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                                                     transition-all duration-200 font-sans text-gray-900
-                                                     placeholder:text-gray-400"
-                      placeholder="Enter your password"
-                    />
-                  </div>
+            <div className="text-center space-y-4 px-4">
+              <h2 className="text-4xl font-extrabold text-slate-800 dark:text-white leading-tight">
+                Give Wings to Your <span className="text-primary italic">Dreams</span>
+              </h2>
+              <p className="text-base text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                Transform your aspirations into achievements with our comprehensive
+                programs designed for success.
+              </p>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <label className="flex items-center font-sans">
-                      <input
-                        type="checkbox"
-                        name="Rememberme"
-                        checked={data.Rememberme}
-                        onChange={handleChange}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-gray-600">Remember me</span>
-                    </label>
-                    <Link
-                      to="/forgot-password"
-                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 
-                                                     underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+              {/* Stats strip */}
+              <div className="pt-2 flex items-center justify-center gap-6">
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-slate-800 dark:text-white">500+</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Courses</p>
+                </div>
+                <div className="w-px h-10 bg-slate-300 dark:bg-slate-600" aria-hidden="true" />
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-slate-800 dark:text-white">10k+</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Students</p>
+                </div>
+                <div className="w-px h-10 bg-slate-300 dark:bg-slate-600" aria-hidden="true" />
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-slate-800 dark:text-white">4.9★</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Rating</p>
+                </div>
+              </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    aria-busy={isLoading}
-                    className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 
-    hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-6 
-    rounded-lg font-medium transition-all duration-200 shadow-lg 
-    hover:shadow-xl font-sans flex items-center justify-center gap-2
-    ${isLoading ? "opacity-80 cursor-not-allowed" : "hover:scale-[1.02]"}`}
+              {/* Joined label */}
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 pt-2">
+                Joined by 10,000+ students worldwide
+              </p>
+            </div>
+          </div>
+
+          
+        </aside>
+
+        {/* ═══════════════════════ RIGHT PANEL — Auth Form ═══════════════════════ */}
+        <section className="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-10 lg:p-16 bg-white dark:bg-slate-900">
+
+          {/* Mobile logo — hidden on desktop */}
+          <div className="flex lg:hidden items-center gap-3 mb-10">
+            <img src={logo} alt="EduVerse logo" className="h-10 w-10 object-contain shrink-0 drop-shadow-sm" />
+            <div className="flex flex-col">
+              <span className="text-xl font-extrabold tracking-tight leading-none">
+                <span className="text-slate-800 dark:text-white">Edu</span><span className="text-primary">Verse</span>
+              </span>
+              <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">
+                Learn&nbsp;·&nbsp;Grow&nbsp;·&nbsp;Succeed
+              </span>
+            </div>
+          </div>
+
+          <div className="max-w-md mx-auto w-full">
+
+            {/* ── Heading ── */}
+            <div className="mb-7">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-1">
+                Welcome Back
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Please enter your details to sign in to your account.
+              </p>
+            </div>
+
+            {/* ── Auth Form ── */}
+            <form className="space-y-5" onSubmit={handelsubmit} noValidate>
+
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                >
+                  Email Address
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <IconMail className="w-5 h-5" />
+                  </span>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="example@eduverse.com"
+                    value={data.email}
+                    onChange={handleChange}
+                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none
+                               rounded-xl focus:ring-2 focus:ring-primary/30 dark:text-white text-sm
+                               shadow-sm transition-all outline-none placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-semibold text-slate-700 dark:text-slate-300"
                   >
-                    {isLoading ? (
-                      <>
-                        <span className="text-sm">Logging in</span>
-                        <span
-                          className="w-4 h-4 border-2 border-white border-t-transparent 
-        rounded-full animate-spin"
-                          aria-hidden="true"
-                        />
-                      </>
-                    ) : (
-                      "Login in"
-                    )}
-                  </Button>
-
-                  <div className="text-center pt-4 border-t border-gray-100 space-y-3">
-                    <p className="text-sm text-gray-600 font-sans">
-                      Don't have an account?{" "}
-                      <Link
-                        to="/Sign-Up"
-                        className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
-                      >
-                        Create account
-                      </Link>
-                    </p>
-                    
-                    {/* Organization Registration Link */}
-                    <div className="pt-3 border-t border-gray-100">
-                      <p className="text-sm text-gray-600 font-sans mb-2">
-                        Want to register your organization?
-                      </p>
-                      <Link
-                        to="/register-organization"
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        Register as Organization Owner
-                      </Link>
-                    </div>
-                  </div>
-                </form>
+                    Password
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <IconLock className="w-5 h-5" />
+                  </span>
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={data.password}
+                    onChange={handleChange}
+                    className="w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800 border-none
+                               rounded-xl focus:ring-2 focus:ring-primary/30 dark:text-white text-sm
+                               shadow-sm transition-all outline-none placeholder:text-slate-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400
+                               hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword
+                      ? <IconEyeOff className="w-5 h-5" />
+                      : <IconEye className="w-5 h-5" />
+                    }
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="w-full max-w-md lg:max-w-lg xl:max-w-2xl order-1 lg:order-2">
-              <div className="relative">
-                <img
-                  src={ilus}
-                  alt="Login illustration"
-                  className="w-full h-auto max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl mx-auto 
-                                             drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+              {/* Remember me */}
+              <div className="flex items-center gap-2">
+                <input
+                  id="remember"
+                  name="Rememberme"
+                  type="checkbox"
+                  checked={data.Rememberme}
+                  onChange={handleChange}
+                  className="w-4 h-4 rounded accent-primary focus:ring-primary
+                             border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800
+                             cursor-pointer"
                 />
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-200 rounded-full opacity-60 animate-pulse"></div>
-                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-purple-200 rounded-full opacity-60 animate-pulse delay-1000"></div>
+                <label
+                  htmlFor="remember"
+                  className="text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none"
+                >
+                  Remember me for 30 days
+                </label>
               </div>
+
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                aria-busy={isLoading}
+                className={`w-full bg-primary text-white font-bold py-4 rounded-xl
+                            shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:brightness-105
+                            active:scale-[0.98] transition-all flex items-center justify-center gap-2
+                            ${isLoading ? "opacity-80 cursor-not-allowed" : ""}`}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="text-sm">Signing in…</span>
+                    <span
+                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                      aria-hidden="true"
+                    />
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <IconArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* ── Divider ── */}
+            <div className="my-8 flex items-center gap-4" aria-hidden="true">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">
+                or
+              </span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
             </div>
+
+            {/* ── Sign up link ── */}
+            <p className="text-center text-slate-500 dark:text-slate-400 text-sm">
+              Don&apos;t have an account?{" "}
+              <Link
+                to="/Sign-Up"
+                className="text-primary font-bold hover:underline transition-all"
+              >
+                Create account
+              </Link>
+            </p>
+
+            {/* ── Organization registration link ── */}
+            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+                Want to register your organization?
+              </p>
+              <Link
+                to="/register-organization"
+                className="inline-flex items-center gap-2 text-sm font-semibold
+                           text-primary hover:text-primary/80 transition-colors"
+              >
+                <IconBuilding className="w-5 h-5" />
+                Register as Organization Owner
+              </Link>
+            </div>
+
           </div>
-        </div>
-      </section>
+        </section>
+
+      </main>
     </React.Fragment>
   );
 }

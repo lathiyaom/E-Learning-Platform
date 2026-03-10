@@ -288,8 +288,8 @@ const AdminLayout = ({
 
   const SidebarContent = useCallback(
     ({ collapsed = false }) => (
-      <div className="flex h-full min-h-0 flex-col">
-        <div className="p-6">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="p-6 flex-shrink-0">
           <div
             className={`flex items-center ${
               collapsed ? "justify-center" : "gap-2"
@@ -317,9 +317,9 @@ const AdminLayout = ({
           </div>
         </div>
 
-        <div className="w-[85%] h-[1px] bg-[#e4e2e2bf] mx-auto"></div>
+        <div className="w-[85%] h-[1px] bg-[#e4e2e2bf] mx-auto flex-shrink-0"></div>
 
-        <nav className="flex-1 min-h-0 px-4 pr-2 space-y-1 mt-4 overflow-y-auto">
+        <nav className="flex-1 min-h-0 px-4 pr-2 space-y-1 mt-4 overflow-y-auto sidebar-scroll-hover">
           {navItems.map((item) => (
             <NavItem key={item.id} item={item} collapsed={collapsed} />
           ))}
@@ -331,7 +331,7 @@ const AdminLayout = ({
           )}
         </nav>
 
-        <div className="border-t border-slate-200 dark:border-slate-800 p-4">
+        <div className="border-t border-slate-200 dark:border-slate-800 p-4 flex-shrink-0">
           <button
             onClick={handleSignOut}
             disabled={isPending}
@@ -362,7 +362,7 @@ const AdminLayout = ({
 
       {/* Mobile Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white dark:bg-navy-charcoal border-r border-slate-200 dark:border-white/5 shadow-xl transition-transform duration-300 ease-in-out lg:hidden
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white dark:bg-navy-charcoal border-r border-slate-200 dark:border-white/5 shadow-xl transition-transform duration-300 ease-in-out lg:hidden overflow-hidden
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Close Button */}
@@ -378,7 +378,7 @@ const AdminLayout = ({
       {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:fixed lg:left-0 lg:top-0 lg:h-full lg:z-50 lg:flex lg:flex-col bg-white dark:bg-navy-charcoal border-r border-slate-200 dark:border-white/5
-          transition-all duration-300 ease-in-out overflow-hidden
+          transition-all duration-300 ease-in-out overflow-visible
           ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
       >
         {/* Collapse Toggle */}

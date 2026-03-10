@@ -5,7 +5,8 @@ import RecommendedSection from "./recommended";
 import ChartSection from "./chartsection";
 import Instructures from "./instructures";
 import QuickAccess from "./QuickAccess"; 
-import AdminLayout from './../../../../utils/Adminlayoute';
+// import AdminLayout from './../../../../utils/Adminlayoute';
+import AdminLayout from "../../../../utils/AdminlayouteNew";
 import { getBreadcrumbs } from "../../../../utils/breadcrumbs";
 
 function IndexStud() {
