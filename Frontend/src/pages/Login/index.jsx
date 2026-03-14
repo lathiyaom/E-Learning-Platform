@@ -244,21 +244,21 @@ function Login() {
   return (
     <React.Fragment>
       {/* Full-viewport split layout */}
-      <main className="flex flex-col lg:flex-row w-full min-h-screen bg-white dark:bg-slate-900 overflow-hidden">
+      <main className="flex flex-col lg:flex-row w-full min-h-screen bg-white dark:bg-background-dark transition-colors duration-300 overflow-hidden select-none">
 
         <aside
           className="hidden lg:flex lg:w-1/2 relative p-12 flex-col justify-between overflow-hidden"
           style={{ background: "radial-gradient(circle at top left, #f3e8ff 0%, #ffffff 100%)" }}
         >
           {/* Dark-mode override */}
-          <div className="absolute inset-0 bg-slate-800 opacity-0 dark:opacity-100 pointer-events-none" aria-hidden="true" />
+          <div className="absolute inset-0 bg-navy-charcoal opacity-0 dark:opacity-100 pointer-events-none" aria-hidden="true" />
 
           {/* Decorative blobs */}
           <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
-          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-purple-400/10 dark:bg-premium-gold/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
 
           {/* Logo */}
-          <div className="relative z-10">
+          <div className="relative z-10 top-[-20px]">
             <div className="flex items-center gap-4 mb-5">
               <img
                 src={logo}
@@ -316,6 +316,8 @@ function Login() {
               <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 pt-2">
                 Joined by 10,000+ students worldwide
               </p>
+
+
             </div>
           </div>
 
@@ -323,7 +325,7 @@ function Login() {
         </aside>
 
         {/* ═══════════════════════ RIGHT PANEL — Auth Form ═══════════════════════ */}
-        <section className="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-10 lg:p-16 bg-white dark:bg-slate-900">
+        <section className="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-10 lg:p-16 bg-white dark:bg-deep-charcoal/80 transition-colors duration-300">
 
           {/* Mobile logo — hidden on desktop */}
           <div className="flex lg:hidden items-center gap-3 mb-10">
@@ -373,7 +375,7 @@ function Login() {
                     placeholder="example@eduverse.com"
                     value={data.email}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none
+                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-navy-charcoal/80 border-none
                                rounded-xl focus:ring-2 focus:ring-primary/30 dark:text-white text-sm
                                shadow-sm transition-all outline-none placeholder:text-slate-400"
                   />
@@ -408,7 +410,7 @@ function Login() {
                     placeholder="••••••••"
                     value={data.password}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800 border-none
+                    className="w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-navy-charcoal/80 border-none
                                rounded-xl focus:ring-2 focus:ring-primary/30 dark:text-white text-sm
                                shadow-sm transition-all outline-none placeholder:text-slate-400"
                   />

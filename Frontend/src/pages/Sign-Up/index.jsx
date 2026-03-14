@@ -1,21 +1,39 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "../../components/Button";
-import ilus2 from "../../assets/imgs/ilustrator2.png";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSignupMutation } from "../../redux/Apis/authApi";
 import { toast } from "react-toastify";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import logo from "../../assets/imgs/logo.png";
+
+import {
+  useGetOrganizationListQuery,
+  useSignupMutation,
+} from "../../redux/Apis/authApi";
 import { setCredentials } from "../../redux";
 import { getApiErrorMessage } from "../../utils/apiError";
+import signupCommunityImage from "../../assets/imgs/signup-community.jpg";
 
 function SignUp() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  // Get auth state from Redux
+  const IconEye = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);
+
+const IconEyeOff = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+  </svg>
+);
+
+
   const { user, isAuthenticated } = useSelector((state) => state.auth);
-  
-  const [signup, { isLoading: signupLoading }] = useSignupMutation();
+
+  const { data: orgListData } = useGetOrganizationListQuery();
+  const [signup] = useSignupMutation();
+
   const [Data, setData] = useState({
     userType: "",
     firstName: "",
@@ -27,16 +45,16 @@ function SignUp() {
     password: "",
     confirmPassword: "",
     agreeTerms: false,
-    organizationCode: "", // Optional organization code for teachers
+    organizationCode: "",
   });
 
   const [Loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // ✅ Check if user is already logged in (even if Redux state is lost)
   useEffect(() => {
     const checkExistingSession = async () => {
-      // First check Redux state
       if (isAuthenticated && user) {
         const userType = user.userType?.toLowerCase();
         const dashboardMap = {
@@ -46,24 +64,25 @@ function SignUp() {
           student: "/student/dashboard",
         };
         const redirectPath = dashboardMap[userType] || "/";
-        console.log("✅ User already logged in (Redux), redirecting to:", redirectPath);
         navigate(redirectPath, { replace: true });
         return;
       }
 
-      // Check sessionStorage for persisted auth
       try {
         const storedAuth = sessionStorage.getItem("authUser");
         if (storedAuth) {
-          const { user: storedUser, accessToken } = JSON.parse(storedAuth);
+          const parsedAuth = JSON.parse(storedAuth);
+          const { user: storedUser, accessToken, refreshToken } = parsedAuth;
+
           if (storedUser && accessToken) {
-            // Restore Redux state
-            dispatch(setCredentials({ 
-              user: storedUser, 
-              accessToken,
-              refreshToken: JSON.parse(storedAuth).refreshToken 
-            }));
-            
+            dispatch(
+              setCredentials({
+                user: storedUser,
+                accessToken,
+                refreshToken,
+              }),
+            );
+
             const userType = storedUser.userType?.toLowerCase();
             const dashboardMap = {
               superadmin: "/superadmin/dashboard",
@@ -72,13 +91,11 @@ function SignUp() {
               student: "/student/dashboard",
             };
             const redirectPath = dashboardMap[userType] || "/";
-            console.log("✅ Session restored from sessionStorage, redirecting to:", redirectPath);
             navigate(redirectPath, { replace: true });
           }
         }
       } catch (error) {
         console.error("Error checking existing session:", error);
-        // Clear invalid sessionStorage data
         sessionStorage.removeItem("authUser");
       }
     };
@@ -86,24 +103,22 @@ function SignUp() {
     checkExistingSession();
   }, [isAuthenticated, user, navigate, dispatch]);
 
-  // Calculate password strength
   const calculatePasswordStrength = (password) => {
     if (!password) return 0;
-    
+
     let strength = 0;
     const checks = {
       length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       digit: /\d/.test(password),
-      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(password),
     };
-    
-    // Count how many criteria are met
-    Object.values(checks).forEach(check => {
+
+    Object.values(checks).forEach((check) => {
       if (check) strength += 20;
     });
-    
+
     return strength;
   };
 
@@ -116,7 +131,7 @@ function SignUp() {
   };
 
   const getPasswordStrengthBarColor = (strength) => {
-    if (strength === 0) return "bg-gray-200";
+    if (strength === 0) return "bg-slate-200";
     if (strength < 40) return "bg-red-500";
     if (strength < 60) return "bg-orange-500";
     if (strength < 80) return "bg-yellow-500";
@@ -129,9 +144,9 @@ function SignUp() {
       ...Data,
       [name]: type === "checkbox" ? checked : value,
     };
+
     setData(newData);
-    
-    // Update password strength when password changes
+
     if (name === "password") {
       setPasswordStrength(calculatePasswordStrength(value));
     }
@@ -139,8 +154,7 @@ function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate all required fields
+
     if (!Data.userType) {
       toast.error("Please select your role", {
         position: "top-center",
@@ -188,17 +202,18 @@ function SignUp() {
       });
       return;
     }
-    
-    // Validate password strength
+
     if (passwordStrength < 80) {
-      toast.error("Password must be strong (80% strength required: 8+ chars, uppercase, lowercase, digit, special char)", {
-        position: "top-center",
-        duration: 4000,
-      });
+      toast.error(
+        "Password must be strong (80% strength required: 8+ chars, uppercase, lowercase, digit, special char)",
+        {
+          position: "top-center",
+          duration: 4000,
+        },
+      );
       return;
     }
 
-    // Validate password match
     if (Data.password !== Data.confirmPassword) {
       toast.error("Passwords do not match", {
         position: "top-center",
@@ -216,19 +231,20 @@ function SignUp() {
     }
 
     setLoading(true);
+
     try {
       const response = await signup({
         userType: Data.userType,
         firstName: Data.firstName,
         lastName: Data.lastName,
-        age: parseInt(Data.age),
+        age: parseInt(Data.age, 10),
         gender: Data.gender,
         phoneNo: Data.phoneNo,
         email: Data.email,
         password: Data.password,
         confirmPassword: Data.confirmPassword,
         agreeTerms: Data.agreeTerms,
-        organizationCode: Data.organizationCode, // Include organization code
+        organizationCode: Data.organizationCode,
       }).unwrap();
 
       if (response?.success) {
@@ -236,6 +252,7 @@ function SignUp() {
           position: "top-center",
           duration: 4000,
         });
+
         setData({
           userType: "",
           firstName: "",
@@ -247,27 +264,35 @@ function SignUp() {
           password: "",
           confirmPassword: "",
           agreeTerms: false,
-          organizationCode: "", // Reset organization code
+          organizationCode: "",
         });
+
         setPasswordStrength(0);
+        setShowPassword(false);
+        setShowConfirmPassword(false);
         setLoading(false);
+
         setTimeout(() => {
           window.location.href = "/Login";
         }, 2000);
       }
     } catch (error) {
       setLoading(false);
-      
-      // Handle different types of errors
-      let errorMessage = getApiErrorMessage(error, "Sign up failed. Please try again.");
-      
+
+      let errorMessage = getApiErrorMessage(
+        error,
+        "Sign up failed. Please try again.",
+      );
+
       if (error?.status === 400) {
         if (error?.data?.errors && Array.isArray(error.data.errors)) {
-          // Handle validation errors
-          const validationErrors = error.data.errors.map(err => err.message).join(', ');
+          const validationErrors = error.data.errors
+            .map((err) => err.message)
+            .join(", ");
           errorMessage = `Validation Error: ${validationErrors}`;
         } else {
-          errorMessage = error?.data?.message || "Invalid request. Please check your input.";
+          errorMessage =
+            error?.data?.message || "Invalid request. Please check your input.";
         }
       } else if (error?.status === 403) {
         errorMessage = "Access denied. You cannot register with this role.";
@@ -281,424 +306,493 @@ function SignUp() {
         position: "top-center",
         duration: 4000,
       });
+
       console.error("Sign Up error:", error?.data || error?.message);
     }
   };
 
+  const inputBaseClass =
+    "w-full rounded-xl border border-[#9A864C]/20 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-navy-charcoal/80 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-primary dark:focus:ring-primary/30";
+
+  const selectBaseClass = `${inputBaseClass} appearance-none pr-10`;
+
+  const renderPasswordToggle = (isVisible, onToggle, label) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-[#9A864C] transition-colors hover:bg-[#9A864C]/10 dark:hover:bg-white/10"
+      aria-label={label}
+    >
+        {isVisible
+                ? <IconEyeOff className="w-5 h-5" />
+                 : <IconEye className="w-5 h-5" />
+                    }
+    </button>
+  );
+
   return (
-    <React.Fragment>
-      <section
-        className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 
-        flex items-center justify-center px-4 sm:px-6 lg:px-8 pb-12"
-      >
-        <div className="w-full max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8 lg:mb-12">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 font-serif tracking-tight">
-              Create an Account
-            </h1>
-            <p className="mt-3 text-base sm:text-lg lg:text-xl text-gray-600 font-light">
-              Register your account
+    <section className="min-h-screen bg-background-light text-slate-900 transition-colors duration-300 dark:bg-background-dark dark:text-slate-100 select-none">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <aside className="relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden bg-lavender/40 px-10 py-12 dark:bg-navy-charcoal">
+          <div className="absolute left-10 top-10 flex items-center gap-2 text-primary">
+            <div className="relative z-10 top-[-20px]">
+              <div className="flex items-center gap-4 mb-5">
+                <img
+                  src={logo}
+                  alt="EduVerse logo"
+                  className="h-14 w-14 object-contain shrink-0 drop-shadow-md"
+                />
+                <div className="flex flex-col">
+                  <span className="text-3xl font-extrabold tracking-tight leading-none select-none">
+                    <span className="text-slate-800 dark:text-white">Edu</span>
+                    <span className="text-primary select-none">Verse</span>
+                  </span>
+                  <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 select-none">
+                    Learn&nbsp;·&nbsp;Grow&nbsp;·&nbsp;Succeed
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="z-10 max-w-md text-center">
+            <div className="mb-8 overflow-hidden rounded-2xl border border-white/70 bg-white p-2 shadow-2xl shadow-black/10 dark:border-white/10 dark:bg-slate-900/70">
+              <img
+                src={signupCommunityImage}
+                alt="Education community"
+                className="h-72 w-full rounded-xl object-cover"
+              />
+            </div>
+            <h2 className="mb-3 text-4xl font-black leading-tight text-slate-900 dark:text-white">
+              Empower your learning journey.
+            </h2>
+            <p className="text-lg font-medium text-[#9A864C] dark:text-premium-gold">
+              Join a global community of learners and educators dedicated to
+              excellence.
             </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 xl:gap-20">
-            {/* Form Section */}
-            <div className="w-full max-w-sm lg:max-w-md xl:max-w-lg order-2">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 lg:p-8">
-                <form
-                  className="space-y-3 sm:space-y-4"
-                  onSubmit={handleSubmit}
-                >
-                  <div>
-                    <label
-                      htmlFor="userType"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                    >
-                      What Is Your Role?
-                    </label>
+          <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl dark:bg-premium-gold/20" />
+          <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-lavender-light/80 blur-3xl dark:bg-slate-700/40" />
+        </aside>
+
+        <main className="flex-1 bg-background-light px-5 py-10 sm:px-8 lg:px-16 lg:py-14 dark:bg-deep-charcoal/80">
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-8 lg:hidden">
+              <div className="relative z-10 top-[-10px]">
+                <div className="flex items-center gap-4 mb-5">
+                  <img
+                    src={logo}
+                    alt="EduVerse logo"
+                    className="h-14 w-14 object-contain shrink-0 drop-shadow-md"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-3xl font-extrabold tracking-tight leading-none select-none">
+                      <span className="text-slate-800 dark:text-white">
+                        Edu
+                      </span>
+                      <span className="text-primary select-none">Verse</span>
+                    </span>
+                    <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 select-none">
+                      Learn&nbsp;·&nbsp;Grow&nbsp;·&nbsp;Succeed
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                Begin Your Eduverse Journey
+              </h1>
+              <p className="mt-2 font-medium text-[#9A864C] dark:text-premium-gold">
+                Ready to start? Fill in your details below.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="userType"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    What Is Your Role?
+                  </label>
+                  <div className="relative">
                     <select
                       id="userType"
                       name="userType"
                       value={Data.userType}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                      transition-all duration-200 font-sans text-gray-900"
+                      className={selectBaseClass}
                       required
                     >
                       <option value="">Select your role</option>
                       <option value="student">Student</option>
                       <option value="teacher">Teacher</option>
                     </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#9A864C] dark:text-premium-gold">
+                      ▾
+                    </span>
                   </div>
+                </div>
 
-                  {/* Organization Code - Optional for both student and teacher */}
-                  <div>
-                    <label
-                      htmlFor="organizationCode"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                    >
-                      Organization Code (Optional)
-                    </label>
-                    <input
-                      type="text"
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="organizationCode"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Organization Code (Optional)
+                  </label>
+                  <div className="relative">
+                    <select
                       id="organizationCode"
                       name="organizationCode"
                       value={Data.organizationCode}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                      transition-all duration-200 font-sans text-gray-900
-                      placeholder:text-gray-400"
-                      placeholder="Enter organization code if you have one"
-                    />
-                    {Data.userType === "student" && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        If left blank, your account will be created under platform learner space.
-                      </p>
-                    )}
-                    {Data.userType === "teacher" && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Optional: Join an existing organization or create your own
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-row gap-3 justify-between items-center">
-                    <div className="flex flex-col flex-1">
-                      <label
-                        htmlFor="firstName"
-                        className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                      >
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        id="firstName"
-                        name="firstName"
-                        value={Data.firstName}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                        transition-all duration-200 font-sans text-gray-900
-                        placeholder:text-gray-400"
-                        placeholder="Enter your name"
-                      />
-                    </div>
-                    <div className="flex flex-col flex-1">
-                      <label
-                        htmlFor="lastName"
-                        className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                      >
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        id="lastName"
-                        name="lastName"
-                        value={Data.lastName}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                        transition-all duration-200 font-sans text-gray-900
-                        placeholder:text-gray-400"
-                        placeholder="Enter your last name"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-row gap-3 justify-between items-center">
-                    <div className="flex flex-col flex-1">
-                      <label
-                        htmlFor="age"
-                        className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                      >
-                        Age
-                      </label>
-                      <input
-                        type="number"
-                        id="age"
-                        name="age"
-                        value={Data.age}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                        transition-all duration-200 font-sans text-gray-900
-                        placeholder:text-gray-400"
-                        placeholder="Enter your age"
-                      />
-                    </div>
-                    <div className="flex flex-col flex-1">
-                      <label
-                        htmlFor="gender"
-                        className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                      >
-                        Gender
-                      </label>
-                      <select
-                        id="gender"
-                        name="gender"
-                        value={Data.gender}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                        transition-all duration-200 font-sans text-gray-900
-                        placeholder:text-gray-400"
-                      >
-                        <option value="" disabled>
-                          Select your gender
+                      className={selectBaseClass}
+                    >
+                      <option value="">Select an organization</option>
+                      {orgListData?.data?.map((org) => (
+                        <option key={org._id} value={org.code}>
+                          {org.name}
                         </option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                      </select>
-                    </div>
+                      ))}
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#9A864C] dark:text-premium-gold">
+                      ▾
+                    </span>
                   </div>
+                  {Data.userType === "student" && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Leave blank to join the platform learner space.
+                    </p>
+                  )}
+                  {Data.userType === "teacher" && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Optional: Join an existing organization or create your
+                      own.
+                    </p>
+                  )}
+                </div>
 
-                  <div>
-                    <label
-                      htmlFor="phoneNo"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                    >
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      id="phoneNo"
-                      name="phoneNo"
-                      value={Data.phoneNo}
+                <div>
+                  <label
+                    htmlFor="firstName"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    First Name
+                  </label>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    value={Data.firstName}
+                    onChange={handleChange}
+                    placeholder="John"
+                    className={inputBaseClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="lastName"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Last Name
+                  </label>
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    value={Data.lastName}
+                    onChange={handleChange}
+                    placeholder="Doe"
+                    className={inputBaseClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="age"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Age
+                  </label>
+                  <input
+                    id="age"
+                    name="age"
+                    type="number"
+                    value={Data.age}
+                    onChange={handleChange}
+                    placeholder="18"
+                    className={inputBaseClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="gender"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Gender
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={Data.gender}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                      transition-all duration-200 font-sans text-gray-900
-                      placeholder:text-gray-400"
-                      placeholder="Enter your phone number"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
+                      className={selectBaseClass}
                     >
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={Data.email}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                      transition-all duration-200 font-sans text-gray-900
-                      placeholder:text-gray-400"
-                      placeholder="Enter your email"
-                    />
+                      <option value="" disabled>
+                        Select gender
+                      </option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#9A864C] dark:text-premium-gold">
+                      ▾
+                    </span>
                   </div>
+                </div>
 
-                  <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                    >
-                      Password
-                    </label>
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="phoneNo"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    id="phoneNo"
+                    name="phoneNo"
+                    type="tel"
+                    value={Data.phoneNo}
+                    onChange={handleChange}
+                    placeholder="+1 (555) 000-0000"
+                    className={inputBaseClass}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={Data.email}
+                    onChange={handleChange}
+                    placeholder="john.doe@example.com"
+                    className={inputBaseClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
                     <input
-                      type="password"
                       id="password"
                       name="password"
+                      type={showPassword ? "text" : "password"}
                       value={Data.password}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm 
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                      transition-all duration-200 font-sans text-gray-900
-                      placeholder:text-gray-400"
-                      placeholder="Enter your password"
+                      placeholder="••••••••"
+                      className={`${inputBaseClass} pr-16`}
                     />
-                    
-                    {/* Password Strength Indicator */}
-                    {Data.password && (
-                      <div className="mt-3 space-y-2">
-                        <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-300 ${getPasswordStrengthBarColor(passwordStrength)}`}
-                            style={{ width: `${passwordStrength}%` }}
-                          ></div>
-                        </div>
-                        <div className="text-xs space-y-1">
-                          <p className={`font-semibold ${getPasswordStrengthLabel(passwordStrength).color}`}>
-                            Password Strength: {getPasswordStrengthLabel(passwordStrength).label}
-                          </p>
-                          <p className="text-gray-600">Password must contain:</p>
-                          <ul className="grid grid-cols-2 gap-1 text-gray-600">
-                            <li className={`flex items-center gap-1 ${Data.password.length >= 8 ? 'text-green-600' : ''}`}>
-                              <span className={Data.password.length >= 8 ? '✓' : '○'}>
-                              </span> 8+ characters
-                            </li>
-                            <li className={`flex items-center gap-1 ${/[A-Z]/.test(Data.password) ? 'text-green-600' : ''}`}>
-                              <span className={/[A-Z]/.test(Data.password) ? '✓' : '○'}>
-                              </span> Uppercase
-                            </li>
-                            <li className={`flex items-center gap-1 ${/[a-z]/.test(Data.password) ? 'text-green-600' : ''}`}>
-                              <span className={/[a-z]/.test(Data.password) ? '✓' : '○'}>
-                              </span> Lowercase
-                            </li>
-                            <li className={`flex items-center gap-1 ${/\d/.test(Data.password) ? 'text-green-600' : ''}`}>
-                              <span className={/\d/.test(Data.password) ? '✓' : '○'}>
-                              </span> Number
-                            </li>
-                            <li className={`flex items-center gap-1 col-span-2 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(Data.password) ? 'text-green-600' : ''}`}>
-                              <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(Data.password) ? '✓' : '○'}>
-                              </span> Special character (!@#$%^&*)
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
+                    {renderPasswordToggle(
+                      showPassword,
+                      () => setShowPassword((prev) => !prev),
+                      "Toggle password visibility",
                     )}
                   </div>
+                </div>
 
-                  <div>
-                    <label
-                      htmlFor="confirmPassword"
-                      className="block text-sm font-medium text-gray-700 mb-2 font-sans"
-                    >
-                      Confirm Password
-                    </label>
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  >
+                    Confirm Password
+                  </label>
+                  <div className="relative">
                     <input
-                      type="password"
                       id="confirmPassword"
                       name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
                       value={Data.confirmPassword}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2.5 border rounded-lg shadow-sm 
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                      transition-all duration-200 font-sans text-gray-900
-                      placeholder:text-gray-400 ${
-                        Data.confirmPassword && Data.password !== Data.confirmPassword
-                          ? 'border-red-500 focus:ring-red-500'
-                          : Data.confirmPassword && Data.password === Data.confirmPassword
-                          ? 'border-green-500 focus:ring-green-500'
-                          : 'border-gray-300'
+                      placeholder="••••••••"
+                      className={`${inputBaseClass} pr-16 ${
+                        Data.confirmPassword &&
+                        Data.password !== Data.confirmPassword
+                          ? "border-red-400 focus:border-red-500 focus:ring-red-200"
+                          : Data.confirmPassword &&
+                              Data.password === Data.confirmPassword
+                            ? "border-green-400 focus:border-green-500 focus:ring-green-200"
+                            : ""
                       }`}
-                      placeholder="Re-enter your password"
                     />
-                    {Data.confirmPassword && (
-                      <p className={`text-xs mt-2 font-semibold ${
-                        Data.password === Data.confirmPassword
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }`}>
-                        {Data.password === Data.confirmPassword
-                          ? '✓ Passwords match'
-                          : '✗ Passwords do not match'}
-                      </p>
+                    {renderPasswordToggle(
+                      showConfirmPassword,
+                      () => setShowConfirmPassword((prev) => !prev),
+                      "Toggle confirm password visibility",
                     )}
                   </div>
+                </div>
+              </div>
 
-                  <div className="flex items-start text-sm">
-                    <label className="flex items-start font-sans">
-                      <input
-                        type="checkbox"
-                        name="agreeTerms"
-                        checked={Data.agreeTerms}
-                        onChange={handleChange}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-                      />
-                      <span className="ml-2 text-gray-600 leading-relaxed">
-                        I agree to the
-                        <button
-                          type="button"
-                          className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 underline"
-                        >
-                          Terms of Service
-                        </button>{" "}
-                        and{" "}
-                        <button
-                          type="button"
-                          className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 underline"
-                        >
-                          Privacy Policy
-                        </button>
-                      </span>
-                    </label>
+              {Data.password && (
+                <div className="rounded-xl border border-[#9A864C]/15 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/70">
+                  <div className="mb-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div
+                      className={`h-full transition-all duration-300 ${getPasswordStrengthBarColor(passwordStrength)}`}
+                      style={{ width: `${passwordStrength}%` }}
+                    />
                   </div>
 
-                  <Button
-                    type="submit"
-                    disabled={Loading}
-                    aria-busy={Loading}
-                    className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 
-                        hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-6 
-                        rounded-lg font-medium transition-all duration-200 shadow-lg 
-                        hover:shadow-xl font-sans flex items-center justify-center gap-2
-                        ${
-                          Loading
-                            ? "opacity-80 cursor-not-allowed"
-                            : "hover:scale-[1.02]"
-                        }`}
+                  <p
+                    className={`text-xs font-semibold ${getPasswordStrengthLabel(passwordStrength).color}`}
                   >
-                    {Loading ? (
-                      <>
-                        <span className="text-sm">Signing up</span>
-                        <span
-                          className="w-4 h-4 border-2 border-white border-t-transparent 
-                            rounded-full animate-spin"
-                          aria-hidden="true"
-                        />
-                      </>
-                    ) : (
-                      "Sign In"
-                    )}
-                  </Button>
+                    Password Strength:{" "}
+                    {getPasswordStrengthLabel(passwordStrength).label}
+                  </p>
 
-                  <div className="text-center pt-4 border-t border-gray-100 space-y-3">
-                    <p className="text-sm text-gray-600 font-sans">
-                      Already have an account?{" "}
-                      <Link
-                        to="/Login"
-                        className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
-                      >
-                        Login
-                      </Link>
-                    </p>
-                    
-                    {/* Organization Registration Link */}
-                    <div className="pt-3 border-t border-gray-100">
-                      <p className="text-sm text-gray-600 font-sans mb-2">
-                        Want to register your organization?
-                      </p>
-                      <Link
-                        to="/register-organization"
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        Register as Organization Owner
-                      </Link>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </div>
+                  <ul className="mt-2 grid grid-cols-1 gap-1 text-xs text-slate-600 dark:text-slate-400 sm:grid-cols-2">
+                    <li
+                      className={
+                        Data.password.length >= 8 ? "text-green-600" : ""
+                      }
+                    >
+                      8+ characters
+                    </li>
+                    <li
+                      className={
+                        /[A-Z]/.test(Data.password) ? "text-green-600" : ""
+                      }
+                    >
+                      Uppercase letter
+                    </li>
+                    <li
+                      className={
+                        /[a-z]/.test(Data.password) ? "text-green-600" : ""
+                      }
+                    >
+                      Lowercase letter
+                    </li>
+                    <li
+                      className={
+                        /\d/.test(Data.password) ? "text-green-600" : ""
+                      }
+                    >
+                      Number
+                    </li>
+                    <li
+                      className={`sm:col-span-2 ${
+                        /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(
+                          Data.password,
+                        )
+                          ? "text-green-600"
+                          : ""
+                      }`}
+                    >
+                      Special character (!@#$%^&*)
+                    </li>
+                  </ul>
+                </div>
+              )}
 
-            <div className="w-full max-w-md lg:max-w-lg xl:max-w-2xl order-1">
-              <div className="relative">
-                <img
-                  src={ilus2}
-                  alt="Login illustration"
-                  className="w-full h-auto max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl mx-auto 
-                  drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+              {Data.confirmPassword && (
+                <p
+                  className={`text-xs font-semibold ${
+                    Data.password === Data.confirmPassword
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {Data.password === Data.confirmPassword
+                    ? "Passwords match"
+                    : "Passwords do not match"}
+                </p>
+              )}
+
+              <div className="flex items-start gap-3 pt-1">
+                <input
+                  id="agreeTerms"
+                  name="agreeTerms"
+                  type="checkbox"
+                  checked={Data.agreeTerms}
+                  onChange={handleChange}
+                  className="mt-0.5 h-4 w-4 rounded border-[#9A864C]/30 text-primary focus:ring-primary accent-primary focus:ring-primary/30 dark:border-slate-700 dark:bg-slate-900/80 dark:focus:ring-primary/30 dark:accent-primary "
                 />
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-200 rounded-full opacity-60 animate-pulse"></div>
-                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-purple-200 rounded-full opacity-60 animate-pulse delay-1000"></div>
+                <label htmlFor="agreeTerms" className="text-sm text-slate-600 dark:text-slate-300">
+                  I agree to the
+                  <button
+                    type="button"
+                    className="ml-1 font-semibold text-[#9A864C] underline dark:text-premium-gold"
+                  >
+                    Terms of Service
+                  </button>
+                  <span className="mx-1">and</span>
+                  <button
+                    type="button"
+                    className="font-semibold text-[#9A864C] underline dark:text-premium-gold"
+                  >
+                    Privacy Policy
+                  </button>
+                </label>
               </div>
-            </div>
+
+              <button
+                type="submit"
+                disabled={Loading}
+                aria-busy={Loading}
+                className={`w-full rounded-xl bg-primary py-3.5 text-base font-extrabold text-slate-900 shadow-lg shadow-primary/25 transition-all duration-200 hover:bg-primary/90 ${
+                  Loading
+                    ? "cursor-not-allowed opacity-80"
+                    : "hover:-translate-y-0.5"
+                }`}
+              >
+                {Loading ? "Signing up..." : "Sign Up"}
+              </button>
+
+              <p className="text-center text-sm font-medium text-slate-600 dark:text-slate-300">
+                Already have an account?
+                <Link
+                  to="/Login"
+                  className="ml-1 font-bold text-[#9A864C] hover:underline dark:text-premium-gold"
+                >
+                  Log In
+                </Link>
+              </p>
+
+              <div className="rounded-xl border border-[#9A864C]/15 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900/70">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Want to register your organization?
+                </p>
+                <Link
+                  to="/register-organization"
+                  className="mt-1 inline-flex items-center text-sm font-bold text-[#9A864C] hover:underline dark:text-premium-gold"
+                >
+                  Register as Organization Owner
+                </Link>
+              </div>
+            </form>
           </div>
-        </div>
-      </section>
-    </React.Fragment>
+        </main>
+      </div>
+    </section>
   );
 }
 

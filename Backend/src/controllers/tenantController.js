@@ -201,9 +201,33 @@ const assignTeacherToTenant = async (req, res) => {
   }
 };
 
+// Get public list of organizations (name + code) — used on signup page
+const getOrganizationList = async (req, res) => {
+  try {
+    const { Tenant } = require("../models");
+    const orgs = await Tenant.find(
+      { userType: "admin", status: "active" },
+      { name: 1, code: 1, _id: 1 }
+    ).sort({ name: 1 });
+
+    return res.status(200).json({
+      message: "Organizations fetched successfully",
+      success: true,
+      data: orgs,
+    });
+  } catch (error) {
+    console.error("Error fetching organization list:", error.message);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
 module.exports = {
   createTenant,
   getTenantDetails,
   updateTenant,
   assignTeacherToTenant,
+  getOrganizationList,
 };

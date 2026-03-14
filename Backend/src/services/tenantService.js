@@ -69,15 +69,10 @@ const createTenant = async (tenantData) => {
   // Do NOT hash here — the Tenant model hook does it automatically
 
   // Determine userType:
-  // - If no tenants exist yet → first tenant becomes "superadmin" (bootstrap)
-  // - If called by superadmin → create as "admin"
-  // - Can be overridden via tenantData.userType for superadmin actions
-  let assignedUserType = tenantData.userType || "admin";
-
-  const tenantCount = await Tenant.countDocuments();
-  if (tenantCount === 0) {
-    assignedUserType = "superadmin"; // First ever tenant = platform owner
-  }
+  // Public self-registration always creates an organization admin.
+  // The superadmin is auto-created at server startup and must never be
+  // created via this public endpoint.
+  const assignedUserType = "admin";
 
   const newTenant = await Tenant.create({
     name,

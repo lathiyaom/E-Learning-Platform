@@ -176,3 +176,41 @@ code {
   -webkit-font-smoothing: antialiased;
 }
 
+
+/* Dark glass effect for the floating cards */
+.dark .glass-card {
+  background: rgba(30, 31, 38, 0.55);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 10px 30px rgba(0,0,0,0.35);
+
+  transition: all 0.35s ease;
+}
+
+/* hover interaction */
+.glass-card {
+  transition: transform 0.5s ease-out;
+}
+
+.glass-card:hover{
+  transform: translateY(-4px) scale(1.02);
+}
+.dark .glass-card{
+  background: rgba(30, 31, 38, 0.55);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 10px 30px rgba(0,0,0,0.35);
+  transition: all 0.35s ease-in-out;
+}
+.dark .glass-card:hover{
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 15px 40px rgba(0,0,0,0.45);
+}
+

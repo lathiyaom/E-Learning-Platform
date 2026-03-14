@@ -77,6 +77,10 @@ export const authApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["User"],
     }),
+
+    getOrganizationList: builder.query({
+      query: () => "/Tenant/list",
+    }),
   }),
   overrideExisting: false,
 });
@@ -93,4 +97,5 @@ export const {
   useLazyGetUserDetailsQuery,
   useUpdateUserMutation,
   useDeleteUserMutation,
+  useGetOrganizationListQuery,
 } = authApi;

@@ -10,8 +10,10 @@ const config = {
         "background-light": "#F9FAFB",
         "background-dark": "#1a1d2b",
         "sidebar-dark": "#1F2937",
+        lavender: "#e6e6fa",
         "lavender-light": "#f3f0ff",
         "lavender-dark": "#1e1b4b",
+        "tan-gold": "#9a864c",
         "card-border": "rgba(180, 140, 76, 0.15)",
         // Premium Dark Theme Colors
         "premium-gold": "#B08D57",

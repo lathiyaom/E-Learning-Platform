@@ -1,7 +1,23 @@
 import { useState } from "react";
 import { Button } from "../../components/Button";
 import { Link, useNavigate } from "react-router-dom";
-import { Building, Shield, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Building,
+  Shield,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  AlertCircle,
+  Sparkles,
+  KeyRound,
+  UserCog,
+  Presentation,
+  GraduationCap,
+  School,
+  Info,
+  Building2,
+  UserPlus,
+} from "lucide-react";
 import API from "../../utils/axiosintence";
 import { toast } from "react-toastify";
 import { getApiErrorMessage } from "../../utils/apiError";
@@ -75,10 +91,13 @@ function OrganizationRegister() {
 
     // Validation
     if (passwordStrength < 80) {
-      toast.error("Password must be strong (8+ chars, uppercase, lowercase, digit, special char)", {
-        position: "top-center",
-        duration: 4000,
-      });
+      toast.error(
+        "Password must be strong (8+ chars, uppercase, lowercase, digit, special char)",
+        {
+          position: "top-center",
+          duration: 4000,
+        },
+      );
       return;
     }
 
@@ -138,332 +157,485 @@ function OrganizationRegister() {
       }
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error(getApiErrorMessage(error, "Registration failed. Please try again."), {
-        position: "top-center",
-        duration: 4000,
-      });
+      toast.error(
+        getApiErrorMessage(error, "Registration failed. Please try again."),
+        {
+          position: "top-center",
+          duration: 4000,
+        },
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <section className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-      <div className="w-full max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl mb-4">
-            <Building className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 font-serif tracking-tight">
-            Register Your Organization
-          </h1>
-          <p className="mt-3 text-base sm:text-lg text-gray-600 font-light">
-            Create an admin account to manage your institution
-          </p>
-        </div>
+  const inputClass =
+    "w-full rounded-[8px] border border-slate-200 bg-slate-50/50 focus:border-[#B08D57] focus:ring focus:ring-[#B08D57]/30 text-sm py-3 px-4 transition-all outline-none dark:border-slate-700 dark:bg-navy-charcoal/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#B08D57] dark:focus:ring-[#B08D57]/30";
 
-        {/* Info Banner */}
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-          <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-blue-800">
-              <p className="font-semibold mb-1">Platform owner is pre-configured</p>
-              <p>
-                The platform owner account is auto-created by backend startup. This form creates organization admin accounts.
+  const sectionTitleClass =
+    "font-bold text-slate-800 text-base uppercase tracking-widest font-heading dark:text-slate-200";
+
+  return (
+    <section className="min-h-screen bg-[#F9FAFB] text-slate-900 transition-colors duration-300 dark:bg-[#1a1d2b] dark:text-slate-100 select-none">
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <aside className="relative hidden md:flex md:w-[40%] flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#F4E9D8] to-[#B08D57] dark:from-[#1A1B23] dark:to-[#0F0F12] p-12">
+          <div className="absolute top-0 left-0 w-80 h-80 bg-white/20 dark:bg-[#ecb613]/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-white/10 dark:bg-[#ecb613]/5 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+
+          <div className="relative z-10 w-full max-w-lg">
+            <div className="mb-12 relative flex justify-center">
+              <div className="flex flex-col gap-6 relative z-10 w-full sm:w-[320px]">
+                <svg
+                  className="absolute inset-0 w-full h-full -z-10 pointer-events-none opacity-40 dark:opacity-20"
+                  viewBox="0 0 450 300 "
+                >
+                  <path
+                    d="M110 7 Q 200 150 280 120 120 "
+                    fill="none"
+                    stroke="white"
+                    strokeDasharray="6 4"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M280 140 Q 200 200 120 260  "
+                    fill="none"
+                    stroke="white"
+                    strokeDasharray="6 4"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx="200"
+                    cy="150"
+                    fill="white"
+                    fillOpacity="0.1"
+                    r="40"
+                  />
+                </svg>
+
+                <div className="flex justify-start transform -rotate-6 mb-10  ">
+                  <div className="bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-white/40 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-4 w-64 glass-card card-float-x">
+                    <div className="w-12 h-12 rounded-full bg-[#B08D57] flex items-center justify-center text-white shadow-inner">
+                      <UserCog className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="h-2 w-24 bg-slate-800/20 dark:bg-white/20 rounded mb-2" />
+                      <div className="h-2 w-16 bg-slate-800/10 dark:bg-white/10 rounded" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end transform rotate-3 -mt-4 mb-4">
+                  <div className="bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-white/40 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-4 w-64 glass-card card-float-x">
+                    <div className="w-12 h-12 rounded-full bg-[#ecb613] flex items-center justify-center text-white shadow-inner">
+                      <Presentation className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="h-2 w-20 bg-slate-800/20 dark:bg-white/20 rounded mb-2" />
+                      <div className="h-2 w-28 bg-slate-800/10 dark:bg-white/10 rounded" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-center transform -rotate-10 -mt-6  ">
+                  <div className="bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-white/40 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-4 w-64 glass-card card-float-x">
+                    <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-[#B08D57] shadow-inner">
+                      <GraduationCap className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="h-2 w-24 bg-slate-800/20 dark:bg-white/20 rounded mb-2" />
+                      <div className="h-2 w-20 bg-slate-800/10 dark:bg-white/10 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <h2 className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-white mb-6 leading-tight font-heading">
+                Empower Your Institution's Future
+              </h2>
+              <p className="text-slate-700 dark:text-slate-300 text-lg max-w-sm mx-auto font-medium">
+                Welcome to Eduverse. A warmer, smarter way to connect students,
+                teachers, and administrators in one unified ecosystem.
               </p>
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* Form */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Organization Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Building className="h-5 w-5 text-purple-600" />
-                Organization Details
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Organization Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={data.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="ABC University"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Organization Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phoneNo"
-                    value={data.phoneNo}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="1234567890"
-                    required
-                  />
-                </div>
+        <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 lg:p-16 overflow-y-auto bg-[#F9FAFB] dark:bg-[#0F0F12]/80">
+          <div className="w-full max-w-2xl">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-16 h-16 text-[#B08D57] rounded-2xl mb-6 bg-[#F4E9D8] dark:bg-[#ecb613]/15 dark:text-[#B08D57]">
+                <School className="w-8 h-8" />
               </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+                Join the Eduverse Community
+              </h1>
+              <p className="text-slate-500 dark:text-slate-300 mt-3 text-lg">
+                Create an admin account to manage your institution
+              </p>
             </div>
 
-            {/* Owner Details */}
-            <div className="space-y-4 pt-4 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Organization Owner Details
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Owner Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="OrgOwnerName"
-                    value={data.OrgOwnerName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="John Doe"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Owner Email *
-                  </label>
-                  <input
-                    type="email"
-                    name="OrgOwnerEmail"
-                    value={data.OrgOwnerEmail}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="john@abc.edu"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Owner Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    name="OrgOwnerPhone"
-                    value={data.OrgOwnerPhone}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="9876543210"
-                    required
-                  />
-                </div>
+            <div className="bg-white/60 dark:bg-[#1A1B23]/80 border border-slate-100 dark:border-slate-700 rounded-[24px] p-5 mb-10 flex gap-4 items-center">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#ecb613]/10 dark:bg-[#ecb613]/15">
+                <Info className="w-5 h-5 text-[#B08D57]" />
               </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug select-none">
+                <span className="font-bold text-slate-800 dark:text-white">
+                  Note:
+                </span>{" "}
+                Use this form to create organization administrator accounts
+                responsible for managing their respective organizations on the
+                platform.
+              </p>
             </div>
 
-            {/* Login Credentials */}
-            <div className="space-y-4 pt-4 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Login Credentials
-              </h3>
+            <div className="bg-white dark:bg-[#1A1B23]/80 rounded-[8px] p-8 sm:p-10 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04),_0_5px_15px_-5px_rgba(0,0,0,0.03)] border border-white dark:border-slate-700">
+              <form onSubmit={handleSubmit} className="space-y-10">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#ecb613]/10 dark:bg-[#ecb613]/15">
+                      <Building2 className="w-4 h-4 text-[#B08D57]" />
+                    </span>
+                    <h3 className={sectionTitleClass}>Organization Details</h3>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Login Email *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={data.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="admin@abc.edu"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  This email will be used to login to the admin panel
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password *
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={data.password}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="Enter strong password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-
-                {/* Password Strength Indicator */}
-                {data.password && (
-                  <div className="mt-3 space-y-2">
-                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength)}`}
-                        style={{ width: `${passwordStrength}%` }}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="group">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        Organization Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={data.name}
+                        onChange={handleChange}
+                        className={inputClass}
+                        placeholder="ABC University"
+                        required
                       />
                     </div>
-                    <p className={`text-xs font-semibold ${getPasswordStrengthLabel(passwordStrength).color}`}>
-                      Password Strength: {getPasswordStrengthLabel(passwordStrength).label}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                      <div className={`flex items-center gap-1 ${data.password.length >= 8 ? 'text-green-600' : ''}`}>
-                        {data.password.length >= 8 ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                        8+ characters
+                    <div className="group">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        Organization Phone *
+                      </label>
+                      <input
+                        type="tel"
+                        name="phoneNo"
+                        value={data.phoneNo}
+                        onChange={handleChange}
+                        className={inputClass}
+                        placeholder="1234567890"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#F4E9D8] dark:bg-[#ecb613]/15">
+                      <UserPlus className="w-4 h-4 text-[#B08D57]" />
+                    </span>
+                    <h3 className={sectionTitleClass}>
+                      Organization Owner Details
+                    </h3>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="group">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        Owner Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="OrgOwnerName"
+                        value={data.OrgOwnerName}
+                        onChange={handleChange}
+                        className={inputClass}
+                        placeholder="John Doe"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="group">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Owner Email *
+                        </label>
+                        <input
+                          type="email"
+                          name="OrgOwnerEmail"
+                          value={data.OrgOwnerEmail}
+                          onChange={handleChange}
+                          className={inputClass}
+                          placeholder="owner@example.com"
+                          required
+                        />
                       </div>
-                      <div className={`flex items-center gap-1 ${/[A-Z]/.test(data.password) ? 'text-green-600' : ''}`}>
-                        {/[A-Z]/.test(data.password) ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                        Uppercase
-                      </div>
-                      <div className={`flex items-center gap-1 ${/[a-z]/.test(data.password) ? 'text-green-600' : ''}`}>
-                        {/[a-z]/.test(data.password) ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                        Lowercase
-                      </div>
-                      <div className={`flex items-center gap-1 ${/\d/.test(data.password) ? 'text-green-600' : ''}`}>
-                        {/\d/.test(data.password) ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                        Number
-                      </div>
-                      <div className={`flex items-center gap-1 col-span-2 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(data.password) ? 'text-green-600' : ''}`}>
-                        {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(data.password) ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                        Special character
+                      <div className="group">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Owner Phone *
+                        </label>
+                        <input
+                          type="tel"
+                          name="OrgOwnerPhone"
+                          value={data.OrgOwnerPhone}
+                          onChange={handleChange}
+                          className={inputClass}
+                          placeholder="1234567890"
+                          required
+                        />
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password *
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="ConformPassword"
-                    value={data.ConformPassword}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                      data.ConformPassword && data.password !== data.ConformPassword
-                        ? 'border-red-500'
-                        : data.ConformPassword && data.password === data.ConformPassword
-                        ? 'border-green-500'
-                        : 'border-gray-300'
-                    }`}
-                    placeholder="Re-enter password"
-                    required
-                  />
+                <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#ecb613]/15 flex items-center justify-center">
+                      <KeyRound className="w-4 h-4 text-slate-600 dark:text-[#B08D57]" />
+                    </span>
+                    <h3 className={sectionTitleClass}>Login Credentials</h3>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="group">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        Login Email *
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={data.email}
+                        onChange={handleChange}
+                        className={inputClass}
+                        placeholder="admin@university.edu"
+                        required
+                      />
+                      <p className="text-xs text-slate-400 mt-2 italic font-medium">
+                        Used exclusively for admin panel authentication.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="relative group">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Password *
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={data.password}
+                            onChange={handleChange}
+                            className={`${inputClass} pr-12`}
+                            placeholder="••••••••"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-[#B08D57] transition-colors"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-5 w-5" />
+                            ) : (
+                              <Eye className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="group">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Confirm Password *
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            name="ConformPassword"
+                            value={data.ConformPassword}
+                            onChange={handleChange}
+                            className={`${inputClass} pr-12 ${data.ConformPassword && data.password !== data.ConformPassword ? "border-red-400 focus:border-red-500 focus:ring-red-200" : data.ConformPassword && data.password === data.ConformPassword ? "border-green-400 focus:border-green-500 focus:ring-green-200" : ""}`}
+                            placeholder="••••••••"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-[#B08D57] transition-colors"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-5 w-5" />
+                            ) : (
+                              <Eye className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {data.password && (
+                    <div className="mt-4 space-y-2 rounded-xl border border-[#B08D57]/15 bg-[#f8f8f6] p-4 dark:border-slate-700 dark:bg-slate-900/70">
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                        <div
+                          className={`h-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength)}`}
+                          style={{ width: `${passwordStrength}%` }}
+                        />
+                      </div>
+                      <p
+                        className={`text-xs font-semibold ${getPasswordStrengthLabel(passwordStrength).color}`}
+                      >
+                        Password Strength:{" "}
+                        {getPasswordStrengthLabel(passwordStrength).label}
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400">
+                        <div
+                          className={`flex items-center gap-1 ${data.password.length >= 8 ? "text-green-600" : ""}`}
+                        >
+                          {data.password.length >= 8 ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3" />
+                          )}
+                          8+ characters
+                        </div>
+                        <div
+                          className={`flex items-center gap-1 ${/[A-Z]/.test(data.password) ? "text-green-600" : ""}`}
+                        >
+                          {/[A-Z]/.test(data.password) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3" />
+                          )}
+                          Uppercase
+                        </div>
+                        <div
+                          className={`flex items-center gap-1 ${/[a-z]/.test(data.password) ? "text-green-600" : ""}`}
+                        >
+                          {/[a-z]/.test(data.password) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3" />
+                          )}
+                          Lowercase
+                        </div>
+                        <div
+                          className={`flex items-center gap-1 ${/\d/.test(data.password) ? "text-green-600" : ""}`}
+                        >
+                          {/\d/.test(data.password) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3" />
+                          )}
+                          Number
+                        </div>
+                        <div
+                          className={`col-span-2 flex items-center gap-1 ${/[!@#$%^&*()_+\-=\[\]{};':"\|,.<>\/?]/.test(data.password) ? "text-green-600" : ""}`}
+                        >
+                          {/[!@#$%^&*()_+\-=\[\]{};':"\|,.<>\/?]/.test(
+                            data.password,
+                          ) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3" />
+                          )}
+                          Special character
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {data.ConformPassword && (
+                    <p
+                      className={`mt-2 text-xs font-semibold ${data.password === data.ConformPassword ? "text-green-600" : "text-red-600"}`}
+                    >
+                      {data.password === data.ConformPassword
+                        ? "Passwords match"
+                        : "Passwords do not match"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-700">
+                  <div className="flex items-start gap-3 p-1">
+                    <input
+                      type="checkbox"
+                      name="agreeTerms"
+                      checked={data.agreeTerms}
+                      onChange={handleChange}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#B08D57] accent-[#B08D57] focus:ring-[#B08D57] dark:border-slate-700 dark:bg-slate-900/80"
+                      required
+                    />
+                    <label className="text-sm text-slate-600 dark:text-slate-300 leading-snug">
+                      I accept the{" "}
+                      <Link
+                        to="/terms"
+                        className="font-bold hover:underline text-[#B08D57]"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and have read the{" "}
+                      <Link
+                        to="/privacy"
+                        className="font-bold hover:underline text-[#B08D57]"
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </label>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    type="submit"
+                    disabled={loading}
+                    className={`w-full bg-[#B08D57] text-white font-black py-4 rounded-[8px] hover:bg-[#B08D57]/90 hover:shadow-xl transition-all shadow-lg flex items-center justify-center gap-3 group ${loading ? "cursor-not-allowed opacity-80" : ""}`}
                   >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {loading ? (
+                      <>
+                        <span className="text-lg">
+                          Registering Organization
+                        </span>
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg">Register Organization</span>
+                        <Sparkles className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </button>
                 </div>
-                {data.ConformPassword && (
-                  <p className={`text-xs mt-2 font-semibold ${
-                    data.password === data.ConformPassword ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {data.password === data.ConformPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
-                  </p>
-                )}
-              </div>
+              </form>
             </div>
 
-            {/* Terms */}
-            <div className="flex items-start">
-              <input
-                type="checkbox"
-                name="agreeTerms"
-                checked={data.agreeTerms}
-                onChange={handleChange}
-                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
-                required
-              />
-              <label className="ml-2 text-sm text-gray-600">
-                I agree to the Terms of Service and Privacy Policy, and confirm that all information provided is accurate.
-              </label>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={loading}
-              className={`w-full bg-gradient-to-r from-purple-600 to-blue-600 
-                hover:from-purple-700 hover:to-blue-700 text-white py-3 px-6 
-                rounded-lg font-medium transition-all duration-200 shadow-lg 
-                hover:shadow-xl flex items-center justify-center gap-2
-                ${loading ? "opacity-80 cursor-not-allowed" : "hover:scale-[1.02]"}`}
-            >
-              {loading ? (
-                <>
-                  <span>Registering Organization</span>
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                </>
-              ) : (
-                <>
-                  <Building className="h-5 w-5" />
-                  Register Organization
-                </>
-              )}
-            </Button>
-
-            {/* Login Link */}
-            <div className="text-center pt-4 border-t border-gray-100 space-y-3">
-              <p className="text-sm text-gray-600">
+            <div className="mt-10 space-y-4 text-center">
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                 Already have an account?{" "}
                 <Link
                   to="/Login"
-                  className="text-purple-600 hover:text-purple-800 font-medium transition-colors"
+                  className="font-bold hover:underline text-[#B08D57]"
                 >
-                  Login here
+                  Sign in
                 </Link>
               </p>
-              
-              {/* Regular User Signup Link */}
-              <div className="pt-3 border-t border-gray-100">
-                <p className="text-sm text-gray-600 mb-2">
-                  Are you a student or teacher?
-                </p>
+              <div className="h-px bg-slate-200 dark:bg-slate-700 w-24 mx-auto"></div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                Joining as a student or teacher?{" "}
                 <Link
                   to="/Sign-Up"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                  className="font-bold hover:underline text-[#ecb613]"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  Register as Student/Teacher
+                  Create personal account
                 </Link>
-              </div>
+              </p>
             </div>
-          </form>
-        </div>
+          </div>
+        </main>
       </div>
     </section>
   );
