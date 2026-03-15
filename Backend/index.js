@@ -1,11 +1,16 @@
 const express = require("express");
 const app = express();
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
+
+// Create HTTP server for Socket.IO
+const server = http.createServer(app);
 
 // Import config and utilities
 const { config, validateEnvironment } = require("./src/config/env");
@@ -154,6 +159,74 @@ const corsOptions = {
   ],
 };
 
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: config.cors.origins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+  transports: ["websocket", "polling"],
+  pingTimeout: 60000,
+  pingInterval: 25000,
+});
+
+// Track online users
+const onlineUsers = new Map();
+
+io.on("connection", (socket) => {
+  logger.info(`Socket connected: ${socket.id}`);
+
+  // User comes online
+  socket.on("user_online", (userId) => {
+    if (userId) {
+      onlineUsers.set(userId, socket.id);
+      io.emit("user_status_change", { userId, status: "online" });
+    }
+  });
+
+  // Join a conversation room
+  socket.on("join_conversation", (conversationId) => {
+    if (conversationId) {
+      socket.join(`conversation_${conversationId}`);
+    }
+  });
+
+  // Leave a conversation room  
+  socket.on("leave_conversation", (conversationId) => {
+    if (conversationId) {
+      socket.leave(`conversation_${conversationId}`);
+    }
+  });
+
+  // Typing indicator
+  socket.on("typing", ({ conversationId, userId }) => {
+    socket.to(`conversation_${conversationId}`).emit("user_typing", { conversationId, userId });
+  });
+
+  // Stop typing
+  socket.on("stop_typing", ({ conversationId, userId }) => {
+    socket.to(`conversation_${conversationId}`).emit("user_stop_typing", { conversationId, userId });
+  });
+
+  // Handle disconnect
+  socket.on("disconnect", () => {
+    // Remove from online users
+    for (const [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        onlineUsers.delete(userId);
+        io.emit("user_status_change", { userId, status: "offline" });
+        break;
+      }
+    }
+    logger.info(`Socket disconnected: ${socket.id}`);
+  });
+});
+
+// Make io accessible to routes
+app.set("io", io);
+app.set("onlineUsers", onlineUsers);
+
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
@@ -298,8 +371,9 @@ app.use(errorHandler);
 const PORT = config.port;
 initializeDatabase()
   .then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       logger.info(`Server is running on port http://localhost:${PORT} in ${config.nodeEnv} mode`);
+      logger.info(`Socket.IO is ready for connections`);
     });
   })
   .catch((error) => {

@@ -9,17 +9,19 @@ import {
   Megaphone,
   Lock,
   User,
+  Loader2,
 } from "lucide-react";
 
 export const ChatHeader = ({ selectedChat, showProfile, setShowProfile }) => (
   <header className="h-20 shrink-0 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-6 bg-white/50 dark:bg-navy-charcoal/50 backdrop-blur-md z-10">
     <div className="flex items-center gap-4">
-      <div className="size-11 rounded-2xl bg-lavender-light dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold border border-studprimary/10">
-        {selectedChat?.type === "group" ? (
-          <Lock size={20} />
-        ) : (
-          <User size={20} />
-        )}
+      <div className="size-11 rounded-2xl bg-lavender-light dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold border border-studprimary/10 text-sm font-bold">
+        {selectedChat?.name
+          ?.split(" ")
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2) || <User size={20} />}
       </div>
       <div
         onClick={() => setShowProfile(!showProfile)}
@@ -29,22 +31,14 @@ export const ChatHeader = ({ selectedChat, showProfile, setShowProfile }) => (
           <h2 className="text-base font-bold text-slate-900 dark:text-white">
             {selectedChat?.name}
           </h2>
-          {selectedChat?.isStaff && (
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-studprimary/10 dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold border border-studprimary/20 uppercase tracking-tighter">
-              Staff Only
-            </span>
-          )}
         </div>
         <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
           <span
-            className={`size-1.5 rounded-full ${selectedChat?.online ? "bg-green-500" : "bg-slate-300"}`}
+            className={`size-1.5 rounded-full ${
+              selectedChat?.online ? "bg-green-500" : "bg-slate-300"
+            }`}
           ></span>
-          {typeof selectedChat?.online === "number"
-            ? `${selectedChat?.online} members online`
-            : selectedChat?.online
-              ? "Active Now"
-              : "Offline"}{" "}
-          • Academic Hub
+          {selectedChat?.online ? "Active Now" : "Offline"} • Academic Hub
         </div>
       </div>
     </div>
@@ -63,7 +57,7 @@ export const ChatHeader = ({ selectedChat, showProfile, setShowProfile }) => (
   </header>
 );
 
-export const MessageList = ({ messagesData }) => {
+export const MessageList = ({ messagesData, typingUsers, conversationId }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -72,94 +66,154 @@ export const MessageList = ({ messagesData }) => {
     }
   }, [messagesData]);
 
+  const isTyping = typingUsers && typingUsers[conversationId];
+
+  // Group messages by date
+  const getDateLabel = (dateStr) => {
+    if (!dateStr) return "Today";
+    const msgDate = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (msgDate.toDateString() === today.toDateString()) return "Today";
+    if (msgDate.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return msgDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   return (
     <div
       ref={scrollRef}
       className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar bg-slate-50/30 dark:bg-transparent scroll-smooth"
     >
-      <div className="flex items-center gap-4 py-4">
-        <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
-        <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-white dark:bg-navy-charcoal px-3">
-          Today
-        </span>
-        <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
-      </div>
+      {messagesData.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-full text-slate-400">
+          <div className="size-16 rounded-3xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center mb-4">
+            <Megaphone size={28} className="text-studprimary dark:text-premium-gold" />
+          </div>
+          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+            No messages yet
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            Send the first message to start the conversation!
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-4 py-4">
+            <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
+            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-white dark:bg-navy-charcoal px-3">
+              {getDateLabel(messagesData[0]?.time)}
+            </span>
+            <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
+          </div>
 
-      {messagesData.map((msg, index) => (
-        <div
-          key={msg.id || index}
-          className={`flex flex-col animate-message ${
-            msg.type === "broadcast"
-              ? "items-center translate-y-2"
-              : msg.isMe
-                ? "items-end"
-                : "items-start"
-          }`}
-        >
-          {msg.type === "broadcast" ? (
-            <div className="bg-studprimary/5 dark:bg-premium-gold/5 border border-studprimary/10 dark:border-premium-gold/10 rounded-3xl p-6 w-full max-w-lg text-center shadow-sm">
-              <div className="size-12 rounded-2xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold mx-auto mb-4">
-                <Megaphone size={24} />
-              </div>
-              <p className="text-[10px] font-extrabold text-studprimary dark:text-premium-gold uppercase tracking-tighter mb-2">
-                SYSTEM BROADCAST SENT
-              </p>
-              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 italic px-4 leading-relaxed font-display">
-                "{msg.content}"
-              </p>
-              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-4">
-                Triggered by Admin • {msg.time}
-              </p>
-            </div>
-          ) : (
+          {messagesData.map((msg, index) => (
             <div
-              className={`flex gap-3 max-w-[85%] md:max-w-[70%] ${
-                msg.isMe ? "flex-row-reverse" : ""
+              key={msg.id || index}
+              className={`flex flex-col animate-message ${
+                msg.type === "broadcast"
+                  ? "items-center translate-y-2"
+                  : msg.isMe
+                  ? "items-end"
+                  : "items-start"
               }`}
             >
-              {!msg.isMe && (
-                <div className="size-9 rounded-full shrink-0 border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                  {msg.avatar ? (
-                    <img
-                      src={msg.avatar}
-                      className="w-full h-full object-cover"
-                      alt={msg.sender}
-                    />
-                  ) : (
-                    <User size={16} className="text-slate-400" />
-                  )}
-                </div>
-              )}
-              <div className={`flex flex-col ${msg.isMe ? "items-end" : ""}`}>
-                <div className="flex items-baseline gap-2 mb-1.5 px-1">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-slate-200">
-                    {msg.sender}
-                  </span>
-                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+              {msg.type === "broadcast" ? (
+                <div className="bg-studprimary/5 dark:bg-premium-gold/5 border border-studprimary/10 dark:border-premium-gold/10 rounded-3xl p-6 w-full max-w-lg text-center shadow-sm">
+                  <div className="size-12 rounded-2xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold mx-auto mb-4">
+                    <Megaphone size={24} />
+                  </div>
+                  <p className="text-[10px] font-extrabold text-studprimary dark:text-premium-gold uppercase tracking-tighter mb-2">
+                    SYSTEM BROADCAST
+                  </p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 italic px-4 leading-relaxed">
+                    "{msg.content}"
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-4">
                     {msg.time}
-                  </span>
+                  </p>
                 </div>
+              ) : (
                 <div
-                  className={`p-4 rounded-3xl shadow-sm ${
-                    msg.isMe
-                      ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal rounded-tr-none"
-                      : "bg-white dark:bg-white/10 border border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-tl-none"
+                  className={`flex gap-3 max-w-[85%] md:max-w-[70%] ${
+                    msg.isMe ? "flex-row-reverse" : ""
                   }`}
                 >
-                  <p className="text-sm leading-relaxed font-medium">
-                    {msg.content}
-                  </p>
+                  {!msg.isMe && (
+                    <div className="size-9 rounded-full shrink-0 border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                      {msg.avatar ? (
+                        <img
+                          src={msg.avatar}
+                          className="w-full h-full object-cover"
+                          alt={msg.sender}
+                        />
+                      ) : (
+                        <span className="text-xs font-bold text-studprimary dark:text-premium-gold">
+                          {msg.sender
+                            ?.split(" ")
+                            .map((w) => w[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2) || "?"}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div
+                    className={`flex flex-col ${msg.isMe ? "items-end" : ""}`}
+                  >
+                    <div className="flex items-baseline gap-2 mb-1.5 px-1">
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-200">
+                        {msg.isMe ? "You" : msg.sender}
+                      </span>
+                      <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+                        {msg.time}
+                      </span>
+                    </div>
+                    <div
+                      className={`p-4 rounded-3xl shadow-sm ${
+                        msg.isMe
+                          ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal rounded-tr-none"
+                          : "bg-white dark:bg-white/10 border border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-tl-none"
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed font-medium">
+                        {msg.content}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Typing indicator */}
+          {isTyping && (
+            <div className="flex items-start gap-3 animate-message">
+              <div className="size-9 rounded-full shrink-0 border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                <User size={16} className="text-slate-400" />
+              </div>
+              <div className="bg-white dark:bg-white/10 border border-slate-100 dark:border-white/5 rounded-3xl rounded-tl-none px-5 py-3 shadow-sm">
+                <div className="flex gap-1.5">
+                  <span className="size-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                  <span className="size-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                  <span className="size-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                 </div>
               </div>
             </div>
           )}
-        </div>
-      ))}
+        </>
+      )}
     </div>
   );
 };
 
-export const MessageInput = ({ message, setMessage, onSend }) => {
+export const MessageInput = ({ message, setMessage, onSend, sending }) => {
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -195,10 +249,14 @@ export const MessageInput = ({ message, setMessage, onSend }) => {
           />
           <button
             onClick={onSend}
-            disabled={!message.trim()}
+            disabled={!message?.trim() || sending}
             className="shrink-0 size-11 bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal rounded-2xl flex items-center justify-center shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
-            <Send size={18} fill="currentColor" />
+            {sending ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Send size={18} fill="currentColor" />
+            )}
           </button>
         </div>
       </div>
@@ -214,6 +272,10 @@ const ChatWindow = ({
   showProfile,
   setShowProfile,
   onSendMessage,
+  sending,
+  typingUsers,
+  conversationId,
+  isSocketConnected = true, // Connection status for UI feedback
 }) => {
   return (
     <main className="flex-1 flex flex-col h-full bg-white dark:bg-navy-charcoal overflow-hidden relative">
@@ -222,11 +284,16 @@ const ChatWindow = ({
         showProfile={showProfile}
         setShowProfile={setShowProfile}
       />
-      <MessageList messagesData={messagesData} />
+      <MessageList
+        messagesData={messagesData}
+        typingUsers={typingUsers}
+        conversationId={conversationId}
+      />
       <MessageInput
         message={message}
         setMessage={setMessage}
         onSend={onSendMessage}
+        sending={sending}
       />
     </main>
   );

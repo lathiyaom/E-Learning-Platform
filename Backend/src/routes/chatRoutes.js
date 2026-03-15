@@ -58,8 +58,9 @@ router.get("/contacts", authenticate, tenantScope, async (req, res) => {
 // Start or get conversation
 router.post("/start-conversation", authenticate, tenantScope, async (req, res) => {
   try {
-    const { teacher_id, subject, course_context } = req.body;
-    const studentId = req.user.id;
+    const { teacher_id, student_id, subject, course_context } = req.body;
+    const currentUserId = req.user.id;
+    const currentUserType = req.user.userType;
     const organizationId = req.tenantId;
 
     if (!organizationId) {
@@ -69,39 +70,90 @@ router.post("/start-conversation", authenticate, tenantScope, async (req, res) =
       });
     }
 
-    // Check if teacher exists and is in same organization
-    const teacher = await User.findById(teacher_id);
-    if (!teacher || teacher.userType !== "teacher") {
-      return res.status(404).json({
-        success: false,
-        message: "Teacher not found"
-      });
-    }
+    let finalStudentId, finalTeacherId, contactId;
 
-    const teacherOrgIds = (teacher.organizations || []).map((id) => id.toString());
-    const teacherTenantId = teacher.tenant_id?.toString();
-    const sameOrganization =
-      teacherOrgIds.includes(organizationId.toString()) ||
-      teacherTenantId === organizationId.toString();
+    if (currentUserType === "student") {
+      // Student is starting conversation with a teacher
+      contactId = teacher_id;
+      if (!contactId) {
+        return res.status(400).json({
+          success: false,
+          message: "teacher_id is required",
+        });
+      }
+      const teacher = await User.findById(contactId);
+      if (!teacher || teacher.userType !== "teacher") {
+        return res.status(404).json({
+          success: false,
+          message: "Teacher not found",
+        });
+      }
+      finalStudentId = currentUserId;
+      finalTeacherId = contactId;
 
-    if (!sameOrganization) {
-      return res.status(400).json({
+      // Check organization match
+      const teacherOrgIds = (teacher.organizations || []).map((id) => id.toString());
+      const teacherTenantId = teacher.tenant_id?.toString();
+      const sameOrganization =
+        teacherOrgIds.includes(organizationId.toString()) ||
+        teacherTenantId === organizationId.toString();
+
+      if (!sameOrganization) {
+        return res.status(400).json({
+          success: false,
+          message: "Teacher is not available in your organization",
+        });
+      }
+    } else if (currentUserType === "teacher") {
+      // Teacher is starting conversation with a student
+      contactId = student_id || teacher_id; // support both field names from frontend
+      if (!contactId) {
+        return res.status(400).json({
+          success: false,
+          message: "student_id is required",
+        });
+      }
+      const student = await User.findById(contactId);
+      if (!student || student.userType !== "student") {
+        return res.status(404).json({
+          success: false,
+          message: "Student not found",
+        });
+      }
+      finalStudentId = contactId;
+      finalTeacherId = currentUserId;
+
+      // Check organization match
+      const studentOrgIds = (student.organizations || []).map((id) => id.toString());
+      const studentTenantId = student.tenant_id?.toString();
+      const sameOrganization =
+        studentOrgIds.includes(organizationId.toString()) ||
+        studentTenantId === organizationId.toString();
+
+      if (!sameOrganization) {
+        return res.status(400).json({
+          success: false,
+          message: "Student is not available in your organization",
+        });
+      }
+    } else {
+      return res.status(403).json({
         success: false,
-        message: "Teacher is not available in your organization",
+        message: "Only students and teachers can start conversations",
       });
     }
 
     // Check if conversation already exists
     let conversation = await Conversation.findOne({
-      student_id: studentId,
-      teacher_id: teacher_id
+      student_id: finalStudentId,
+      teacher_id: finalTeacherId
     });
 
     if (!conversation) {
       // Create new conversation
       conversation = new Conversation({
-        student_id: studentId,
-        teacher_id: teacher_id,
+        student_id: finalStudentId,
+        teacher_id: finalTeacherId,
         organization_id: organizationId,
         subject: subject || "",
         course_context: course_context || null
@@ -184,6 +236,27 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
       { path: 'sender_id', select: 'firstName lastName email userType' },
       { path: 'reply_to', select: 'message sender_id' }
     ]);
+
+    // Emit real-time Socket.IO event
+    const io = req.app.get("io");
+    if (io) {
+      // Send message to the conversation room
+      io.to(`conversation_${conversation_id}`).emit("new_message", {
+        conversationId: conversation_id,
+        message: newMessage,
+      });
+
+      // Notify conversation list update (for sidebar)
+      const populatedConv = await Conversation.findById(conversation_id)
+        .populate([
+          { path: 'student_id', select: 'firstName lastName email' },
+          { path: 'teacher_id', select: 'firstName lastName email' },
+        ]);
+
+      io.emit("conversation_updated", {
+        conversation: populatedConv,
+      });
+    }
 
     res.status(201).json({
       success: true,
