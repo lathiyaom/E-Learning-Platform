@@ -17,6 +17,7 @@ const CourseForm = () => {
     title: "",
     description: "",
     category: "",
+    level: "Easy",
     video_url: "",
     image: "",
     tags: [],
@@ -34,6 +35,7 @@ const CourseForm = () => {
         title: course.title || "",
         description: course.description || "",
         category: course.category || "",
+        level: course.level || "Easy",
         video_url: course.video_url || course.videoUrl || "",
         image: course.image || "",
         tags: course.tags || [],
@@ -141,6 +143,20 @@ const CourseForm = () => {
               <option value="Business">Business</option>
               <option value="Marketing">Marketing</option>
               <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Level *</label>
+            <select
+              value={formData.level}
+              onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+              className="w-full px-3 py-2 border rounded"
+              required
+            >
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
             </select>
           </div>
 

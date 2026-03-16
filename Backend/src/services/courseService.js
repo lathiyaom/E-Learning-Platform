@@ -94,6 +94,7 @@ const createCourse = async (courseData) => {
     video_url: courseVideoUrl,
     videoUrl: courseVideoUrl,
     tags: tags || ["Popular"],
+    level: courseData.level || "Easy",
     price: coursePrice,
     pricing: coursePrice,
     priceUSD: coursePrice,
@@ -165,7 +166,7 @@ const updateCourse = async (id, tenantId, updateData) => {
   });
   if (!course) throw new Error("Course Not Found");
 
-  const { title, image, description, category, videoUrl, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount } = updateData;
+  const { title, image, description, category, videoUrl, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount, level } = updateData;
 
   if (title !== undefined && title.length === 0)
     throw new Error("Title is required");
@@ -186,6 +187,7 @@ const updateCourse = async (id, tenantId, updateData) => {
     course.videoUrl = videoUrl;
   }
   if (tags) course.tags = tags;
+  if (level) course.level = level;
   
   // Handle multiple price field formats
   const coursePrice = price ?? pricing ?? priceUSD;

@@ -77,7 +77,7 @@ function ChatPage() {
 
   // ========== SOCKET.IO SETUP ==========
   useEffect(() => {
-    if (!user?.id) return;
+    if (!(user?._id || user?.id)) return;
 
     try {
       const socket = connectSocket();
@@ -91,7 +91,7 @@ function ChatPage() {
       // Socket connect event
       const handleConnect = () => {
         setIsSocketConnected(true);
-        emitUserOnline(user.id);
+        emitUserOnline((user._id || user.id));
       };
 
       const handleDisconnect = () => {
@@ -129,7 +129,7 @@ function ChatPage() {
       console.error("Socket setup error:", error);
       toast.error("Connection error - some features may not work");
     }
-  }, [user?.id]);
+  }, [(user?._id || user?.id)]);
 
   // ========== SOCKET EVENT HANDLERS ==========
 
@@ -254,10 +254,10 @@ function ChatPage() {
   // ========== DATA FETCHING ==========
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!(user?._id || user?.id)) return;
     fetchConversations();
     fetchContacts();
-  }, [user?.id]);
+  }, [(user?._id || user?.id)]);
 
   const fetchConversations = async () => {
     try {
@@ -377,7 +377,7 @@ function ChatPage() {
       pendingMessagesRef.current.set(optimisticMessage._id, optimisticMessage);
 
       // Stop typing indicator
-      sendStopTyping(conversationId, user.id);
+      sendStopTyping(conversationId, (user._id || user.id));
 
       // Send to server
       const response = await chatApi.sendMessage({
@@ -443,8 +443,8 @@ function ChatPage() {
   const handleMessageChange = (value) => {
     setMessage(value);
 
-    if (selectedChat?._id && user?.id) {
-      sendTyping(selectedChat._id, user.id);
+    if (selectedChat?._id && (user?._id || user?.id)) {
+      sendTyping(selectedChat._id, (user._id || user.id));
 
       // Clear existing timeout
       if (typingTimeoutRef.current) {
@@ -453,7 +453,7 @@ function ChatPage() {
 
       // Stop typing after 2 seconds of inactivity
       typingTimeoutRef.current = setTimeout(() => {
-        sendStopTyping(selectedChat._id, user.id);
+        sendStopTyping(selectedChat._id, (user._id || user.id));
       }, 2000);
     }
   };
@@ -567,7 +567,7 @@ function ChatPage() {
     () =>
       messages.map((msg) => {
         const senderId = msg.sender_id?._id || msg.sender_id;
-        const isMe = senderId === user?.id;
+        const isMe = senderId === (user?._id || user?.id);
         const senderName = msg.sender_id?.firstName
           ? `${msg.sender_id.firstName} ${msg.sender_id.lastName || ""}`
           : isMe
@@ -586,7 +586,7 @@ function ChatPage() {
           isOptimistic: msg.isOptimistic,
         };
       }),
-    [messages, formatTime, user?.id]
+    [messages, formatTime, (user?._id || user?.id)]
   );
 
   // Get selected chat data

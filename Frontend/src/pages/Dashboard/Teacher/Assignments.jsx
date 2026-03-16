@@ -51,7 +51,8 @@ const Assignments = () => {
 
   // Filter courses for current teacher
   const courses = coursesData?.data?.filter(course => 
-    course.createdBy === user?._id || course.teacher_id === user?._id
+    String(course.createdBy?._id || course.createdBy) === String(user?._id || user?.id) || 
+    String(course.teacher_id?._id || course.teacher_id) === String(user?._id || user?.id)
   ) || [];
 
   const assignments = assignmentsData?.data || [];

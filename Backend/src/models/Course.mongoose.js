@@ -61,6 +61,11 @@ const courseSchema = new mongoose.Schema(
       min: 0,
       max: 5,
     },
+    level: {
+      type: String,
+      enum: ["Easy", "Medium", "Hard"],
+      default: "Easy",
+    },
     reviewCount: {
       type: Number,
       default: 0,

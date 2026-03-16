@@ -479,9 +479,40 @@ const TeacherLectureManagement = () => {
                             {/* Upload Area */}
                             <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 mb-6 text-center">
                                 <FileUp className="w-10 h-10 mx-auto text-slate-400 mb-2" />
-                                <p className="text-slate-600 dark:text-slate-400">
+                                <p className="text-slate-600 dark:text-slate-400 mb-4">
                                     Materials attached to this lecture
                                 </p>
+                                <label className="inline-block bg-blue-100 hover:bg-blue-200 text-blue-600 dark:bg-blue-900 dark:text-blue-300 px-4 py-2 rounded-lg cursor-pointer transition">
+                                    Upload Material
+                                    <input 
+                                        type="file" 
+                                        className="hidden" 
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const formData = new FormData();
+                                            formData.append("file", file);
+                                            formData.append("course_id", selectedLecture.courseId || selectedCourse);
+                                            formData.append("title", file.name);
+                                            formData.append("type", file.type.includes("video") ? "video" : "document");
+                                            try {
+                                                const token = localStorage.getItem("token") || document.cookie.split("token=")[1]?.split(";")[0];
+                                                const res = await fetch("http://localhost:5000/Material/upload", {
+                                                    method: "POST",
+                                                    headers: { Authorization: `Bearer ${token}` },
+                                                    body: formData
+                                                });
+                                                if (res.ok) {
+                                                    alert("Uploaded successfully");
+                                                } else {
+                                                    alert("Upload failed");
+                                                }
+                                            } catch (error) {
+                                                alert("Upload failed: " + error.message);
+                                            }
+                                        }}
+                                    />
+                                </label>
                             </div>
 
                             {/* Materials List */}

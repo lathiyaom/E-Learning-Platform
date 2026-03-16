@@ -83,11 +83,11 @@ const authenticate = async (req, res, next) => {
     }
 
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      userType: decoded.userType,
-      firstName: decoded.firstName,
-      lastName: decoded.lastName,
+      id: account.id || account._id || decoded.id,
+      email: account.email || decoded.email,
+      userType: account.userType || decoded.userType,
+      firstName: account.firstName || account.name || decoded.firstName,
+      lastName: account.lastName || decoded.lastName,
       sessionId,
       role,
       ...(role === "user" && { tenantId: account.tenant_id }),
@@ -118,7 +118,7 @@ const authorize = (...allowedRoles) => {
     }
 
     // Convert to uppercase for case-insensitive comparison
-    const userRole = req.user.userType?.toUpperCase();
+    const userRole = req.user.userType?.toUpperCase(); console.log('[AUTHORIZE] req.user:', req.user, 'allowedRoles:', allowedRoles);
     const allowed = allowedRoles.map((role) => role.toUpperCase());
 
     if (!allowed.includes(userRole)) {

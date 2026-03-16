@@ -24,6 +24,7 @@ function AddCourse() {
     image: "",
     description: "",
     category: "",
+    level: "Easy",
     rating: 0,
     reviewCount: 0,
     videoUrl: "",
@@ -223,6 +224,24 @@ function AddCourse() {
                           {cat}
                         </option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-semibold text-[#343131] mb-3">
+                      <Grid3X3 size={18} className="mr-2 text-[#D8A25E]" />
+                      Level
+                    </label>
+                    <select
+                      name="level"
+                      value={courseData.level || "Easy"}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300 text-[#343131]"
+                      required
+                    >
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
                     </select>
                   </div>
                 </div>
