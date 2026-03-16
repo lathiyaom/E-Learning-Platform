@@ -128,10 +128,9 @@ tenantSchema.pre("save", async function () {
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  
-  // ✅ Auto-generate organization code if not provided
+
+  // Auto-generate organization code only for org admins (not superadmin)
   if (!this.code && this.userType === "admin") {
-    // Generate code from organization name (e.g., "ABC School" -> "ABCSCH")
     const nameCode = this.name
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "")

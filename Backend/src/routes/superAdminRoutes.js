@@ -20,6 +20,9 @@ router.get("/Users", superAdminController.getAllUsers);
 // Dashboard stats
 router.get("/Stats", superAdminController.getPlatformStats);
 
+// Organizations overview (per-org teacher & student counts)
+router.get("/Organizations", superAdminController.getOrganizationsOverview);
+
 // Activity logs
 router.get("/Logs", superAdminController.getActivityLogs);
 

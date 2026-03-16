@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import "./App.css";
 import Home from "./pages/Home";
 import HomeNew from "./pages/HomeNew";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import About from "./pages/About2/index";
 import ContactUs from "./pages/CountectUs/index";
 import Index from "./pages/Courses2/index";
@@ -33,11 +33,9 @@ import ExploreCourses from "./pages/Dashboard/student/exploreCourses/index.jsx";
 import Userprofile from "./pages/Dashboard/student/userprofile/index.jsx";
 import MyLearning from "./pages/Dashboard/student/Mylearning/index.jsx";
 import ChatInterface from "./pages/Chat/index.jsx";
-import SuperAdminDashboard from "./pages/Dashboard/SuperAdmin/SuperAdminDashboard.jsx";
 import TenantManagement from "./pages/Dashboard/SuperAdmin/TenantManagement.jsx";
 import UserManagement from "./pages/Dashboard/SuperAdmin/UserManagement.jsx";
 import TenantDetail from "./pages/Dashboard/SuperAdmin/TenantDetail.jsx";
-import Analytics from "./pages/Dashboard/SuperAdmin/Analytics.jsx";
 import AdminDashboard from "./pages/Dashboard/Admin/AdminDashboard.jsx";
 import TeacherDashboard from "./pages/Dashboard/Teacher/TeacherDashboard.jsx";
 import MyCourses from "./pages/Dashboard/Teacher/MyCourses.jsx";
@@ -119,12 +117,11 @@ function App() {
             <Route path="/help" element={<Help />} />
             
             {/* SuperAdmin Routes - Protected */}
-            <Route path="/superadmin" element={<ProtectedRoute requiredRole="superadmin"><SuperAdminDashboard /></ProtectedRoute>} />
-            <Route path="/superadmin/dashboard" element={<ProtectedRoute requiredRole="superadmin"><SuperAdminDashboard /></ProtectedRoute>} />
+            <Route path="/superadmin" element={<Navigate to="/superadmin/tenants" replace />} />
+            <Route path="/superadmin/dashboard" element={<Navigate to="/superadmin/tenants" replace />} />
             <Route path="/superadmin/tenants" element={<ProtectedRoute requiredRole="superadmin"><TenantManagement /></ProtectedRoute>} />
             <Route path="/superadmin/tenants/:id" element={<ProtectedRoute requiredRole="superadmin"><TenantDetail /></ProtectedRoute>} />
             <Route path="/superadmin/users" element={<ProtectedRoute requiredRole="superadmin"><UserManagement /></ProtectedRoute>} />
-            <Route path="/superadmin/analytics" element={<ProtectedRoute requiredRole="superadmin"><Analytics /></ProtectedRoute>} />
             
             {/* Admin Routes - Protected */}
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />

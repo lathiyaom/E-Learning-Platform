@@ -259,6 +259,24 @@ const getActivityLogs = async (req, res) => {
   }
 };
 
+// GET /SuperAdmin/Organizations — Per-org overview with teacher & student counts
+const getOrganizationsOverview = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10, search } = req.query;
+    const result = await superAdminService.getOrganizationsOverview({ status, page, limit, search });
+
+    return res.status(200).json({
+      message: "Organizations overview retrieved",
+      success: true,
+      data: result.organizations,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("SuperAdmin - Organizations overview error:", error.message);
+    return res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
 module.exports = {
   getAllTenants,
   getTenantWithUsers,
@@ -267,6 +285,7 @@ module.exports = {
   changeTenantStatus,
   getAllUsers,
   getPlatformStats,
+  getOrganizationsOverview,
   deleteTenant,
   getActivityLogs,
 };

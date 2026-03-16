@@ -210,44 +210,108 @@ const getAllUsersAcrossPlatform = async () => {
 
 // Get platform dashboard stats
 const getPlatformStats = async () => {
-  const totalTenants = await Tenant.countDocuments();
-  const activeTenants = await Tenant.countDocuments({ status: "active" });
-  const suspendedTenants = await Tenant.countDocuments({ status: "suspended" });
-  const inactiveTenants = await Tenant.countDocuments({ status: "inactive" });
-  const superadminCount = await Tenant.countDocuments({ userType: "superadmin" });
+  const totalOrganizations = await Tenant.countDocuments({ userType: "admin" });
+  const activeOrganizations = await Tenant.countDocuments({ userType: "admin", status: "active" });
+  const suspendedOrganizations = await Tenant.countDocuments({ userType: "admin", status: "suspended" });
+  const inactiveOrganizations = await Tenant.countDocuments({ userType: "admin", status: "inactive" });
 
   const totalUsers = await User.countDocuments();
-  const activeUsers = await User.countDocuments({ status: "active" });
   const studentCount = await User.countDocuments({ userType: "student" });
   const teacherCount = await User.countDocuments({ userType: "teacher" });
-  const adminCount = await User.countDocuments({ userType: "admin" });
 
-  // Get total courses (if Course model exists)
   let totalCourses = 0;
   try {
     const { Course } = require("../models");
     totalCourses = await Course.countDocuments();
-  } catch (error) {
-    // Course model might not exist yet
-  }
+  } catch (_) {}
 
   return {
-    tenants: {
-      total: totalTenants,
-      active: activeTenants,
-      suspended: suspendedTenants,
-      inactive: inactiveTenants,
-      superadmins: superadminCount,
+    organizations: {
+      total: totalOrganizations,
+      active: activeOrganizations,
+      suspended: suspendedOrganizations,
+      inactive: inactiveOrganizations,
     },
     users: {
       total: totalUsers,
-      active: activeUsers,
       students: studentCount,
       teachers: teacherCount,
-      admins: adminCount,
     },
     courses: {
       total: totalCourses,
+    },
+  };
+};
+
+// Get per-organization overview: name, status, teacher count, student count
+const getOrganizationsOverview = async (filters = {}) => {
+  const { status, page = 1, limit = 10, search } = filters;
+
+  const query = { userType: "admin" };
+  if (status) query.status = status;
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { OrgOwnerName: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const total = await Tenant.countDocuments(query);
+
+  const organizations = await Tenant.find(query)
+    .select("name email OrgOwnerName OrgOwnerEmail phoneNo status createdAt")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+
+  const orgIds = organizations.map((o) => o._id);
+
+  // Aggregate teacher and student counts per org in one query
+  const userCounts = await User.aggregate([
+    { $match: { tenant_id: { $in: orgIds } } },
+    {
+      $group: {
+        _id: { tenant_id: "$tenant_id", userType: "$userType" },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // Build lookup map: orgId -> { teachers, students }
+  const countMap = {};
+  for (const entry of userCounts) {
+    const id = entry._id.tenant_id.toString();
+    if (!countMap[id]) countMap[id] = { teachers: 0, students: 0 };
+    if (entry._id.userType === "teacher") countMap[id].teachers = entry.count;
+    if (entry._id.userType === "student") countMap[id].students = entry.count;
+  }
+
+  const overview = organizations.map((org) => {
+    const counts = countMap[org._id.toString()] || { teachers: 0, students: 0 };
+    return {
+      id: org._id,
+      name: org.name,
+      email: org.email,
+      ownerName: org.OrgOwnerName,
+      ownerEmail: org.OrgOwnerEmail,
+      phone: org.phoneNo,
+      status: org.status,
+      teachers: counts.teachers,
+      students: counts.students,
+      totalUsers: counts.teachers + counts.students,
+      joinedAt: org.createdAt,
+    };
+  });
+
+  return {
+    organizations: overview,
+    pagination: {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      pages: Math.ceil(total / parseInt(limit)),
     },
   };
 };
@@ -336,6 +400,7 @@ module.exports = {
   changeTenantStatus,
   getAllUsersAcrossPlatform,
   getPlatformStats,
+  getOrganizationsOverview,
   deleteTenant,
   getActivityLogs,
 };

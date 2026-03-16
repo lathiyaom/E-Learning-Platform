@@ -37,28 +37,22 @@ const SuperAdminLayout = ({
   const navItems = useMemo(
     () => [
       {
-        id: "dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        link: "/superadmin/dashboard",
-      },
-      {
         id: "tenants",
         label: "Organizations",
         icon: Building,
         link: "/superadmin/tenants",
       },
       {
-        id: "users",
-        label: "Users",
+        id: "teachers",
+        label: "Teachers",
         icon: Users,
-        link: "/superadmin/users",
+        link: "/superadmin/users?role=teacher",
       },
       {
-        id: "analytics",
-        label: "Analytics",
-        icon: BarChart3,
-        link: "/superadmin/analytics",
+        id: "students",
+        label: "Students",
+        icon: Users,
+        link: "/superadmin/users?role=student",
       },
     ],
     []
@@ -100,7 +94,7 @@ const SuperAdminLayout = ({
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {
           const ActiveIcon = item.icon;
-          const active = location.pathname === item.link;
+          const active = (location.pathname + location.search) === item.link || location.pathname === item.link;
           return (
             <Link
               key={item.id}

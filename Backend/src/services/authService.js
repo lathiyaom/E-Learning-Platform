@@ -20,6 +20,10 @@ const login = async (email, password) => {
       throw new Error("Invalid email or password");
     }
 
+    if (tenant.status !== "active") {
+      throw new Error("Your account has been suspended or deactivated. Contact support.");
+    }
+
     const tokens = generateTokens({
       id: tenant.id,
       email: tenant.email,
@@ -37,10 +41,10 @@ const login = async (email, password) => {
       user: {
         id: tenant.id,
         email: tenant.email,
-        firstName: tenant.name,
-        lastName: "",
+        name: tenant.name,
         userType: tenant.userType,
         role: "tenant",
+        isSuperAdmin: tenant.userType === "superadmin",
       },
     };
   }

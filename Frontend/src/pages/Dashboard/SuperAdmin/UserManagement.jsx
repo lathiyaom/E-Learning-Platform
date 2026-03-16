@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import SuperAdminLayout from "../../../utils/SuperAdminLayout";
 import { useGetAllPlatformUsersQuery } from "../../../redux/Apis/superAdminApi";
 import {
@@ -15,8 +16,19 @@ import {
 
 const UserManagement = () => {
   const { data, isLoading, isError, error } = useGetAllPlatformUsersQuery();
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get("role") || "all";
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState(initialRole);
+
+  useEffect(() => {
+    const role = searchParams.get("role");
+    if (role) {
+      setRoleFilter(role);
+    } else {
+      setRoleFilter("all");
+    }
+  }, [searchParams]);
   const [statusFilter, setStatusFilter] = useState("all");
 
   const users = data?.data || [];
@@ -98,8 +110,14 @@ const UserManagement = () => {
     );
   }
 
+  const pageTitle = roleFilter === "teacher" 
+    ? "Teachers Management" 
+    : roleFilter === "student" 
+      ? "Students Management" 
+      : "User Management";
+
   return (
-    <SuperAdminLayout pageTitle="User Management" showSearch={false}>
+    <SuperAdminLayout pageTitle={pageTitle} showSearch={false}>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">

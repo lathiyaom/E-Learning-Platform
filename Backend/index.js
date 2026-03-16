@@ -26,42 +26,17 @@ const { connectDB } = require("./src/Db/mongoose");
 // const { testConnection, syncDatabase } = require("./src/Db/sequelize");
 // const supabase = require("./src/Db/supabase");
 require("./src/models/index");
-const { Tenant } = require("./src/models");
+
+const seedSuperAdmin = require("./src/utils/seedSuperAdmin");
 
 // Initialize database connection
 const initializeDatabase = async () => {
   try {
-    // Connect to MongoDB
     await connectDB();
     logger.info("✅ Database connected successfully");
 
-    // Auto-create platform owner (superadmin) on first run
-    const superadminEmail = process.env.SUPERADMIN_EMAIL || "superadmin@gmail.com";
-    const superadminPassword = process.env.SUPERADMIN_PASSWORD || "superadmin123";
-    const existingSuperadmin = await Tenant.findOne({
-      $or: [{ userType: "superadmin" }, { email: superadminEmail }],
-    });
-
-    if (!existingSuperadmin) {
-      await Tenant.create({
-        name: "Platform Owner",
-        code: "PLATFM",
-        phoneNo: "9999999999",
-        userType: "superadmin",
-        OrgOwnerName: "Platform Owner",
-        OrgOwnerEmail: superadminEmail,
-        OrgOwnerPhone: "9999999999",
-        email: superadminEmail,
-        password: superadminPassword,
-        status: "active",
-        agreeTerms: true,
-        about: "Platform owner account",
-      });
-
-      logger.info("Superadmin auto-created", { email: superadminEmail });
-    } else {
-      logger.info("Superadmin already exists", { email: existingSuperadmin.email });
-    }
+    // Seed platform Super Admin (idempotent — safe on every restart)
+    await seedSuperAdmin();
   } catch (error) {
     logger.error("Database initialization failed", error);
     process.exit(1);
