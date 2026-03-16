@@ -97,6 +97,13 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Organization invitation fields (set when SuperAdmin invites teacher to an org)
+    pendingOrgInvitation: {
+      token: { type: String, default: null },
+      organizationId: { type: mongoose.Schema.Types.ObjectId, ref: "Tenant", default: null },
+      invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Tenant", default: null },
+      expiresAt: { type: Date, default: null },
+    },
     sessions: [
       {
         sid: {

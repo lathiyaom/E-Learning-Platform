@@ -18,6 +18,8 @@ import DeleteCourses from "./pages/Profile/Admin/DeleteCourses.jsx";
 import UserUpdateForm from "./pages/Profile/Admin/UserUpdateForm.jsx";
 import Settings from "./pages/Profile/Admin/settings.jsx";
 import UserComments from "./pages/Profile/Admin/UserComments.jsx";
+import ManageUsers from "./pages/Dashboard/Admin/Users.jsx";
+import ManageCourses from "./pages/Dashboard/Admin/Courses.jsx";
 import AssignTeachers from "./pages/Dashboard/Admin/AssignTeachers.jsx";
 import AdminEventsManagement from "./pages/Dashboard/Admin/AdminEventsManagement.jsx";
 import AdminHolidaysManagement from "./pages/Dashboard/Admin/AdminHolidaysManagement.jsx";
@@ -36,6 +38,7 @@ import ChatInterface from "./pages/Chat/index.jsx";
 import TenantManagement from "./pages/Dashboard/SuperAdmin/TenantManagement.jsx";
 import UserManagement from "./pages/Dashboard/SuperAdmin/UserManagement.jsx";
 import TenantDetail from "./pages/Dashboard/SuperAdmin/TenantDetail.jsx";
+import TeacherManagement from "./pages/Dashboard/SuperAdmin/TeacherManagement.jsx";
 import AdminDashboard from "./pages/Dashboard/Admin/AdminDashboard.jsx";
 import TeacherDashboard from "./pages/Dashboard/Teacher/TeacherDashboard.jsx";
 import MyCourses from "./pages/Dashboard/Teacher/MyCourses.jsx";
@@ -54,6 +57,8 @@ import StudentAssignments from "./pages/Dashboard/student/StudentAssignments.jsx
 
 import RateCourse from "./pages/Dashboard/student/RateCourse.jsx";
 import StudentFeedbackSystem from "./pages/Dashboard/student/StudentFeedbackSystem.jsx";
+import InvitationResult from "./pages/Teacher/InvitationResult.jsx";
+import InvitationAction from "./pages/Teacher/InvitationAction.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Unauthorized from "./pages/Unauthorized.jsx";
@@ -115,6 +120,8 @@ function App() {
             <Route path="/resources" element={<Resources />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/teacher/invitation-result" element={<InvitationResult />} />
+            <Route path="/teacher/invitation/:token/:action" element={<InvitationAction />} />
             
             {/* SuperAdmin Routes - Protected */}
             <Route path="/superadmin" element={<Navigate to="/superadmin/tenants" replace />} />
@@ -122,6 +129,7 @@ function App() {
             <Route path="/superadmin/tenants" element={<ProtectedRoute requiredRole="superadmin"><TenantManagement /></ProtectedRoute>} />
             <Route path="/superadmin/tenants/:id" element={<ProtectedRoute requiredRole="superadmin"><TenantDetail /></ProtectedRoute>} />
             <Route path="/superadmin/users" element={<ProtectedRoute requiredRole="superadmin"><UserManagement /></ProtectedRoute>} />
+            <Route path="/superadmin/teachers" element={<ProtectedRoute requiredRole="superadmin"><TeacherManagement /></ProtectedRoute>} />
             
             {/* Admin Routes - Protected */}
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -132,8 +140,9 @@ function App() {
             <Route path="/admin/event-manager" element={<ProtectedRoute requiredRole="admin"><EventManager /></ProtectedRoute>} />
             <Route path="/admin/holiday-manager" element={<ProtectedRoute requiredRole="admin"><HolidayManager /></ProtectedRoute>} />
             <Route path="/admin/teacher-marketplace" element={<ProtectedRoute requiredRole="admin"><TeacherMarketplace /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><ManageUsers /></ProtectedRoute>} />
             <Route path="/ActiveUsers" element={<ProtectedRoute requiredRole="admin"><ActiveUsers /></ProtectedRoute>} />
-            <Route path="/managecourses" element={<ProtectedRoute requiredRole="admin"><DeleteCourses /></ProtectedRoute>} />
+            <Route path="/managecourses" element={<ProtectedRoute requiredRole="admin"><ManageCourses /></ProtectedRoute>} />
             <Route path="/AddCourse" element={<ProtectedRoute requiredRole="admin"><AddCourse /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute requiredRole="admin"><Settings /></ProtectedRoute>} />
             <Route path="/updateForm" element={<ProtectedRoute requiredRole="admin"><UserUpdateForm /></ProtectedRoute>} />

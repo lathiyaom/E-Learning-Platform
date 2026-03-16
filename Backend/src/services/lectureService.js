@@ -1,4 +1,4 @@
-const { Lecture, Course, User } = require("../models");
+const { Lecture, Course, User, Holiday } = require("../models");
 
 const lectureService = {
   /**
@@ -6,6 +6,33 @@ const lectureService = {
    */
   createLecture: async (tenantId, lectureData) => {
     try {
+      // Check if lecture date falls on a holiday
+      if (lectureData.lectureDate) {
+        const lectureDay = new Date(lectureData.lectureDate);
+        lectureDay.setHours(0, 0, 0, 0);
+        const lectureDayEnd = new Date(lectureDay);
+        lectureDayEnd.setHours(23, 59, 59, 999);
+
+        const holiday = await Holiday.findOne({
+          $and: [
+            { $or: [{ tenantId: null }, { tenantId }] },
+            { date: { $lte: lectureDayEnd } },
+            {
+              $or: [
+                { endDate: { $gte: lectureDay } },
+                { endDate: null, date: { $gte: lectureDay } },
+              ],
+            },
+          ],
+        });
+
+        if (holiday) {
+          throw new Error(
+            `Cannot schedule lecture on holiday: "${holiday.title}" (${new Date(holiday.date).toDateString()})`
+          );
+        }
+      }
+
       // Verify course exists (skip tenant check if tenantId is null for unassigned teachers)
       const courseQuery = tenantId
         ? { _id: lectureData.courseId, $or: [{ organization_id: tenantId }, { tenantId }] }

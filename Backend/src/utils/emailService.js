@@ -434,11 +434,89 @@ const sendPasswordResetExpiredEmail = async (email, firstName, forgotPasswordLin
   }
 };
 
+// Send teacher organization invitation email
+const sendTeacherInvitationEmail = async ({ email, teacherName, organizationName, adminName, acceptLink, rejectLink }) => {
+  try {
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Organization Invitation - Eduverse</title></head>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background-color:#F9FAFB;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#F9FAFB;">
+    <tr><td style="padding:40px 20px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#1A1B23 0%,#2d2e3b 100%);padding:48px 40px;text-align:center;">
+            <div style="margin-bottom:24px;">
+              <div style="display:inline-block;background:linear-gradient(135deg,#B48B4D 0%,#ecb613 100%);padding:12px 28px;border-radius:12px;">
+                <h1 style="margin:0;font-size:28px;font-weight:800;color:#fff;">EDUVERSE</h1>
+              </div>
+            </div>
+            <div style="display:inline-block;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);padding:8px 20px;border-radius:20px;margin-bottom:20px;">
+              <span style="color:#a5b4fc;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">🎓 Organization Invitation</span>
+            </div>
+            <h2 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;line-height:1.3;">You've Been Invited to Join an Organization!</h2>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:48px 40px;">
+            <p style="margin:0 0 8px 0;color:#1A1B23;font-size:18px;font-weight:600;">Hi ${teacherName},</p>
+            <p style="margin:0 0 24px 0;color:#64748b;font-size:16px;line-height:1.6;"><strong style="color:#4f46e5;">${adminName}</strong> (Super Admin) has invited you to join <strong style="color:#1A1B23;">${organizationName}</strong> as a teacher on Eduverse.</p>
+            <div style="background:linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%);border-left:4px solid #3b82f6;padding:20px 24px;border-radius:12px;margin-bottom:32px;">
+              <p style="margin:0;color:#1e40af;font-size:14px;line-height:1.6;">
+                <strong>📋 What this means:</strong><br/>
+                By accepting, you will be assigned to <strong>${organizationName}</strong> and can start teaching their students, managing courses, and more.<br/><br/>
+                <strong>⏰ This invitation expires in 48 hours.</strong>
+              </p>
+            </div>
+            <p style="margin:0 0 24px 0;color:#64748b;font-size:15px;">Please choose your response below:</p>
+            <div style="text-align:center;margin:36px 0;display:flex;gap:16px;justify-content:center;">
+              <a href="${acceptLink}" style="display:inline-block;background:linear-gradient(135deg,#059669 0%,#10b981 100%);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;box-shadow:0 8px 24px rgba(16,185,129,0.3);margin-right:12px;">
+                ✅ Accept Invitation
+              </a>
+              <a href="${rejectLink}" style="display:inline-block;background:linear-gradient(135deg,#dc2626 0%,#ef4444 100%);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;box-shadow:0 8px 24px rgba(239,68,68,0.3);">
+                ❌ Decline
+              </a>
+            </div>
+            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;padding:20px;border-radius:12px;margin:32px 0;">
+              <p style="margin:0 0 8px 0;color:#475569;font-size:13px;font-weight:600;">Or copy these links:</p>
+              <p style="margin:0 0 4px 0;color:#059669;font-size:12px;word-break:break-all;">Accept: ${acceptLink}</p>
+              <p style="margin:0;color:#dc2626;font-size:12px;word-break:break-all;">Decline: ${rejectLink}</p>
+            </div>
+            <p style="margin:24px 0 0 0;color:#94a3b8;font-size:13px;">If you were not expecting this invitation, you can safely ignore this email.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#f8fafc;padding:32px 40px;text-align:center;border-top:1px solid #e2e8f0;">
+            <p style="margin:0;color:#94a3b8;font-size:13px;">© 2026 Eduverse. All rights reserved.</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    await transporter.sendMail({
+      from: `"Eduverse Platform" <${process.env.SMTP_USER || 'no-reply@eduverse.com'}>`,
+      to: email,
+      subject: `Invitation to join ${organizationName} on Eduverse`,
+      html,
+    });
+
+    logger.info("Teacher invitation email sent", { email, organizationName });
+  } catch (error) {
+    logger.error("Failed to send teacher invitation email", { email, error: error.message });
+    throw error;
+  }
+};
+
 module.exports = {
   transporter,
   sendEmail,
   sendPasswordResetEmail,
   sendPasswordResetConfirmationEmail,
   sendPasswordResetExpiredEmail,
+  sendTeacherInvitationEmail,
   emailTemplates,
 };

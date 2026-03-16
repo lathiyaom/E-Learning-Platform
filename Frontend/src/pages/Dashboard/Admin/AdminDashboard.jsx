@@ -63,7 +63,7 @@ function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Manage Users */}
           <Link
-            to="/ActiveUsers"
+            to="/admin/users"
             className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300 group"
           >
             <div className="flex items-center justify-between mb-4">
@@ -79,7 +79,7 @@ function AdminDashboard() {
 
           {/* Add User */}
           <Link
-            to="/Sign-Up"
+            to="/admin/users"
             className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300 group"
           >
             <div className="flex items-center justify-between mb-4">

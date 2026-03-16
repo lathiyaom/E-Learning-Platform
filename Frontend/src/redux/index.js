@@ -79,6 +79,16 @@ export {
   useDeleteFileMutation,
 } from "./Apis/uploadApi";
 
+// Admin user management exports
+export {
+  useGetAdminUsersQuery,
+  useCreateAdminUserMutation,
+  useUpdateAdminUserMutation,
+  useSuspendAdminUserMutation,
+  useActivateAdminUserMutation,
+  useDeleteAdminUserMutation,
+} from "./Apis/adminApi";
+
 // Newsletter exports
 export {
   useSubscribeMutation,

@@ -218,6 +218,55 @@ const AdminLayout = ({
         },
       ];
     }
+
+    if (userRole === "ADMIN") {
+      return [
+        {
+          id: "dashboard",
+          icon: LayoutDashboard,
+          label: "Dashboard",
+          link: "/admin/dashboard",
+          breadcrumb: "Dashboard",
+        },
+        {
+          id: "users",
+          icon: Users2,
+          label: "Users",
+          link: "/admin/users",
+          breadcrumb: "Users",
+        },
+        {
+          id: "courses",
+          icon: BookOpen,
+          label: "Courses",
+          link: "/managecourses",
+          breadcrumb: "Courses",
+        },
+        {
+          id: "events",
+          icon: Calendar,
+          label: "Events",
+          link: "/admin/events",
+          breadcrumb: "Events",
+        },
+        {
+          id: "holidays",
+          icon: Calendar,
+          label: "Holidays",
+          link: "/admin/holidays",
+          breadcrumb: "Holidays",
+        },
+        {
+          id: "settings",
+          icon: User,
+          label: "Settings",
+          link: "/settings",
+          breadcrumb: "Settings",
+        },
+      ];
+    }
+
+    return [];
   }, [userRole, customNavItems]);
 
   const toggleMobileSidebar = useCallback(() => {

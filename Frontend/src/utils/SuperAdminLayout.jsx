@@ -46,7 +46,7 @@ const SuperAdminLayout = ({
         id: "teachers",
         label: "Teachers",
         icon: Users,
-        link: "/superadmin/users?role=teacher",
+        link: "/superadmin/teachers",
       },
       {
         id: "students",

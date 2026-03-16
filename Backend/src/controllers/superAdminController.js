@@ -1,5 +1,9 @@
 const superAdminService = require("../services/superAdminService");
 const { Tenant } = require("../models");
+const User = require("../models/User.mongoose");
+const crypto = require("crypto");
+const { sendTeacherInvitationEmail } = require("../utils/emailService");
+const logger = require("../utils/logger");
 
 /**
  * SuperAdmin Controller — Platform-level operations
@@ -277,6 +281,202 @@ const getOrganizationsOverview = async (req, res) => {
   }
 };
 
+// GET /SuperAdmin/Teachers — All teachers across platform with org info
+const getAllTeachers = async (req, res) => {
+  try {
+    const { search = "", page = 1, limit = 20, assignedOnly, available } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const filter = { userType: "teacher" };
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (available === "true") filter.available_for_org = true;
+    if (assignedOnly === "true") filter["organizations.0"] = { $exists: true };
+
+    const total = await User.countDocuments(filter);
+    const teachers = await User.find(filter)
+      .select("-password -token -refreshToken -sessions -passwordResetToken")
+      .populate("organizations", "name code institutionName")
+      .populate("tenant_id", "name institutionName")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    return res.status(200).json({
+      message: "All teachers retrieved",
+      success: true,
+      data: teachers,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / parseInt(limit)),
+        total,
+        hasNext: skip + parseInt(limit) < total,
+        hasPrev: parseInt(page) > 1,
+      },
+    });
+  } catch (error) {
+    logger.error("SuperAdmin - Get all teachers error:", error.message);
+    return res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
+// POST /SuperAdmin/InviteTeacher — Invite teacher to an organization (sends email)
+const inviteTeacherToOrg = async (req, res) => {
+  try {
+    const { teacherId, organizationId } = req.body;
+
+    if (!teacherId || !organizationId) {
+      return res.status(400).json({ message: "teacherId and organizationId are required", success: false });
+    }
+
+    // Verify teacher exists
+    const teacher = await User.findOne({ _id: teacherId, userType: "teacher" });
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found", success: false });
+    }
+
+    // Verify organization exists
+    const organization = await Tenant.findById(organizationId);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found", success: false });
+    }
+
+    // Check if teacher is already in this organization
+    const alreadyAssigned = teacher.organizations.some(
+      (orgId) => orgId.toString() === organizationId
+    );
+    if (alreadyAssigned) {
+      return res.status(400).json({
+        message: "Teacher is already assigned to this organization",
+        success: false,
+      });
+    }
+
+    // Get superadmin info
+    const superAdmin = await Tenant.findById(req.user.id);
+
+    // Generate secure invitation token (48h expiry)
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+    // Store invitation on teacher
+    teacher.pendingOrgInvitation = {
+      token: hashedToken,
+      organizationId,
+      invitedBy: req.user.id,
+      expiresAt,
+    };
+    await teacher.save({ validateBeforeSave: false });
+
+    // Build accept/reject links
+    const frontendUrl = process.env.FRONTEND_URL_PROD || process.env.FRONTEND_URL_DEV || "http://localhost:5173";
+    const acceptLink = `${frontendUrl}/teacher/invitation/${rawToken}/accept`;
+    const rejectLink = `${frontendUrl}/teacher/invitation/${rawToken}/reject`;
+
+    // Send invitation email
+    await sendTeacherInvitationEmail({
+      email: teacher.email,
+      teacherName: `${teacher.firstName} ${teacher.lastName}`,
+      organizationName: organization.institutionName || organization.name,
+      adminName: superAdmin?.name || "Super Admin",
+      acceptLink,
+      rejectLink,
+    });
+
+    logger.info("Teacher invitation sent", {
+      teacherId,
+      organizationId,
+      invitedBy: req.user.id,
+    });
+
+    return res.status(200).json({
+      message: `Invitation sent to ${teacher.email}`,
+      success: true,
+      data: { teacherId, organizationId, expiresAt },
+    });
+  } catch (error) {
+    logger.error("SuperAdmin - Invite teacher error:", error.message);
+    return res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
+// GET /SuperAdmin/TeacherInvitation/:token/accept — Teacher accepts invitation
+const acceptTeacherInvitation = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const teacher = await User.findOne({
+      "pendingOrgInvitation.token": hashedToken,
+      "pendingOrgInvitation.expiresAt": { $gt: new Date() },
+    });
+
+    if (!teacher) {
+      return res.status(400).json({
+        message: "Invalid or expired invitation token",
+        success: false,
+      });
+    }
+
+    const { organizationId } = teacher.pendingOrgInvitation;
+    const organization = await Tenant.findById(organizationId);
+
+    // Assign teacher to organization (if not already)
+    if (!teacher.organizations.includes(organizationId)) {
+      teacher.organizations.push(organizationId);
+      if (!teacher.currentOrganization) {
+        teacher.currentOrganization = organizationId;
+      }
+    }
+    teacher.available_for_org = false;
+
+    // Clear invitation
+    teacher.pendingOrgInvitation = { token: null, organizationId: null, invitedBy: null, expiresAt: null };
+    await teacher.save({ validateBeforeSave: false });
+
+    const orgName = organization?.institutionName || organization?.name || "the organization";
+
+    // Redirect to frontend with success message
+    const frontendUrl = process.env.FRONTEND_URL_PROD || process.env.FRONTEND_URL_DEV || "http://localhost:5173";
+    return res.redirect(`${frontendUrl}/teacher/invitation-result?status=accepted&org=${encodeURIComponent(orgName)}`);
+  } catch (error) {
+    logger.error("Accept invitation error:", error.message);
+    return res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
+// GET /SuperAdmin/TeacherInvitation/:token/reject — Teacher rejects invitation
+const rejectTeacherInvitation = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const teacher = await User.findOne({
+      "pendingOrgInvitation.token": hashedToken,
+    });
+
+    if (!teacher) {
+      return res.status(400).json({ message: "Invalid invitation token", success: false });
+    }
+
+    // Clear invitation
+    teacher.pendingOrgInvitation = { token: null, organizationId: null, invitedBy: null, expiresAt: null };
+    await teacher.save({ validateBeforeSave: false });
+
+    const frontendUrl = process.env.FRONTEND_URL_PROD || process.env.FRONTEND_URL_DEV || "http://localhost:5173";
+    return res.redirect(`${frontendUrl}/teacher/invitation-result?status=rejected`);
+  } catch (error) {
+    logger.error("Reject invitation error:", error.message);
+    return res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
 module.exports = {
   getAllTenants,
   getTenantWithUsers,
@@ -288,4 +488,8 @@ module.exports = {
   getOrganizationsOverview,
   deleteTenant,
   getActivityLogs,
+  getAllTeachers,
+  inviteTeacherToOrg,
+  acceptTeacherInvitation,
+  rejectTeacherInvitation,
 };

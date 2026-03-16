@@ -2,7 +2,6 @@ import { apiSlice } from "./apiSlice";
 
 export const superAdminApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // Get all tenants
     getAllTenants: builder.query({
       query: () => "/SuperAdmin/Tenants",
       providesTags: (result) =>
@@ -14,7 +13,6 @@ export const superAdminApi = apiSlice.injectEndpoints({
           : [{ type: "Tenant", id: "LIST" }],
     }),
 
-    // Get tenant with users
     getTenantWithUsers: builder.query({
       query: (id) => `/SuperAdmin/Tenant/${id}`,
       providesTags: (result, error, id) => [
@@ -23,7 +21,6 @@ export const superAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Promote tenant to superadmin
     promoteTenant: builder.mutation({
       query: (id) => ({
         url: `/SuperAdmin/Promote/${id}`,
@@ -35,7 +32,6 @@ export const superAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Demote superadmin to admin
     demoteTenant: builder.mutation({
       query: (id) => ({
         url: `/SuperAdmin/Demote/${id}`,
@@ -47,7 +43,6 @@ export const superAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Change tenant status
     changeTenantStatus: builder.mutation({
       query: ({ id, status }) => ({
         url: `/SuperAdmin/Status/${id}`,
@@ -60,7 +55,6 @@ export const superAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Get all users across platform
     getAllPlatformUsers: builder.query({
       query: () => "/SuperAdmin/Users",
       providesTags: (result) =>
@@ -72,10 +66,36 @@ export const superAdminApi = apiSlice.injectEndpoints({
           : [{ type: "User", id: "LIST" }],
     }),
 
-    // Get platform statistics
     getPlatformStats: builder.query({
       query: () => "/SuperAdmin/Stats",
       providesTags: ["Stats"],
+    }),
+
+    getAllTeachers: builder.query({
+      query: ({ search = "", page = 1, limit = 20 } = {}) => {
+        const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+        if (search) params.append("search", search);
+        return `/SuperAdmin/Teachers?${params.toString()}`;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: "Teacher", id: _id })),
+              { type: "Teacher", id: "LIST" },
+            ]
+          : [{ type: "Teacher", id: "LIST" }],
+    }),
+
+    inviteTeacherToOrg: builder.mutation({
+      query: ({ teacherId, organizationId }) => ({
+        url: "/SuperAdmin/InviteTeacher",
+        method: "POST",
+        body: { teacherId, organizationId },
+      }),
+      invalidatesTags: (result, error, { teacherId }) => [
+        { type: "Teacher", id: teacherId },
+        { type: "Teacher", id: "LIST" },
+      ],
     }),
   }),
   overrideExisting: false,
@@ -93,4 +113,7 @@ export const {
   useLazyGetAllPlatformUsersQuery,
   useGetPlatformStatsQuery,
   useLazyGetPlatformStatsQuery,
+  useGetAllTeachersQuery,
+  useLazyGetAllTeachersQuery,
+  useInviteTeacherToOrgMutation,
 } = superAdminApi;

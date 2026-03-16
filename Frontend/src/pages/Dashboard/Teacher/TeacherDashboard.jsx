@@ -1,12 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import AdminLayout from "../../../utils/Adminlayoute";
+import { eventApi } from "../../../api/eventApi";
+import { holidayApi } from "../../../api/holidayApi";
 
 const TeacherDashboard = () => {
   const { user } = useSelector((state) => state.auth || {});
   const { data: coursesData } = useGetAllCoursesQuery();
+  const [events, setEvents] = useState([]);
+  const [holidays, setHolidays] = useState([]);
   const teacherId = String(user?._id || user?.id || "");
+
+  useEffect(() => {
+    const loadMeta = async () => {
+      try {
+        const [eventRes, holidayRes] = await Promise.all([
+          eventApi.getUpcomingEvents({ limit: 5 }),
+          holidayApi.getUpcomingHolidays({ limit: 5 }),
+        ]);
+        setEvents(eventRes?.data?.data || []);
+        setHolidays(holidayRes?.data?.data || []);
+      } catch (error) {
+        setEvents([]);
+        setHolidays([]);
+      }
+    };
+    loadMeta();
+  }, []);
 
   const courses = coursesData?.data || [];
   const myCourses = courses.filter((course) => {
@@ -68,6 +89,44 @@ const TeacherDashboard = () => {
           ))}
         </div>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4">Upcoming Events</h2>
+          {events.length === 0 ? (
+            <p className="text-gray-500 text-sm">No upcoming events.</p>
+          ) : (
+            <div className="space-y-3">
+              {events.map((event) => (
+                <div key={event._id} className="rounded-lg border border-slate-200 p-3">
+                  <p className="font-semibold text-slate-800">{event.title}</p>
+                  <p className="text-xs text-slate-500">
+                    {event.startDate ? new Date(event.startDate).toLocaleDateString() : "Date TBD"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4">Upcoming Holidays</h2>
+          {holidays.length === 0 ? (
+            <p className="text-gray-500 text-sm">No upcoming holidays.</p>
+          ) : (
+            <div className="space-y-3">
+              {holidays.map((holiday) => (
+                <div key={holiday._id} className="rounded-lg border border-slate-200 p-3">
+                  <p className="font-semibold text-slate-800">{holiday.title}</p>
+                  <p className="text-xs text-slate-500">
+                    {holiday.startDate ? new Date(holiday.startDate).toLocaleDateString() : "Date TBD"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );

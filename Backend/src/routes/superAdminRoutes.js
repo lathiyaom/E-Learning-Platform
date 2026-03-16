@@ -6,6 +6,10 @@ const { authenticate, authorize, isTenantOwner } = require("../middlewares/authM
 // All routes require: authenticated + from tenants table + superadmin role
 router.use(authenticate, isTenantOwner, authorize("superadmin"));
 
+// Teacher management (SuperAdmin)
+router.get("/Teachers", superAdminController.getAllTeachers);
+router.post("/InviteTeacher", superAdminController.inviteTeacherToOrg);
+
 // Tenant management
 router.get("/Tenants", superAdminController.getAllTenants);
 router.get("/Tenant/:id", superAdminController.getTenantWithUsers);
@@ -27,3 +31,10 @@ router.get("/Organizations", superAdminController.getOrganizationsOverview);
 router.get("/Logs", superAdminController.getActivityLogs);
 
 module.exports = router;
+// Teacher invitation callback routes (public - accessible without auth via redirect)
+module.exports.invitationRouter = (() => {
+	const invRouter = require("express").Router();
+	invRouter.get("/:token/accept", superAdminController.acceptTeacherInvitation);
+	invRouter.get("/:token/reject", superAdminController.rejectTeacherInvitation);
+	return invRouter;
+})();
