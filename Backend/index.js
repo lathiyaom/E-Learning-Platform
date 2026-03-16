@@ -211,34 +211,34 @@ app.set("onlineUsers", onlineUsers);
 //   legacyHeaders: false,
 // });
 
-// ✅ Strict rate limiting for login endpoint
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login attempts
-  skipSuccessfulRequests: true,
-  message: "Too many login attempts, please try again later",
-});
+// // ✅ Strict rate limiting for login endpoint
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 5, // 5 login attempts
+//   skipSuccessfulRequests: true,
+//   message: "Too many login attempts, please try again later",
+// });
 
-// ✅ Rate limiting for signup
-const signupLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // 5 signups per hour per IP
-  message: "Too many account creations, please try again later",
-});
+// // ✅ Rate limiting for signup
+// const signupLimiter = rateLimit({
+//   windowMs: 60 * 60 * 1000, // 1 hour
+//   max: 5, // 5 signups per hour per IP
+//   message: "Too many account creations, please try again later",
+// });
 
-// ✅ Rate limiting for token refresh
-const refreshLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // 20 refresh attempts
-  message: "Too many token refresh attempts",
-});
+// // ✅ Rate limiting for token refresh
+// const refreshLimiter = rateLimit({
+//   windowMs: 60 * 60 * 1000, // 1 hour
+//   max: 20, // 20 refresh attempts
+//   message: "Too many token refresh attempts",
+// });
 
-// ✅ Rate limiting for superadmin operations
-const superAdminLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30, // 30 requests per minute
-  message: "Too many admin operations, please slow down",
-});
+// // ✅ Rate limiting for superadmin operations
+// const superAdminLimiter = rateLimit({
+//   windowMs: 60 * 1000, // 1 minute
+//   max: 30, // 30 requests per minute
+//   message: "Too many admin operations, please slow down",
+// });
 
 // Middleware
 // Security headers
@@ -259,7 +259,7 @@ app.use(helmet({
 }));
 
 app.use(cors(corsOptions));
-app.use(limiter); // Apply rate limiting to all routes
+// app.use(limiter); // Apply rate limiting to all routes
 app.use(express.json({ limit: "10mb" })); // Request size limit
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
@@ -292,7 +292,7 @@ app.get("/health", (req, res) => {
 // Routes
 // ✅ Apply specific rate limiters to sensitive endpoints
 const userRoutesWithLimits = express.Router();
-userRoutesWithLimits.use("/Signup", signupLimiter);
+// userRoutesWithLimits.use("/Signup", signupLimiter);
 userRoutesWithLimits.use("/", userRoutes);
 
 app.use("/User", userRoutesWithLimits);
@@ -301,13 +301,13 @@ app.use("/Contact", contactRoutes);
 
 // ✅ Auth routes with specific limiters
 const authRoutesWithLimits = express.Router();
-authRoutesWithLimits.use("/Login", loginLimiter);
-authRoutesWithLimits.use("/refresh-token", refreshLimiter);
+// authRoutesWithLimits.use("/Login", loginLimiter);
+// authRoutesWithLimits.use("/refresh-token", refreshLimiter);
 authRoutesWithLimits.use("/", authRoutes);
 
 app.use("/Auth", authRoutesWithLimits);
 app.use("/Tenant", tenantRoutes);
-app.use("/SuperAdmin", superAdminLimiter, superAdminRoutes); // ✅ Rate limit all superadmin routes
+app.use("/SuperAdmin", superAdminRoutes); // ✅ Rate limit all superadmin routes
 app.use("/Admin", adminRoutes);
 app.use("/ActivityLog", activityLogRoutes);
 app.use("/Bookmark", bookmarkRoutes);
