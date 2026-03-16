@@ -202,7 +202,7 @@ io.on("connection", (socket) => {
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
 
-// Rate Limiting
+// // Rate Limiting
 // const limiter = rateLimit({
 //   windowMs: config.rateLimit.windowMs,
 //   max: config.rateLimit.maxRequests,
@@ -211,7 +211,7 @@ app.set("onlineUsers", onlineUsers);
 //   legacyHeaders: false,
 // });
 
-// ✅ Strict rate limiting for login endpoint
+// // ✅ Strict rate limiting for login endpoint
 // const loginLimiter = rateLimit({
 //   windowMs: 15 * 60 * 1000, // 15 minutes
 //   max: 5, // 5 login attempts
@@ -219,21 +219,21 @@ app.set("onlineUsers", onlineUsers);
 //   message: "Too many login attempts, please try again later",
 // });
 
-// ✅ Rate limiting for signup
+// // ✅ Rate limiting for signup
 // const signupLimiter = rateLimit({
 //   windowMs: 60 * 60 * 1000, // 1 hour
 //   max: 5, // 5 signups per hour per IP
 //   message: "Too many account creations, please try again later",
 // });
 
-// ✅ Rate limiting for token refresh
+// // ✅ Rate limiting for token refresh
 // const refreshLimiter = rateLimit({
 //   windowMs: 60 * 60 * 1000, // 1 hour
 //   max: 20, // 20 refresh attempts
 //   message: "Too many token refresh attempts",
 // });
 
-// ✅ Rate limiting for superadmin operations
+// // ✅ Rate limiting for superadmin operations
 // const superAdminLimiter = rateLimit({
 //   windowMs: 60 * 1000, // 1 minute
 //   max: 30, // 30 requests per minute
@@ -308,8 +308,6 @@ authRoutesWithLimits.use("/", authRoutes);
 app.use("/Auth", authRoutesWithLimits);
 app.use("/Tenant", tenantRoutes);
 app.use("/SuperAdmin", superAdminRoutes); // ✅ Rate limit all superadmin routes
-const { invitationRouter } = require("./src/routes/superAdminRoutes");
-app.use("/TeacherInvitation", invitationRouter); // Public - no auth needed for invite accept/reject
 app.use("/Admin", adminRoutes);
 app.use("/ActivityLog", activityLogRoutes);
 app.use("/Bookmark", bookmarkRoutes);
