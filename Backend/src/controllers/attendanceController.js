@@ -3,7 +3,7 @@ const attendanceService = require("../services/attendanceService");
 const markAttendance = async (req, res) => {
   try {
     const { courseId, classDate, attendanceRecords } = req.body;
-    
+
     if (!courseId || !classDate || !attendanceRecords) {
       return res.status(400).json({
         message: "courseId, classDate, and attendanceRecords required",
@@ -16,7 +16,7 @@ const markAttendance = async (req, res) => {
       courseId,
       new Date(classDate),
       attendanceRecords,
-      req.user.id
+      req.user.id,
     );
 
     return res.status(201).json({
@@ -47,7 +47,7 @@ const updateAttendance = async (req, res) => {
     const attendance = await attendanceService.updateAttendance(
       id,
       req.tenantId,
-      attendanceRecords
+      attendanceRecords,
     );
 
     return res.status(200).json({
@@ -66,9 +66,12 @@ const updateAttendance = async (req, res) => {
 const getAttendanceReport = async (req, res) => {
   try {
     const { courseId } = req.params;
-    
-    const report = await attendanceService.getAttendanceReport(req.tenantId, courseId);
-    
+
+    const report = await attendanceService.getAttendanceReport(
+      req.tenantId,
+      courseId,
+    );
+
     return res.status(200).json({
       message: "Attendance report retrieved",
       success: true,
@@ -85,7 +88,7 @@ const getAttendanceReport = async (req, res) => {
 const getStudentAttendance = async (req, res) => {
   try {
     const { studentId, courseId } = req.params;
-    
+
     // Students can only view their own attendance
     if (req.user.userType === "student" && req.user.id !== studentId) {
       return res.status(403).json({
@@ -97,9 +100,10 @@ const getStudentAttendance = async (req, res) => {
     const attendance = await attendanceService.getStudentAttendance(
       req.tenantId,
       studentId,
-      courseId
+      courseId,
+      req.user.userType,
     );
-    
+
     return res.status(200).json({
       message: "Student attendance retrieved",
       success: true,
@@ -117,7 +121,10 @@ const deleteAttendance = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const attendance = await attendanceService.deleteAttendance(id, req.tenantId);
+    const attendance = await attendanceService.deleteAttendance(
+      id,
+      req.tenantId,
+    );
 
     return res.status(200).json({
       message: "Attendance deleted successfully",
