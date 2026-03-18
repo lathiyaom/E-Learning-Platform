@@ -19,6 +19,10 @@ const config = {
         "premium-gold": "#B08D57",
         "deep-charcoal": "#0F0F12",
         "navy-charcoal": "#1A1B23",
+        "premium-surface": "#151722",
+        "premium-surface-2": "#1C1E2B",
+        "premium-border": "rgba(176, 141, 87, 0.2)",
+        "premium-tooltip": "#12131A",
         "gold-glow": "rgba(176, 141, 87, 0.15)",
         // HomeNew accent colors
         primary: "#ecb613",
@@ -69,7 +73,10 @@ const config = {
     "dark:bg-navy-charcoal",
     "dark:bg-navy-charcoal/80",
     "dark:bg-navy-charcoal/95",
+    "dark:bg-premium-surface",
+    "dark:bg-premium-surface-2",
     "dark:bg-background-dark",
+    "dark:border-premium-gold/20",
   ],
 };
 

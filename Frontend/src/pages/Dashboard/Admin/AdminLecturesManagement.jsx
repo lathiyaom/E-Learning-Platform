@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus, Edit, Trash2, Search, ChevronDown } from "lucide-react";
 import { getLecturesByCourse, createLecture, updateLecture, deleteLecture } from "../../../redux/Apis/lectureApi";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import AdminLayout from './../../../utils/Adminlayoute';
 
 const AdminLecturesManagement = () => {
   const dispatch = useDispatch();
@@ -66,6 +67,10 @@ const AdminLecturesManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!courseId) {
+      return;
+    }
     
     const lectureData = {
       ...formData,
@@ -115,6 +120,7 @@ const AdminLecturesManagement = () => {
   };
 
   return (
+    <AdminLayout>
     <div className="p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-navy-charcoal dark:to-deep-charcoal min-h-screen">
       {/* Header */}
       <div className="mb-8">
@@ -124,6 +130,11 @@ const AdminLecturesManagement = () => {
         <p className="text-slate-600 dark:text-slate-400">
           Manage all course lectures, materials, and scheduling
         </p>
+        {!courseId && (
+          <div className="mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+            Select a course first to manage lectures. Go to <Link className="font-semibold underline" to="/managecourses">Manage Courses</Link> and open a specific course lecture route.
+          </div>
+        )}
       </div>
 
       {/* Controls */}
@@ -444,6 +455,7 @@ const AdminLecturesManagement = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

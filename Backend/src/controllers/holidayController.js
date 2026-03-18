@@ -1,334 +1,289 @@
 const { Holiday } = require("../models");
 
+const CURRENT_HOLIDAY_TYPES = ["public", "restricted", "optional"];
+const LEGACY_HOLIDAY_TYPES = ["platform", "organization", "national", "regional", "religious"];
+
+const mapLegacyHolidayTypeToCurrent = (value) => {
+  if (!value) return "restricted";
+  const normalized = String(value).toLowerCase();
+  if (CURRENT_HOLIDAY_TYPES.includes(normalized)) return normalized;
+
+  const mapping = {
+    platform: "public",
+    national: "public",
+    regional: "public",
+    religious: "public",
+    organization: "restricted",
+  };
+
+  return mapping[normalized] || "restricted";
+};
+
+const normalizeHoliday = (holidayDoc) => {
+  const holiday = holidayDoc.toObject ? holidayDoc.toObject() : holidayDoc;
+  return {
+    ...holiday,
+    endDate: holiday.endDate || holiday.date,
+    type: holiday.type || holiday.holiday_type,
+    isRecurring: holiday.isRecurring ?? holiday.is_recurring ?? false,
+    tenantId: holiday.tenantId || holiday.organization_id,
+    createdBy: holiday.createdBy || holiday.created_by,
+  };
+};
+
+const buildHolidayPayload = (body, req) => {
+  const holidayType = mapLegacyHolidayTypeToCurrent(body.holiday_type || body.type);
+  const legacyType = LEGACY_HOLIDAY_TYPES.includes(String(body.type || "").toLowerCase())
+    ? String(body.type).toLowerCase()
+    : "organization";
+
+  return {
+    organization_id: req.tenantId,
+    tenantId: req.tenantId,
+    title: body.title,
+    date: body.date,
+    endDate: body.endDate || body.date,
+    holiday_type: holidayType,
+    type: legacyType,
+    description: body.description || "",
+    is_recurring: body.is_recurring ?? body.isRecurring ?? false,
+    isRecurring: body.isRecurring ?? body.is_recurring ?? false,
+    recurring_pattern: body.recurring_pattern || null,
+    recurring_end_date: body.recurring_end_date || null,
+    affects_roles: Array.isArray(body.affects_roles)
+      ? body.affects_roles
+      : body.affects_roles
+        ? [body.affects_roles]
+        : ["all"],
+    is_full_day: body.is_full_day ?? true,
+    start_time: body.start_time || null,
+    end_time: body.end_time || null,
+    created_by: req.user.id,
+    createdBy: req.user.id,
+    status: body.status || "active",
+    color: body.color || "#EF4444",
+    tags: Array.isArray(body.tags)
+      ? body.tags
+      : typeof body.tags === "string" && body.tags.trim()
+        ? body.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        : [],
+    send_reminder: body.send_reminder ?? true,
+    reminder_sent: body.reminder_sent ?? false,
+  };
+};
+
+const buildHolidayScopeQuery = (tenantId) => ({
+  $or: [
+    { organization_id: tenantId },
+    { tenantId },
+    { tenantId: null },
+  ],
+});
+
 const holidayController = {
-  /**
-   * Create holiday
-   * POST /Holiday/create
-   */
   createHoliday: async (req, res) => {
     try {
-      const { title, description, date, endDate, type, isRecurring, color } = req.body;
-      const userType = req.user.userType;
-      const tenantId = type === "platform" ? null : req.user.tenantId;
-      const createdBy = req.user.tenantId;
-
-      // Only admin/superadmin can create holidays
-      if (!["admin", "superadmin"].includes(userType)) {
-        return res.status(403).json({
-          success: false,
-          message: "Unauthorized to create holiday",
-        });
+      const role = String(req.user.userType || "").toLowerCase();
+      if (!["admin", "superadmin"].includes(role)) {
+        return res.status(403).json({ success: false, message: "Unauthorized to create holiday" });
       }
 
-      // Validate required fields
-      if (!title || !date) {
+      const payload = buildHolidayPayload(req.body, req);
+      if (!payload.title || !payload.date || !payload.holiday_type) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: title, date",
+          message: "Missing required fields: title, date, holiday_type",
         });
       }
 
-      const holiday = await Holiday.create({
-        tenantId,
-        title,
-        description,
-        date,
-        endDate,
-        type: type || "organization",
-        isRecurring,
-        color,
-        createdBy,
-      });
+      const holiday = await Holiday.create(payload);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: "Holiday created successfully",
-        data: holiday,
+        data: normalizeHoliday(holiday),
       });
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(400).json({ success: false, message: error.message });
     }
   },
 
-  /**
-   * Get all holidays (platform + organization)
-   * GET /Holiday/all
-   */
   getAllHolidays: async (req, res) => {
     try {
       const { page = 1, limit = 10, type, year } = req.query;
-      const tenantId = req.user.tenantId;
+      const skip = (Number(page) - 1) * Number(limit);
+      const query = buildHolidayScopeQuery(req.tenantId);
 
-      const query = {
-        $or: [
-          { tenantId: null }, // Platform holidays
-          { tenantId }, // Organization holidays
-        ],
-      };
-
-      if (type) query.type = type;
+      if (type) {
+        query.$and = [{ $or: [{ holiday_type: mapLegacyHolidayTypeToCurrent(type) }, { type }] }];
+      }
 
       if (year) {
-        const startOfYear = new Date(year, 0, 1);
-        const endOfYear = new Date(year, 11, 31);
+        const startOfYear = new Date(Number(year), 0, 1);
+        const endOfYear = new Date(Number(year), 11, 31, 23, 59, 59, 999);
         query.date = { $gte: startOfYear, $lte: endOfYear };
       }
 
       const total = await Holiday.countDocuments(query);
-      const skip = (page - 1) * limit;
-
       const holidays = await Holiday.find(query)
         .sort({ date: 1 })
         .skip(skip)
-        .limit(parseInt(limit));
+        .limit(Number(limit));
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Holidays retrieved successfully",
-        data: holidays,
+        data: holidays.map(normalizeHoliday),
         pagination: {
           total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(total / limit),
+          page: Number(page),
+          limit: Number(limit),
+          pages: Math.ceil(total / Number(limit)),
         },
       });
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(400).json({ success: false, message: error.message });
     }
   },
 
-  /**
-   * Get upcoming holidays
-   * GET /Holiday/upcoming
-   */
   getUpcomingHolidays: async (req, res) => {
     try {
       const { days = 90, page = 1, limit = 10 } = req.query;
-      const tenantId = req.user.tenantId;
-
       const startDate = new Date();
+      startDate.setHours(0, 0, 0, 0);
       const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + parseInt(days));
+      endDate.setDate(endDate.getDate() + Number(days));
+      const skip = (Number(page) - 1) * Number(limit);
 
       const query = {
-        $or: [
-          { tenantId: null },
-          { tenantId },
-        ],
+        ...buildHolidayScopeQuery(req.tenantId),
         date: { $gte: startDate, $lte: endDate },
+        status: { $ne: "cancelled" },
       };
 
       const total = await Holiday.countDocuments(query);
-      const skip = (page - 1) * limit;
-
       const holidays = await Holiday.find(query)
         .sort({ date: 1 })
         .skip(skip)
-        .limit(parseInt(limit));
+        .limit(Number(limit));
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Upcoming holidays retrieved successfully",
-        data: holidays,
+        data: holidays.map(normalizeHoliday),
         pagination: {
           total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(total / limit),
+          page: Number(page),
+          limit: Number(limit),
+          pages: Math.ceil(total / Number(limit)),
         },
       });
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(400).json({ success: false, message: error.message });
     }
   },
 
-  /**
-   * Get holiday by ID
-   * GET /Holiday/:id
-   */
   getHolidayById: async (req, res) => {
     try {
-      const { id } = req.params;
-      const tenantId = req.user.tenantId;
-
       const holiday = await Holiday.findOne({
-        _id: id,
-        $or: [
-          { tenantId: null },
-          { tenantId },
-        ],
+        _id: req.params.id,
+        ...buildHolidayScopeQuery(req.tenantId),
       });
 
       if (!holiday) {
-        return res.status(404).json({
-          success: false,
-          message: "Holiday not found",
-        });
+        return res.status(404).json({ success: false, message: "Holiday not found" });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Holiday retrieved successfully",
-        data: holiday,
+        data: normalizeHoliday(holiday),
       });
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(400).json({ success: false, message: error.message });
     }
   },
 
-  /**
-   * Update holiday
-   * PATCH /Holiday/update/:id
-   */
   updateHoliday: async (req, res) => {
     try {
-      const { id } = req.params;
-      const userType = req.user.userType;
-      const tenantId = req.user.tenantId;
-
-      // Only admin/superadmin can update
-      if (!["admin", "superadmin"].includes(userType)) {
-        return res.status(403).json({
-          success: false,
-          message: "Unauthorized",
-        });
+      const role = String(req.user.userType || "").toLowerCase();
+      if (!["admin", "superadmin"].includes(role)) {
+        return res.status(403).json({ success: false, message: "Unauthorized" });
       }
 
       const holiday = await Holiday.findOne({
-        _id: id,
-        $or: [
-          { tenantId: null },
-          { tenantId },
-        ],
+        _id: req.params.id,
+        ...buildHolidayScopeQuery(req.tenantId),
       });
 
       if (!holiday) {
-        return res.status(404).json({
-          success: false,
-          message: "Holiday not found",
-        });
+        return res.status(404).json({ success: false, message: "Holiday not found" });
       }
 
-      const allowedFields = ["title", "description", "date", "endDate", "type", "isRecurring", "color"];
-      const updates = {};
-      allowedFields.forEach((field) => {
-        if (req.body[field] !== undefined) {
-          updates[field] = req.body[field];
-        }
-      });
+      const payload = buildHolidayPayload({ ...holiday.toObject(), ...req.body }, req);
+      payload.created_by = holiday.created_by || payload.created_by;
+      payload.createdBy = holiday.createdBy || payload.createdBy;
 
-      const updatedHoliday = await Holiday.findByIdAndUpdate(id, updates, { new: true });
+      Object.assign(holiday, payload);
+      await holiday.save();
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Holiday updated successfully",
-        data: updatedHoliday,
+        data: normalizeHoliday(holiday),
       });
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(400).json({ success: false, message: error.message });
     }
   },
 
-  /**
-   * Delete holiday
-   * DELETE /Holiday/delete/:id
-   */
   deleteHoliday: async (req, res) => {
     try {
-      const { id } = req.params;
-      const userType = req.user.userType;
-      const tenantId = req.user.tenantId;
-
-      // Only admin/superadmin can delete
-      if (!["admin", "superadmin"].includes(userType)) {
-        return res.status(403).json({
-          success: false,
-          message: "Unauthorized",
-        });
+      const role = String(req.user.userType || "").toLowerCase();
+      if (!["admin", "superadmin"].includes(role)) {
+        return res.status(403).json({ success: false, message: "Unauthorized" });
       }
 
       const holiday = await Holiday.findOneAndDelete({
-        _id: id,
-        $or: [
-          { tenantId: null },
-          { tenantId },
-        ],
+        _id: req.params.id,
+        ...buildHolidayScopeQuery(req.tenantId),
       });
 
       if (!holiday) {
-        return res.status(404).json({
-          success: false,
-          message: "Holiday not found",
-        });
+        return res.status(404).json({ success: false, message: "Holiday not found" });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Holiday deleted successfully",
-        data: holiday,
+        data: normalizeHoliday(holiday),
       });
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(400).json({ success: false, message: error.message });
     }
   },
 
-  /**
-   * Get calendar holidays by year/month
-   * GET /Holiday/calendar/:year/:month
-   */
   getCalendarHolidays: async (req, res) => {
     try {
-      const { year, month } = req.params;
-      const tenantId = req.user.tenantId;
-
-      // Validate year and month
-      const yearNum = parseInt(year);
-      const monthNum = parseInt(month);
-
-      if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid year or month",
-        });
+      const yearNum = Number(req.params.year);
+      const monthNum = Number(req.params.month);
+      if (Number.isNaN(yearNum) || Number.isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+        return res.status(400).json({ success: false, message: "Invalid year or month" });
       }
 
-      // Get start and end dates for the month
       const startDate = new Date(yearNum, monthNum - 1, 1);
-      const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59);
-
+      const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
       const query = {
-        $or: [
-          { tenantId: null }, // Platform holidays
-          { tenantId }, // Organization holidays
-        ],
+        ...buildHolidayScopeQuery(req.tenantId),
         date: { $gte: startDate, $lte: endDate },
       };
 
       const holidays = await Holiday.find(query).sort({ date: 1 });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Calendar holidays retrieved successfully",
-        data: holidays,
+        data: holidays.map(normalizeHoliday),
         meta: {
           year: yearNum,
           month: monthNum,
@@ -336,10 +291,7 @@ const holidayController = {
         },
       });
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(400).json({ success: false, message: error.message });
     }
   },
 };

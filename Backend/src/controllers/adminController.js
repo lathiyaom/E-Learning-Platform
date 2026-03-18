@@ -5,7 +5,15 @@ const logger = require("../utils/logger");
 // Get all users within the tenant's scope
 const getMyUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "", status = "", userType = "" } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status = "",
+      userType = "",
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
     const tenantId = req.tenantId;
     const requesterId = req.user?.id;
 
@@ -38,11 +46,14 @@ const getMyUsers = async (req, res) => {
       filter.userType = userType;
     }
 
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
+    const safeSortFields = new Set(["firstName", "lastName", "email", "userType", "status", "createdAt"]);
+    const normalizedSortBy = safeSortFields.has(String(sortBy)) ? String(sortBy) : "createdAt";
+    const normalizedSortOrder = String(sortOrder).toLowerCase() === "asc" ? 1 : -1;
     
     const users = await User.find(filter)
       .select("-password -token -refreshToken")
-      .sort({ createdAt: -1 })
+      .sort({ [normalizedSortBy]: normalizedSortOrder })
       .skip(skip)
       .limit(parseInt(limit))
       .populate("organizations", "name code");
@@ -62,10 +73,13 @@ const getMyUsers = async (req, res) => {
         users,
         pagination: {
           currentPage: parseInt(page),
-          totalPages: Math.ceil(total / limit),
+          totalPages: Math.ceil(total / Number(limit)),
           totalUsers: total,
-          hasNext: page * limit < total,
-          hasPrev: page > 1
+          hasNext: Number(page) * Number(limit) < total,
+          hasPrev: Number(page) > 1,
+          pageSize: Number(limit),
+          sortBy: normalizedSortBy,
+          sortOrder: normalizedSortOrder === 1 ? "asc" : "desc",
         }
       }
     });

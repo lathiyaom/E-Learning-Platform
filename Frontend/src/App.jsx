@@ -21,6 +21,8 @@ import UserComments from "./pages/Profile/Admin/UserComments.jsx";
 import ManageUsers from "./pages/Dashboard/Admin/Users.jsx";
 import ManageCourses from "./pages/Dashboard/Admin/Courses.jsx";
 import AssignTeachers from "./pages/Dashboard/Admin/AssignTeachers.jsx";
+import Attendance from "./pages/Dashboard/Admin/Attendance.jsx";
+import AdminLecturesManagement from "./pages/Dashboard/Admin/AdminLecturesManagement.jsx";
 import AdminEventsManagement from "./pages/Dashboard/Admin/AdminEventsManagement.jsx";
 import AdminHolidaysManagement from "./pages/Dashboard/Admin/AdminHolidaysManagement.jsx";
 import EventManager from "./pages/Admin/EventManager/index.jsx";
@@ -135,6 +137,9 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/assign-teachers" element={<ProtectedRoute requiredRole="admin"><AssignTeachers /></ProtectedRoute>} />
+            <Route path="/admin/attendance" element={<ProtectedRoute requiredRole="admin"><Attendance /></ProtectedRoute>} />
+            <Route path="/admin/lectures" element={<ProtectedRoute requiredRole="admin"><AdminLecturesManagement /></ProtectedRoute>} />
+            <Route path="/admin/lectures/:courseId" element={<ProtectedRoute requiredRole="admin"><AdminLecturesManagement /></ProtectedRoute>} />
             <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><AdminEventsManagement /></ProtectedRoute>} />
             <Route path="/admin/holidays" element={<ProtectedRoute requiredRole="admin"><AdminHolidaysManagement /></ProtectedRoute>} />
             <Route path="/admin/event-manager" element={<ProtectedRoute requiredRole="admin"><EventManager /></ProtectedRoute>} />

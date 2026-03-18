@@ -54,7 +54,10 @@ export const connectSocket = () => {
     socket.on("disconnect", (reason) => {
       console.log("Socket disconnected:", reason);
       // Indicate disconnection for graceful degradation
-      if (reason === "io server disconnect" || reason === "io client namespace disconnect") {
+      if (
+        reason === "io server disconnect" ||
+        reason === "io client namespace disconnect"
+      ) {
         // Server explicitly disconnected - might need re-auth
       }
     });
@@ -92,7 +95,7 @@ export const setupTokenRefreshListener = () => {
       if (socket?.connected) {
         // Update socket auth for next connection
         socket.auth = { token: currentToken };
-        
+
         // Disconnect and reconnect to use new token
         socket.disconnect();
         socket.connect();

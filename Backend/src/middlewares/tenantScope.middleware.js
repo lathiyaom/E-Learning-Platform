@@ -20,19 +20,18 @@ const tenantScope = async (req, res, next) => {
       });
     }
 
-    // Extract tenantId based on user role
-    if (req.user.userType === "teacher") {
+    // Tenant-table accounts (organization owner / superadmin) are their own tenant context.
+    if (req.user.role === "tenant") {
+      req.tenantId = req.user.id;
+    } else if (req.user.userType === "teacher") {
       // ✅ Teachers: prefer currentOrganization, fallback to primary tenant
       const teacher = await User.findById(req.user.id).select("currentOrganization tenant_id organizations");
       req.tenantId =
         teacher?.currentOrganization ||
         teacher?.tenant_id ||
         teacher?.organizations?.[0];
-    } else if (req.user.userType === "admin" || req.user.userType === "superadmin") {
-      // Admin/superadmin: They ARE the tenant (from Tenant table)
-      req.tenantId = req.user.id;
     } else {
-      // Student or other user: use current org, then organization list, then primary tenant_id
+      // Student/admin user accounts from User table: use current org, then organization list, then primary tenant_id
       const user = await User.findById(req.user.id).select("currentOrganization organizations tenant_id");
       req.tenantId =
         user?.currentOrganization ||

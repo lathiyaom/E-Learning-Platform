@@ -93,7 +93,10 @@ export const MessageList = ({ messagesData, typingUsers, conversationId }) => {
       {messagesData.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-slate-400">
           <div className="size-16 rounded-3xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center mb-4">
-            <Megaphone size={28} className="text-studprimary dark:text-premium-gold" />
+            <Megaphone
+              size={28}
+              className="text-studprimary dark:text-premium-gold"
+            />
           </div>
           <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
             No messages yet
@@ -119,8 +122,8 @@ export const MessageList = ({ messagesData, typingUsers, conversationId }) => {
                 msg.type === "broadcast"
                   ? "items-center translate-y-2"
                   : msg.isMe
-                  ? "items-end"
-                  : "items-start"
+                    ? "items-end"
+                    : "items-start"
               }`}
             >
               {msg.type === "broadcast" ? (
@@ -200,9 +203,18 @@ export const MessageList = ({ messagesData, typingUsers, conversationId }) => {
               </div>
               <div className="bg-white dark:bg-white/10 border border-slate-100 dark:border-white/5 rounded-3xl rounded-tl-none px-5 py-3 shadow-sm">
                 <div className="flex gap-1.5">
-                  <span className="size-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                  <span className="size-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                  <span className="size-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                  <span
+                    className="size-2 bg-slate-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  ></span>
+                  <span
+                    className="size-2 bg-slate-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  ></span>
+                  <span
+                    className="size-2 bg-slate-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  ></span>
                 </div>
               </div>
             </div>

@@ -1,6 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, ClipboardList, Calendar, Clock, Users, Award } from "lucide-react";
+import {
+  BookOpen,
+  ClipboardList,
+  Calendar,
+  Clock,
+  Users,
+  Award,
+  ArrowRight,
+} from "lucide-react";
 
 const QuickAccess = () => {
   const navigate = useNavigate();
@@ -11,7 +19,6 @@ const QuickAccess = () => {
       title: "Today's Lectures",
       description: "View your scheduled lectures",
       icon: BookOpen,
-      color: "bg-blue-500",
       link: "/student/conducted-lectures",
     },
     {
@@ -19,7 +26,6 @@ const QuickAccess = () => {
       title: "Upcoming Lectures",
       description: "See lectures for next 7 days",
       icon: Clock,
-      color: "bg-purple-500",
       link: "/student/upcoming-lectures",
     },
     {
@@ -27,7 +33,6 @@ const QuickAccess = () => {
       title: "Upcoming Exams",
       description: "View and prepare for exams",
       icon: ClipboardList,
-      color: "bg-red-500",
       link: "/student/upcoming-exams",
     },
     {
@@ -35,7 +40,6 @@ const QuickAccess = () => {
       title: "Exam Results",
       description: "Check your exam scores",
       icon: Award,
-      color: "bg-green-500",
       link: "/student/exam-results",
     },
     {
@@ -43,7 +47,6 @@ const QuickAccess = () => {
       title: "My Timetable",
       description: "View weekly schedule",
       icon: Calendar,
-      color: "bg-orange-500",
       link: "/student/timetable",
     },
     {
@@ -51,37 +54,53 @@ const QuickAccess = () => {
       title: "My Enrollments",
       description: "Manage course enrollments",
       icon: Users,
-      color: "bg-indigo-500",
       link: "/student/enrollments",
     },
   ];
 
   return (
-    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-white/5">
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-        Quick Access
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <section className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 md:p-6 shadow-sm">
+      <div className="pointer-events-none absolute -top-20 -right-16 h-44 w-44 rounded-full bg-lavender-light dark:bg-premium-gold/10 blur-3xl" />
+
+      <div className="relative mb-5 flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+            Quick Access
+          </h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Jump to your most-used student actions
+          </p>
+        </div>
+        <div className="hidden sm:flex items-center rounded-full border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          {quickActions.length} shortcuts
+        </div>
+      </div>
+
+      <div className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {quickActions.map((action) => {
           const IconComponent = action.icon;
           return (
             <button
               key={action.id}
               onClick={() => navigate(action.link)}
-              className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 hover:shadow-md transition-all duration-200 text-left"
+              className="group flex h-full items-start gap-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-studprimary/30 dark:hover:border-premium-gold/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-studprimary/40 dark:focus-visible:ring-premium-gold/40"
             >
-              <div className={`p-3 rounded-lg ${action.color} bg-opacity-10 group-hover:bg-opacity-20 transition-colors`}>
-                <IconComponent className={`w-6 h-6 ${action.color.replace('bg-', 'text-')}`} />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lavender-light text-studprimary dark:bg-premium-gold/10 dark:text-premium-gold transition-colors group-hover:bg-studprimary/10 dark:group-hover:bg-premium-gold/15">
+                <IconComponent className="h-5 w-5" />
               </div>
-              
-              <div className="flex-1">
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">
+
+              <div className="min-w-0 flex-1">
+                <h4 className="mb-1 font-semibold text-slate-900 dark:text-white">
                   {action.title}
                 </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                   {action.description}
                 </p>
+
+                <div className="mt-3 flex items-center text-xs font-semibold text-studprimary dark:text-premium-gold">
+                  Open
+                  <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                </div>
               </div>
             </button>
           );

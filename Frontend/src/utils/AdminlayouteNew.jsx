@@ -278,6 +278,10 @@ const AdminLayout = ({
     }
   }, [email, logoutMutation, dispatch]);
 
+  const handleSidebarWheelCapture = useCallback((event) => {
+    event.stopPropagation();
+  }, []);
+
   // Navigation Item Component
   const NavItem = useCallback(
     ({ item, collapsed = false }) => {
@@ -356,7 +360,9 @@ const AdminLayout = ({
 
         {/* Navigation */}
         <nav 
-          className="flex-1 min-h-0 px-4 pr-2 space-y-1 mt-4 overflow-y-auto sidebar-scroll-hover"
+          className="flex-1 min-h-0 px-4 pr-2 space-y-1 mt-4 overflow-y-auto overflow-x-hidden overscroll-contain sidebar-scroll-hover"
+          style={{ WebkitOverflowScrolling: "touch" }}
+          onWheelCapture={handleSidebarWheelCapture}
           aria-label="Main navigation"
         >
           {navItems.map((item) => (
@@ -391,7 +397,7 @@ const AdminLayout = ({
         </div>
       </div>
     ),
-    [navItems, NavItem, handleSignOut, isPending, userRole]
+    [navItems, NavItem, handleSignOut, isPending, userRole, handleSidebarWheelCapture]
   );
 
   return (

@@ -15,8 +15,15 @@ const server = http.createServer(app);
 // Import config and utilities
 const { config, validateEnvironment } = require("./src/config/env");
 const logger = require("./src/utils/logger");
-const { errorHandler, notFoundHandler, asyncHandler } = require("./src/middlewares/errorHandler.middleware");
-const { requestLogger, errorLogger } = require("./src/middlewares/requestLogger.middleware");
+const {
+  errorHandler,
+  notFoundHandler,
+  asyncHandler,
+} = require("./src/middlewares/errorHandler.middleware");
+const {
+  requestLogger,
+  errorLogger,
+} = require("./src/middlewares/requestLogger.middleware");
 
 // Validate environment variables
 validateEnvironment();
@@ -75,7 +82,6 @@ const initializeDatabase = async () => {
 //   }
 // };
 
-
 // Import Routes
 const userRoutes = require("./src/routes/userRoutes");
 const courseRoutes = require("./src/routes/courseRoutes");
@@ -83,6 +89,7 @@ const contactRoutes = require("./src/routes/contactRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const tenantRoutes = require("./src/routes/tenantRoutes");
 const superAdminRoutes = require("./src/routes/superAdminRoutes");
+const { invitationRouter } = require("./src/routes/superAdminRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const activityLogRoutes = require("./src/routes/activityLogRoutes");
 const bookmarkRoutes = require("./src/routes/bookmarkRoutes");
@@ -167,7 +174,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Leave a conversation room  
+  // Leave a conversation room
   socket.on("leave_conversation", (conversationId) => {
     if (conversationId) {
       socket.leave(`conversation_${conversationId}`);
@@ -176,12 +183,16 @@ io.on("connection", (socket) => {
 
   // Typing indicator
   socket.on("typing", ({ conversationId, userId }) => {
-    socket.to(`conversation_${conversationId}`).emit("user_typing", { conversationId, userId });
+    socket
+      .to(`conversation_${conversationId}`)
+      .emit("user_typing", { conversationId, userId });
   });
 
   // Stop typing
   socket.on("stop_typing", ({ conversationId, userId }) => {
-    socket.to(`conversation_${conversationId}`).emit("user_stop_typing", { conversationId, userId });
+    socket
+      .to(`conversation_${conversationId}`)
+      .emit("user_stop_typing", { conversationId, userId });
   });
 
   // Handle disconnect
@@ -242,21 +253,23 @@ app.set("onlineUsers", onlineUsers);
 
 // Middleware
 // Security headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "res.cloudinary.com"],
-      scriptSrc: ["'self'"],
-      connectSrc: ["'self'"],
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:", "res.cloudinary.com"],
+        scriptSrc: ["'self'"],
+        connectSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false
-}));
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 
 app.use(cors(corsOptions));
 // app.use(limiter); // Apply rate limiting to all routes
@@ -308,6 +321,7 @@ authRoutesWithLimits.use("/", authRoutes);
 app.use("/Auth", authRoutesWithLimits);
 app.use("/Tenant", tenantRoutes);
 app.use("/SuperAdmin", superAdminRoutes); // ✅ Rate limit all superadmin routes
+app.use("/TeacherInvitation", invitationRouter);
 app.use("/Admin", adminRoutes);
 app.use("/ActivityLog", activityLogRoutes);
 app.use("/Bookmark", bookmarkRoutes);
@@ -347,7 +361,9 @@ const PORT = config.port;
 initializeDatabase()
   .then(() => {
     server.listen(PORT, () => {
-      logger.info(`Server is running on port http://localhost:${PORT} in ${config.nodeEnv} mode`);
+      logger.info(
+        `Server is running on port http://localhost:${PORT} in ${config.nodeEnv} mode`,
+      );
       logger.info(`Socket.IO is ready for connections`);
     });
   })
