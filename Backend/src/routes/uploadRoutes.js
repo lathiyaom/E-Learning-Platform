@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { uploadController, imageUpload, documentUpload, videoUpload } = require("../controllers/uploadController");
+const { uploadController } = require("../controllers/uploadController");
+const {
+  imageUpload,
+  documentUpload,
+  videoUpload,
+} = require("../middlewares/upload.middleware");
 const { authenticate } = require("../middlewares/authMiddleware");
 
 // All upload routes require authentication

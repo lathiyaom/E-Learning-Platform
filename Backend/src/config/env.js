@@ -38,6 +38,9 @@ const optionalEnvVars = {
   SMTP_PASS: "your-password",
   SENDGRID_API_KEY: "",
   AWS_SES_REGION: "us-east-1",
+  CLOUDINARY_CLOUD_NAME: "dq5qqbfo7",
+  CLOUDINARY_API_KEY: "574428955361562",
+  CLOUDINARY_API_SECRET: "gLlvx5_RH7U9nnmKWY2s1m3R-Dk",
 };
 
 const config = {
@@ -110,6 +113,18 @@ const config = {
     awsSes: {
       region: process.env.AWS_SES_REGION,
     },
+  },
+
+  // Cloudinary
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
+    apiKey: process.env.CLOUDINARY_API_KEY || "",
+    apiSecret: process.env.CLOUDINARY_API_SECRET || "",
+    isConfigured: Boolean(
+      process.env.CLOUDINARY_CLOUD_NAME &&
+        process.env.CLOUDINARY_API_KEY &&
+        process.env.CLOUDINARY_API_SECRET
+    ),
   },
 };
 

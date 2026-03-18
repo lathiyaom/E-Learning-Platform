@@ -1,180 +1,135 @@
-const multer = require("multer");
-const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const {
+  uploadBufferToCloudinary,
+  deleteAssetFromCloudinary,
+} = require("../services/uploadService");
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "your_cloud_name",
-  api_key: process.env.CLOUDINARY_API_KEY || "your_api_key",
-  api_secret: process.env.CLOUDINARY_API_SECRET || "your_api_secret",
-});
-
-// Image upload storage
-const imageStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "eduvers/images",
-    resource_type: "auto",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
-    transformation: [{ width: 500, height: 500, crop: "limit" }],
-  },
-});
-
-// Document upload storage
-const documentStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "eduvers/documents",
-    resource_type: "auto",
-    allowed_formats: ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"],
-  },
-});
-
-// Video upload storage
-const videoStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "eduvers/videos",
-    resource_type: "video",
-    allowed_formats: ["mp4", "avi", "mov", "mkv", "webm"],
-    eager: [{ format: "mp4" }], // Convert to mp4
-  },
-});
-
-// Upload middleware
-const imageUpload = multer({ storage: imageStorage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB
-const documentUpload = multer({ storage: documentStorage, limits: { fileSize: 25 * 1024 * 1024 } }); // 25MB
-const videoUpload = multer({ storage: videoStorage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB
-
-const uploadController = {
-  /**
-   * Upload image
-   * POST /Upload/image
-   */
-  uploadImage: async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "No image file provided",
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Image uploaded successfully",
-        data: {
-          url: req.file.path,
-          publicId: req.file.filename,
-          size: req.file.size,
-          mimeType: req.file.mimetype,
-        },
-      });
-    } catch (error) {
-      res.status(400).json({
+const uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
         success: false,
-        message: error.message,
+        message: "No image file provided",
       });
     }
-  },
 
-  /**
-   * Upload document
-   * POST /Upload/document
-   */
-  uploadDocument: async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "No document file provided",
-        });
-      }
+    const uploadedFile = await uploadBufferToCloudinary(req.file, {
+      folder: "eduvers/images",
+      resource_type: "image",
+      allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
+      transformation: [{ width: 500, height: 500, crop: "limit" }],
+    });
 
-      res.status(200).json({
-        success: true,
-        message: "Document uploaded successfully",
-        data: {
-          url: req.file.path,
-          publicId: req.file.filename,
-          size: req.file.size,
-          mimeType: req.file.mimetype,
-          name: req.file.originalname,
-        },
-      });
-    } catch (error) {
-      res.status(400).json({
+    return res.status(200).json({
+      success: true,
+      message: "Image uploaded successfully",
+      data: {
+        url: uploadedFile.secure_url,
+        publicId: uploadedFile.public_id,
+        size: uploadedFile.bytes,
+        mimeType: req.file.mimetype,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const uploadDocument = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
         success: false,
-        message: error.message,
+        message: "No document file provided",
       });
     }
-  },
 
-  /**
-   * Upload video
-   * POST /Upload/video
-   */
-  uploadVideo: async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "No video file provided",
-        });
-      }
+    const uploadedFile = await uploadBufferToCloudinary(req.file, {
+      folder: "eduvers/documents",
+      resource_type: "raw",
+      allowed_formats: ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"],
+    });
 
-      res.status(200).json({
-        success: true,
-        message: "Video uploaded successfully",
-        data: {
-          url: req.file.path,
-          publicId: req.file.filename,
-          size: req.file.size,
-          mimeType: req.file.mimetype,
-          duration: req.file.duration,
-        },
-      });
-    } catch (error) {
-      res.status(400).json({
+    return res.status(200).json({
+      success: true,
+      message: "Document uploaded successfully",
+      data: {
+        url: uploadedFile.secure_url,
+        publicId: uploadedFile.public_id,
+        size: uploadedFile.bytes,
+        mimeType: req.file.mimetype,
+        name: req.file.originalname,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const uploadVideo = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
         success: false,
-        message: error.message,
+        message: "No video file provided",
       });
     }
-  },
 
-  /**
-   * Delete uploaded file
-   * DELETE /Upload/:publicId
-   */
-  deleteFile: async (req, res) => {
-    try {
-      const { publicId } = req.params;
+    const uploadedFile = await uploadBufferToCloudinary(req.file, {
+      folder: "eduvers/videos",
+      resource_type: "video",
+      allowed_formats: ["mp4", "avi", "mov", "mkv", "webm"],
+    });
 
-      if (!publicId) {
-        return res.status(400).json({
-          success: false,
-          message: "Public ID is required",
-        });
-      }
+    return res.status(200).json({
+      success: true,
+      message: "Video uploaded successfully",
+      data: {
+        url: uploadedFile.secure_url,
+        publicId: uploadedFile.public_id,
+        size: uploadedFile.bytes,
+        mimeType: req.file.mimetype,
+        duration: uploadedFile.duration,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
-      await cloudinary.uploader.destroy(publicId);
+const deleteFile = async (req, res, next) => {
+  try {
+    const { publicId } = req.params;
 
-      res.status(200).json({
-        success: true,
-        message: "File deleted successfully",
-      });
-    } catch (error) {
-      res.status(400).json({
+    if (!publicId) {
+      return res.status(400).json({
         success: false,
-        message: error.message,
+        message: "Public ID is required",
       });
     }
-  },
+
+    const deletionResult = await deleteAssetFromCloudinary(publicId);
+
+    if (!deletionResult.deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "File not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "File deleted successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
 
 module.exports = {
-  uploadController,
-  imageUpload,
-  documentUpload,
-  videoUpload,
+  uploadController: {
+    uploadImage,
+    uploadDocument,
+    uploadVideo,
+    deleteFile,
+  },
 };

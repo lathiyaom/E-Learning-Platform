@@ -82,6 +82,19 @@ const errorHandler = (err, req, res, next) => {
     code = "FOREIGN_KEY_ERROR";
   }
 
+  if (err.name === "MulterError") {
+    statusCode = 400;
+    code = "UPLOAD_ERROR";
+
+    if (err.code === "LIMIT_FILE_SIZE") {
+      message = "Uploaded file is too large";
+    } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      message = "Unexpected upload field";
+    } else {
+      message = err.message || "Upload failed";
+    }
+  }
+
   // Response format
   const response = {
     success: false,

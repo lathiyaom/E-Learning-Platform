@@ -32,10 +32,29 @@ validateEnvironment();
 const { connectDB } = require("./src/Db/mongoose");
 // const { testConnection, syncDatabase } = require("./src/Db/sequelize");
 // const supabase = require("./src/Db/supabase");
+const {
+  isCloudinaryConfigured,
+  missingCloudinaryEnvVars,
+} = require("./src/config/cloudinary");
 const { User, Tenant, Conversation } = require("./src/models");
 const { verifyAccessToken } = require("./src/utils/jwtHelper");
 
 const seedSuperAdmin = require("./src/utils/seedSuperAdmin");
+
+const logCloudinaryStatus = () => {
+  if (isCloudinaryConfigured) {
+    console.log("✅ Cloudinary is connected");
+    logger.info("Cloudinary is connected");
+    return;
+  }
+
+  console.warn(
+    `⚠️ Cloudinary is not configured. Missing env vars: ${missingCloudinaryEnvVars.join(", ")}`,
+  );
+  logger.warn(
+    `Cloudinary is not configured. Missing env vars: ${missingCloudinaryEnvVars.join(", ")}`,
+  );
+};
 
 // Initialize database connection
 const initializeDatabase = async () => {
@@ -503,6 +522,7 @@ initializeDatabase()
         `Server is running on port http://localhost:${PORT} in ${config.nodeEnv} mode`,
       );
       logger.info(`Socket.IO is ready for connections`);
+      logCloudinaryStatus();
     });
   })
   .catch((error) => {
