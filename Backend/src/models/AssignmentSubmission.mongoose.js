@@ -21,7 +21,7 @@ const assignmentSubmissionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    
+
     // Submission content
     submissionType: {
       type: String,
@@ -32,23 +32,27 @@ const assignmentSubmissionSchema = new mongoose.Schema(
       type: String,
       maxlength: 10000,
     },
-    fileSubmissions: [{
-      filename: String,
-      originalName: String,
-      mimeType: String,
-      size: Number, // in bytes
-      url: String,
-      uploadedAt: {
-        type: Date,
-        default: Date.now,
+    fileSubmissions: [
+      {
+        filename: String,
+        originalName: String,
+        mimeType: String,
+        size: Number, // in bytes
+        url: String,
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
-    }],
-    linkSubmissions: [{
-      url: String,
-      title: String,
-      description: String,
-    }],
-    
+    ],
+    linkSubmissions: [
+      {
+        url: String,
+        title: String,
+        description: String,
+      },
+    ],
+
     // Submission timing
     submittedAt: {
       type: Date,
@@ -62,7 +66,7 @@ const assignmentSubmissionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    
+
     // Grading
     grade: {
       type: Number,
@@ -79,9 +83,24 @@ const assignmentSubmissionSchema = new mongoose.Schema(
     },
     letterGrade: {
       type: String,
-      enum: ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F", "I", "W"],
+      enum: [
+        "A+",
+        "A",
+        "A-",
+        "B+",
+        "B",
+        "B-",
+        "C+",
+        "C",
+        "C-",
+        "D+",
+        "D",
+        "F",
+        "I",
+        "W",
+      ],
     },
-    
+
     // Feedback
     teacherFeedback: {
       type: String,
@@ -94,22 +113,24 @@ const assignmentSubmissionSchema = new mongoose.Schema(
     gradedAt: {
       type: Date,
     },
-    
+
     // Rubric grading
-    rubricScores: [{
-      criteria: String,
-      score: Number,
-      maxPoints: Number,
-      feedback: String,
-    }],
-    
+    rubricScores: [
+      {
+        criteria: String,
+        score: Number,
+        maxPoints: Number,
+        feedback: String,
+      },
+    ],
+
     // Status
     status: {
       type: String,
       enum: ["draft", "submitted", "graded", "returned", "resubmitted"],
       default: "draft",
     },
-    
+
     // Academic integrity
     plagiarismScore: {
       type: Number,
@@ -119,13 +140,13 @@ const assignmentSubmissionSchema = new mongoose.Schema(
     plagiarismReport: {
       type: String,
     },
-    
+
     // Student notes
     studentNotes: {
       type: String,
       maxlength: 1000,
     },
-    
+
     // Submission attempts
     attemptNumber: {
       type: Number,
@@ -137,7 +158,7 @@ const assignmentSubmissionSchema = new mongoose.Schema(
       default: 1,
       min: 1,
     },
-    
+
     // Multi-tenant support
     tenantId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -145,7 +166,7 @@ const assignmentSubmissionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    
+
     // Soft delete
     isDeleted: {
       type: Boolean,
@@ -157,7 +178,7 @@ const assignmentSubmissionSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes for better performance
@@ -168,20 +189,20 @@ assignmentSubmissionSchema.index({ teacherId: 1, gradedAt: -1 });
 assignmentSubmissionSchema.index({ tenantId: 1, status: 1 });
 
 // Virtual for checking if submission is graded
-assignmentSubmissionSchema.virtual("isGraded").get(function() {
+assignmentSubmissionSchema.virtual("isGraded").get(function () {
   return this.grade !== null && this.grade !== undefined;
 });
 
 // Virtual for checking if submission can be resubmitted
-assignmentSubmissionSchema.virtual("canResubmit").get(function() {
+assignmentSubmissionSchema.virtual("canResubmit").get(function () {
   return this.attemptNumber < this.maxAttempts && this.status !== "graded";
 });
 
 // Pre-save middleware to calculate percentage and letter grade
-assignmentSubmissionSchema.pre("save", function(next) {
+assignmentSubmissionSchema.pre("save", function () {
   if (this.grade !== null && this.grade !== undefined && this.maxGrade) {
     this.percentage = (this.grade / this.maxGrade) * 100;
-    
+
     // Calculate letter grade
     const percentage = this.percentage;
     if (percentage >= 97) this.letterGrade = "A+";
@@ -197,7 +218,8 @@ assignmentSubmissionSchema.pre("save", function(next) {
     else if (percentage >= 60) this.letterGrade = "D";
     else this.letterGrade = "F";
   }
-  next();
 });
-
-module.exports = mongoose.model("AssignmentSubmission", assignmentSubmissionSchema);
+module.exports = mongoose.model(
+  "AssignmentSubmission",
+  assignmentSubmissionSchema,
+);

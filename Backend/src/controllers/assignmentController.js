@@ -1,4 +1,10 @@
-const { Assignment, AssignmentSubmission, Course, User, Enrollment } = require("../models");
+const {
+  Assignment,
+  AssignmentSubmission,
+  Course,
+  User,
+  Enrollment,
+} = require("../models");
 
 /**
  * @desc    Create new assignment
@@ -7,31 +13,72 @@ const { Assignment, AssignmentSubmission, Course, User, Enrollment } = require("
  */
 exports.createAssignment = async (req, res) => {
   try {
-    const { title, description, courseId, assignmentType, maxPoints, dueDate, submissionType, instructions } = req.body;
-    const teacherId = req.user.id;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
-
-    // Validate course belongs to teacher
-    const course = await Course.findOne({ _id: courseId, createdBy: teacherId, tenantId });
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: "Course not found or you don't have permission to create assignments for this course",
-      });
-    }
-
-    const assignment = await Assignment.create({
+    const {
       title,
       description,
       courseId,
-      teacherId,
       assignmentType,
       maxPoints,
       dueDate,
       submissionType,
       instructions,
-      tenantId,
+    } = req.body;
+    const teacherId = req.user.id;
+    // Ensure fallback to organization_id since sometimes tenantId fields vary
+    const tenantId =
+      req.user.tenantId || req.user.tenant_id || req.user.organization_id;
+
+    if (!courseId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Course ID is required." });
+    }
+    if (!title || !description) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Title and description are required.",
+        });
+    }
+
+    // Validate course belongs to teacher
+    // we use an $or because some courses use teacher_id and some use createdBy
+    let courseQuery = {
+      _id: courseId,
+    };
+
+    const course = await Course.findOne(courseQuery);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found: " + courseId,
+      });
+    }
+
+    // Attempt to extract tenant from user, or fallback to course's tenant
+    const finalTenantId = tenantId || course.tenantId || course.organization_id;
+    if (!finalTenantId) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Could not resolve a Tenant ID for this assignment.",
+        });
+    }
+
+    const assignment = await Assignment.create({
       ...req.body,
+      title,
+      description,
+      courseId,
+      teacherId,
+      assignmentType: assignmentType || "homework",
+      maxPoints: Number(maxPoints) || 100,
+      dueDate: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default to +7 days if empty
+      submissionType: submissionType || "text",
+      instructions: instructions || "",
+      tenantId: finalTenantId,
     });
 
     res.status(201).json({
@@ -40,9 +87,11 @@ exports.createAssignment = async (req, res) => {
       message: "Assignment created successfully",
     });
   } catch (error) {
+    console.error("Assignment creation error details:", error);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to create assignment",
+      errorDetails: error.toString(),
     });
   }
 };
@@ -55,11 +104,20 @@ exports.createAssignment = async (req, res) => {
 exports.getTeacherAssignments = async (req, res) => {
   try {
     const teacherId = req.user.id;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
+    const tenantId =
+      req.user.tenantId || req.user.tenant_id || req.user.organization_id;
     const { courseId, status, page = 1, limit = 10 } = req.query;
 
     // Build query
-    const query = { teacherId, tenantId, isDeleted: false };
+    const query = {
+      teacherId,
+      $or: [
+        { tenantId: tenantId },
+        { tenantId: null },
+        { organization_id: tenantId },
+      ],
+      isDeleted: false,
+    };
     if (courseId) query.courseId = courseId;
     if (status === "published") query.isVisible = true;
     if (status === "draft") query.isVisible = false;
@@ -83,6 +141,7 @@ exports.getTeacherAssignments = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to get assignments",
@@ -98,15 +157,18 @@ exports.getTeacherAssignments = async (req, res) => {
 exports.getStudentAssignments = async (req, res) => {
   try {
     const studentId = req.user.id;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { courseId, status, page = 1, limit = 10 } = req.query;
 
     // Get student's enrolled courses
     const enrollments = await Enrollment.find({ studentId, status: "active" });
-    const courseIds = enrollments.map(e => e.courseId);
+    const courseIds = enrollments.map((e) => e.courseId);
 
-    // Build query
-    const query = { courseId: { $in: courseIds }, tenantId, isVisible: true, isDeleted: false };
+    // Build query - students should see all assignments for their enrolled courses
+    const query = {
+      courseId: { $in: courseIds },
+      isVisible: true,
+      isDeleted: false,
+    };
     if (courseId) query.courseId = courseId;
 
     const assignments = await Assignment.find(query)
@@ -116,15 +178,17 @@ exports.getStudentAssignments = async (req, res) => {
       .skip((page - 1) * limit);
 
     // Get submission status for each assignment
-    const assignmentIds = assignments.map(a => a._id);
+    const assignmentIds = assignments.map((a) => a._id);
     const submissions = await AssignmentSubmission.find({
       assignmentId: { $in: assignmentIds },
       studentId,
     });
 
     // Attach submission status to assignments
-    const assignmentsWithStatus = assignments.map(assignment => {
-      const submission = submissions.find(s => s.assignmentId.toString() === assignment._id.toString());
+    const assignmentsWithStatus = assignments.map((assignment) => {
+      const submission = submissions.find(
+        (s) => s.assignmentId.toString() === assignment._id.toString(),
+      );
       return {
         ...assignment.toObject(),
         submissionStatus: submission ? submission.status : "not_submitted",
@@ -148,6 +212,7 @@ exports.getStudentAssignments = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to get assignments",
@@ -165,9 +230,8 @@ exports.getAssignment = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
     const userRole = req.user.userType;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
 
-    const assignment = await Assignment.findOne({ _id: id, tenantId, isDeleted: false })
+    const assignment = await Assignment.findOne({ _id: id, isDeleted: false })
       .populate("courseId", "title code description")
       .populate("teacherId", "firstName lastName email");
 
@@ -206,6 +270,7 @@ exports.getAssignment = async (req, res) => {
       data: assignment,
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to get assignment",
@@ -222,23 +287,48 @@ exports.updateAssignment = async (req, res) => {
   try {
     const { id } = req.params;
     const teacherId = req.user.id;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
+    const tenantId =
+      req.user.tenantId || req.user.tenant_id || req.user.organization_id;
 
-    const assignment = await Assignment.findOne({ _id: id, teacherId, tenantId, isDeleted: false });
+    const query = {
+      _id: id,
+      teacherId,
+      $or: [
+        { tenantId: tenantId },
+        { tenantId: null },
+        { organization_id: tenantId },
+      ],
+      isDeleted: false,
+    };
+
+    const assignment = await Assignment.findOne(query);
     if (!assignment) {
       return res.status(404).json({
         success: false,
-        message: "Assignment not found or you don't have permission to update it",
+        message:
+          "Assignment not found or you don't have permission to update it",
       });
     }
 
     // Check if assignment has submissions
-    const hasSubmissions = await AssignmentSubmission.findOne({ assignmentId: id });
+    const hasSubmissions = await AssignmentSubmission.findOne({
+      assignmentId: id,
+    });
     if (hasSubmissions) {
       // Only allow certain fields to be updated if there are submissions
-      const allowedUpdates = ["isVisible", "instructions", "tags"];
+      const allowedUpdates = [
+        "isVisible",
+        "instructions",
+        "tags",
+        "dueDate",
+        "allowLateSubmission",
+        "latePenaltyPercent",
+        "maxPoints",
+        "title",
+        "description",
+      ];
       const updates = {};
-      allowedUpdates.forEach(field => {
+      allowedUpdates.forEach((field) => {
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field];
         }
@@ -257,6 +347,7 @@ exports.updateAssignment = async (req, res) => {
       message: "Assignment updated successfully",
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to update assignment",
@@ -273,18 +364,33 @@ exports.deleteAssignment = async (req, res) => {
   try {
     const { id } = req.params;
     const teacherId = req.user.id;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
+    const tenantId =
+      req.user.tenantId || req.user.tenant_id || req.user.organization_id;
 
-    const assignment = await Assignment.findOne({ _id: id, teacherId, tenantId, isDeleted: false });
+    const query = {
+      _id: id,
+      teacherId,
+      $or: [
+        { tenantId: tenantId },
+        { tenantId: null },
+        { organization_id: tenantId },
+      ],
+      isDeleted: false,
+    };
+
+    const assignment = await Assignment.findOne(query);
     if (!assignment) {
       return res.status(404).json({
         success: false,
-        message: "Assignment not found or you don't have permission to delete it",
+        message:
+          "Assignment not found or you don't have permission to delete it",
       });
     }
 
     // Check if assignment has submissions
-    const hasSubmissions = await AssignmentSubmission.findOne({ assignmentId: id });
+    const hasSubmissions = await AssignmentSubmission.findOne({
+      assignmentId: id,
+    });
     if (hasSubmissions) {
       // Soft delete
       assignment.isDeleted = true;
@@ -300,6 +406,7 @@ exports.deleteAssignment = async (req, res) => {
       message: "Assignment deleted successfully",
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to delete assignment",
@@ -316,10 +423,19 @@ exports.submitAssignment = async (req, res) => {
   try {
     const { id } = req.params;
     const studentId = req.user.id;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
-    const { submissionType, textContent, fileSubmissions, linkSubmissions, studentNotes } = req.body;
+    const {
+      submissionType,
+      textContent,
+      fileSubmissions,
+      linkSubmissions,
+      studentNotes,
+    } = req.body;
 
-    const assignment = await Assignment.findOne({ _id: id, tenantId, isVisible: true, isDeleted: false });
+    const assignment = await Assignment.findOne({
+      _id: id,
+      isVisible: true,
+      isDeleted: false,
+    });
     if (!assignment) {
       return res.status(404).json({
         success: false,
@@ -345,7 +461,8 @@ exports.submitAssignment = async (req, res) => {
     if (isOverdue && !assignment.allowLateSubmission) {
       return res.status(400).json({
         success: false,
-        message: "Assignment submission is overdue and late submissions are not allowed",
+        message:
+          "Assignment submission is overdue and late submissions are not allowed",
       });
     }
 
@@ -379,7 +496,7 @@ exports.submitAssignment = async (req, res) => {
           attemptNumber: existingSubmission.attemptNumber + 1,
           status: "submitted",
         },
-        { new: true }
+        { new: true },
       );
     } else {
       // Create new submission
@@ -406,6 +523,7 @@ exports.submitAssignment = async (req, res) => {
       message: "Assignment submitted successfully",
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to submit assignment",
@@ -425,8 +543,10 @@ exports.gradeSubmission = async (req, res) => {
     const tenantId = req.user.tenantId || req.user.tenant_id;
     const { grade, teacherFeedback, rubricScores } = req.body;
 
-    const submission = await AssignmentSubmission.findById(submissionId)
-      .populate("assignmentId");
+    const submission =
+      await AssignmentSubmission.findById(submissionId).populate(
+        "assignmentId",
+      );
 
     if (!submission) {
       return res.status(404).json({
@@ -448,7 +568,7 @@ exports.gradeSubmission = async (req, res) => {
     submission.teacherId = teacherId;
     submission.gradedAt = new Date();
     submission.status = "graded";
-    
+
     if (rubricScores) {
       submission.rubricScores = rubricScores;
     }
@@ -461,6 +581,7 @@ exports.gradeSubmission = async (req, res) => {
       message: "Submission graded successfully",
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to grade submission",
@@ -477,15 +598,28 @@ exports.getAssignmentSubmissions = async (req, res) => {
   try {
     const { id } = req.params;
     const teacherId = req.user.id;
-    const tenantId = req.user.tenantId || req.user.tenant_id;
+    const tenantId =
+      req.user.tenantId || req.user.tenant_id || req.user.organization_id;
     const { status, page = 1, limit = 10 } = req.query;
 
+    const queryAssig = {
+      _id: id,
+      teacherId,
+      $or: [
+        { tenantId: tenantId },
+        { tenantId: null },
+        { organization_id: tenantId },
+      ],
+      isDeleted: false,
+    };
+
     // Verify assignment belongs to teacher
-    const assignment = await Assignment.findOne({ _id: id, teacherId, tenantId, isDeleted: false });
+    const assignment = await Assignment.findOne(queryAssig);
     if (!assignment) {
       return res.status(404).json({
         success: false,
-        message: "Assignment not found or you don't have permission to view submissions",
+        message:
+          "Assignment not found or you don't have permission to view submissions",
       });
     }
 
@@ -512,6 +646,7 @@ exports.getAssignmentSubmissions = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to get submissions",

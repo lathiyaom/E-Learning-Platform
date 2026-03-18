@@ -14,6 +14,7 @@ const lectureService = {
         lectureDayEnd.setHours(23, 59, 59, 999);
 
         const holiday = await Holiday.findOne({
+          status: "active",
           $and: [
             { $or: [{ tenantId: null }, { tenantId }] },
             { date: { $lte: lectureDayEnd } },
@@ -28,14 +29,17 @@ const lectureService = {
 
         if (holiday) {
           throw new Error(
-            `Cannot schedule lecture on holiday: "${holiday.title}" (${new Date(holiday.date).toDateString()})`
+            `Cannot schedule lecture on holiday: "${holiday.title}" (${new Date(holiday.date).toDateString()})`,
           );
         }
       }
 
       // Verify course exists (skip tenant check if tenantId is null for unassigned teachers)
       const courseQuery = tenantId
-        ? { _id: lectureData.courseId, $or: [{ organization_id: tenantId }, { tenantId }] }
+        ? {
+            _id: lectureData.courseId,
+            $or: [{ organization_id: tenantId }, { tenantId }],
+          }
         : { _id: lectureData.courseId };
       const course = await Course.findOne(courseQuery);
       if (!course) {
@@ -44,7 +48,11 @@ const lectureService = {
 
       // Verify teacher exists (skip tenant check if tenantId is null)
       const teacherQuery = tenantId
-        ? { _id: lectureData.conductedBy, userType: "teacher", $or: [{ tenant_id: tenantId }, { organizations: tenantId }] }
+        ? {
+            _id: lectureData.conductedBy,
+            userType: "teacher",
+            $or: [{ tenant_id: tenantId }, { organizations: tenantId }],
+          }
         : { _id: lectureData.conductedBy, userType: "teacher" };
       const teacher = await User.findOne(teacherQuery);
       if (!teacher) {
@@ -124,13 +132,22 @@ const lectureService = {
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       let query = {
-        tenantId,
         lectureDate: { $gte: today, $lt: tomorrow },
         status: { $in: ["scheduled", "ongoing"] },
       };
 
-      if (userType === "teacher") {
-        query.conductedBy = userId;
+      if (userType === "student") {
+        const { Enrollment } = require("../models");
+        const enrollments = await Enrollment.find({
+          $or: [{ studentId: userId }, { student_id: userId }],
+        });
+        const courseIds = enrollments.map((e) => e.courseId || e.course_id);
+        query.courseId = { $in: courseIds };
+      } else {
+        if (tenantId) query.tenantId = tenantId;
+        if (userType === "teacher") {
+          query.conductedBy = userId;
+        }
       }
 
       const lectures = await Lecture.find(query)
@@ -155,24 +172,23 @@ const lectureService = {
       futureDate.setDate(futureDate.getDate() + days);
 
       let query = {
-        tenantId,
         lectureDate: { $gte: today, $lte: futureDate },
         status: { $in: ["scheduled", "ongoing"] },
       };
 
-      if (userType === "teacher") {
-        query.conductedBy = userId;
-      } else if (userType === "student") {
+      if (userType === "student") {
         // Get courses where student is enrolled
         const { Enrollment } = require("../models");
         const enrollments = await Enrollment.find({
-          $and: [
-            { $or: [{ studentId: userId }, { student_id: userId }] },
-            { $or: [{ tenantId }, { organization_id: tenantId }] },
-          ],
+          $or: [{ studentId: userId }, { student_id: userId }],
         });
         const courseIds = enrollments.map((e) => e.courseId || e.course_id);
         query.courseId = { $in: courseIds };
+      } else {
+        if (tenantId) query.tenantId = tenantId;
+        if (userType === "teacher") {
+          query.conductedBy = userId;
+        }
       }
 
       const lectures = await Lecture.find(query)
@@ -195,7 +211,7 @@ const lectureService = {
       const lecture = await Lecture.findOneAndUpdate(
         { _id: lectureId, tenantId },
         { $set: updateData },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       )
         .populate("courseId", "title category")
         .populate("conductedBy", "firstName lastName email");
@@ -223,7 +239,7 @@ const lectureService = {
       const lecture = await Lecture.findOneAndUpdate(
         { _id: lectureId, tenantId },
         { $set: { status } },
-        { new: true }
+        { new: true },
       )
         .populate("courseId", "title category")
         .populate("conductedBy", "firstName lastName email");
@@ -246,7 +262,7 @@ const lectureService = {
       const lecture = await Lecture.findOneAndUpdate(
         { _id: lectureId, tenantId },
         { $push: { materials: material } },
-        { new: true }
+        { new: true },
       );
 
       if (!lecture) {
@@ -264,7 +280,10 @@ const lectureService = {
    */
   deleteLecture: async (tenantId, lectureId) => {
     try {
-      const lecture = await Lecture.findOneAndDelete({ _id: lectureId, tenantId });
+      const lecture = await Lecture.findOneAndDelete({
+        _id: lectureId,
+        tenantId,
+      });
 
       if (!lecture) {
         throw new Error("Lecture not found");
