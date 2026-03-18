@@ -36,6 +36,45 @@ code {
   display: none;
 }
 
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.22) transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.22);
+  border-radius: 999px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.36);
+}
+
+.dark .modal-scrollbar {
+  scrollbar-color: rgba(176, 141, 87, 0.35) transparent;
+}
+
+.dark .modal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(176, 141, 87, 0.35);
+}
+
+.dark .modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(176, 141, 87, 0.5);
+}
+
+.modal-scroll-smooth {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -47,6 +86,9 @@ code {
 /* Sidebar scroll with hover-visible thin scrollbar */
 .sidebar-scroll-hover {
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
   transition: scrollbar-color 0.3s ease;
@@ -125,7 +167,7 @@ code {
 
 @layer components {
   .dark-glass {
-    @apply bg-[#1E1F26]/60 backdrop-blur-xl border border-white/5 shadow-inner-glass;
+    @apply bg-premium-surface/85 backdrop-blur-xl border border-premium-gold/15 shadow-none;
   }
   .floating-label-group {
     @apply relative;

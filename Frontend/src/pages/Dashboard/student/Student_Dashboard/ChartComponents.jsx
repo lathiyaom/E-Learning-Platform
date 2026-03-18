@@ -202,3 +202,133 @@ export const TimeDistributionChart = ({ data, title, className }) => {
     </div>
   );
 };
+
+// Reusable analytics bar chart for dashboard sections
+export const AnalyticsBarChart = ({
+  data,
+  title,
+  xKey = "name",
+  yKey = "value",
+  barColor = "#B48B4D",
+  className,
+}) => {
+  return (
+    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}>
+      <div className="mb-6">
+        <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
+          {title}
+        </h4>
+      </div>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={data}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#e2e8f0"
+            className="dark:stroke-slate-700"
+          />
+          <XAxis dataKey={xKey} stroke="#94a3b8" className="text-xs" />
+          <YAxis stroke="#94a3b8" className="text-xs" />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#12131A",
+              border: "1px solid rgba(176, 141, 87, 0.25)",
+              borderRadius: "8px",
+              color: "#fff",
+            }}
+          />
+          <Legend />
+          <Bar dataKey={yKey} fill={barColor} radius={[8, 8, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+export const AnalyticsLineChart = ({
+  data,
+  title,
+  xKey = "name",
+  yKey = "value",
+  lineColor = "#B48B4D",
+  className,
+}) => {
+  return (
+    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}>
+      <div className="mb-6">
+        <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
+          {title}
+        </h4>
+      </div>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#e2e8f0"
+            className="dark:stroke-slate-700"
+          />
+          <XAxis dataKey={xKey} stroke="#94a3b8" className="text-xs" />
+          <YAxis stroke="#94a3b8" className="text-xs" />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#12131A",
+              border: "1px solid rgba(176, 141, 87, 0.25)",
+              borderRadius: "8px",
+              color: "#fff",
+            }}
+          />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey={yKey}
+            stroke={lineColor}
+            strokeWidth={3}
+            dot={{ fill: lineColor, r: 4 }}
+            activeDot={{ r: 6 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+export const AnalyticsRadarChart = ({
+  data,
+  title,
+  angleKey = "name",
+  valueKey = "value",
+  color = "#10b981",
+  className,
+}) => {
+  return (
+    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}>
+      <div className="mb-6">
+        <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
+          {title}
+        </h4>
+      </div>
+      <ResponsiveContainer width="100%" height={300}>
+        <RadarChart data={data}>
+          <PolarGrid stroke="#e2e8f0" className="dark:stroke-slate-700" />
+          <PolarAngleAxis dataKey={angleKey} stroke="#94a3b8" className="text-xs" />
+          <PolarRadiusAxis stroke="#94a3b8" className="text-xs" />
+          <Radar
+            name={title}
+            dataKey={valueKey}
+            stroke={color}
+            fill={color}
+            fillOpacity={0.5}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#12131A",
+              border: "1px solid rgba(176, 141, 87, 0.25)",
+              borderRadius: "8px",
+              color: "#fff",
+            }}
+          />
+          <Legend />
+        </RadarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};

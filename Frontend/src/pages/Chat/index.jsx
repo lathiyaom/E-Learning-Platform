@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { selectCurrentUser } from "../../redux/slice/authSlice";
@@ -71,9 +77,12 @@ function ChatPage() {
   const socketRef = useRef(null);
 
   // ========== UTILITY: Generate idempotency key ==========
-  const generateIdempotencyKey = useCallback((conversationId, messageText, timestamp = Date.now()) => {
-    return `${conversationId}-${timestamp}-${messageText.length}`;
-  }, []);
+  const generateIdempotencyKey = useCallback(
+    (conversationId, messageText, timestamp = Date.now()) => {
+      return `${conversationId}-${timestamp}-${messageText.length}`;
+    },
+    [],
+  );
 
   // ========== SOCKET.IO SETUP ==========
   useEffect(() => {
@@ -137,33 +146,36 @@ function ChatPage() {
    * Handle new message from socket
    * Deduplicates based on message _id and sender
    */
-  const handleNewMessage = useCallback((data) => {
-    try {
-      const { conversationId, message: newMsg } = data;
+  const handleNewMessage = useCallback(
+    (data) => {
+      try {
+        const { conversationId, message: newMsg } = data;
 
-      if (!newMsg?._id) {
-        console.warn("Invalid message data from socket");
-        return;
-      }
-
-      setMessages((prev) => {
-        // Check if message already exists
-        const exists = prev.some((m) => m._id === newMsg._id);
-        if (exists) return prev;
-
-        // Only add if we're viewing this conversation
-        if (selectedChat?._id === conversationId) {
-          return [...prev, newMsg];
+        if (!newMsg?._id) {
+          console.warn("Invalid message data from socket");
+          return;
         }
-        return prev;
-      });
 
-      // Remove from pending if it was optimistic
-      pendingMessagesRef.current.delete(newMsg._id);
-    } catch (error) {
-      console.error("Error handling new message:", error);
-    }
-  }, [selectedChat?._id]);
+        setMessages((prev) => {
+          // Check if message already exists
+          const exists = prev.some((m) => m._id === newMsg._id);
+          if (exists) return prev;
+
+          // Only add if we're viewing this conversation
+          if (selectedChat?._id === conversationId) {
+            return [...prev, newMsg];
+          }
+          return prev;
+        });
+
+        // Remove from pending if it was optimistic
+        pendingMessagesRef.current.delete(newMsg._id);
+      } catch (error) {
+        console.error("Error handling new message:", error);
+      }
+    },
+    [selectedChat?._id],
+  );
 
   /**
    * Handle message delivery confirmation
@@ -176,8 +188,10 @@ function ChatPage() {
       if (optimisticId && messageId) {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg._id === optimisticId ? { ...msg, _id: messageId, isOptimistic: false } : msg
-          )
+            msg._id === optimisticId
+              ? { ...msg, _id: messageId, isOptimistic: false }
+              : msg,
+          ),
         );
 
         pendingMessagesRef.current.delete(optimisticId);
@@ -197,8 +211,7 @@ function ChatPage() {
           const updated = [...prev];
           updated[idx] = { ...updated[idx], ...conversation };
           updated.sort(
-            (a, b) =>
-              new Date(b.last_message_at) - new Date(a.last_message_at)
+            (a, b) => new Date(b.last_message_at) - new Date(a.last_message_at),
           );
           return updated;
         }
@@ -266,7 +279,9 @@ function ChatPage() {
       if (response.data.success) {
         setConversations(response.data.data || []);
       } else {
-        throw new Error(response.data.message || "Failed to load conversations");
+        throw new Error(
+          response.data.message || "Failed to load conversations",
+        );
       }
     } catch (error) {
       console.error("Error fetching conversations:", error);
@@ -310,7 +325,7 @@ function ChatPage() {
 
     // Mark as read (fire and forget)
     markAsRead(selectedChat._id).catch((err) =>
-      console.warn("Failed to mark as read:", err)
+      console.warn("Failed to mark as read:", err),
     );
   }, [selectedChat?._id]);
 
@@ -338,8 +353,8 @@ function ChatPage() {
         prev.map((conv) =>
           conv._id === conversationId
             ? { ...conv, unread_student: false, unread_teacher: false }
-            : conv
-        )
+            : conv,
+        ),
       );
     } catch (error) {
       console.warn("Error marking as read:", error);
@@ -354,7 +369,11 @@ function ChatPage() {
     const messageText = message.trim();
     const conversationId = selectedChat._id;
     const timestamp = Date.now();
-    const idempotencyKey = generateIdempotencyKey(conversationId, messageText, timestamp);
+    const idempotencyKey = generateIdempotencyKey(
+      conversationId,
+      messageText,
+      timestamp,
+    );
 
     // Clear input immediately
     setMessage("");
@@ -394,8 +413,8 @@ function ChatPage() {
           prev.map((msg) =>
             msg._id === optimisticMessage._id
               ? { ...serverMessage, isOptimistic: false }
-              : msg
-          )
+              : msg,
+          ),
         );
 
         pendingMessagesRef.current.delete(optimisticMessage._id);
@@ -409,13 +428,15 @@ function ChatPage() {
                   last_message: messageText,
                   last_message_at: new Date().toISOString(),
                 }
-              : conv
-          )
+              : conv,
+          ),
         );
       } else {
         // Server error - remove optimistic message and restore input
         toast.error(response.data.message || "Failed to send message");
-        setMessages((prev) => prev.filter((m) => m._id !== optimisticMessage._id));
+        setMessages((prev) =>
+          prev.filter((m) => m._id !== optimisticMessage._id),
+        );
         setMessage(messageText);
       }
     } catch (error) {
@@ -430,7 +451,8 @@ function ChatPage() {
         toast.error("Session expired - please login again");
       } else {
         toast.error(
-          error.response?.data?.message || "Failed to send message - check your connection"
+          error.response?.data?.message ||
+            "Failed to send message - check your connection",
         );
       }
     } finally {
@@ -492,7 +514,7 @@ function ChatPage() {
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast.error(
-        error.response?.data?.message || "Failed to start conversation"
+        error.response?.data?.message || "Failed to start conversation",
       );
     }
   };
@@ -500,13 +522,16 @@ function ChatPage() {
   // ========== DATA TRANSFORMATION ==========
 
   // Get the other participant
-  const getOtherParticipant = useCallback((conversation) => {
-    if (!conversation) return null;
-    if (user?.userType === "student") {
-      return conversation.teacher_id;
-    }
-    return conversation.student_id;
-  }, [user?.userType]);
+  const getOtherParticipant = useCallback(
+    (conversation) => {
+      if (!conversation) return null;
+      if (user?.userType === "student") {
+        return conversation.teacher_id;
+      }
+      return conversation.student_id;
+    },
+    [user?.userType],
+  );
 
   // Format time elegantly
   const formatTime = useCallback((dateString) => {
@@ -559,7 +584,13 @@ function ChatPage() {
           _raw: conv,
         };
       }),
-    [conversations, getOtherParticipant, onlineUserIds, formatTime, user?.userType]
+    [
+      conversations,
+      getOtherParticipant,
+      onlineUserIds,
+      formatTime,
+      user?.userType,
+    ],
   );
 
   // Transform messages (memoized)
@@ -571,8 +602,8 @@ function ChatPage() {
         const senderName = msg.sender_id?.firstName
           ? `${msg.sender_id.firstName} ${msg.sender_id.lastName || ""}`
           : isMe
-          ? "You"
-          : "Unknown";
+            ? "You"
+            : "Unknown";
 
         return {
           id: msg._id,
@@ -591,8 +622,11 @@ function ChatPage() {
 
   // Get selected chat data
   const selectedChatData = useMemo(
-    () => (selectedChat ? chatsData.find((c) => c.id === selectedChat._id) || null : null),
-    [selectedChat, chatsData]
+    () =>
+      selectedChat
+        ? chatsData.find((c) => c.id === selectedChat._id) || null
+        : null,
+    [selectedChat, chatsData],
   );
 
   // Handle chat selection
@@ -603,7 +637,7 @@ function ChatPage() {
         setSelectedChat(conv);
       }
     },
-    [conversations]
+    [conversations],
   );
 
   // ========== RENDER ==========

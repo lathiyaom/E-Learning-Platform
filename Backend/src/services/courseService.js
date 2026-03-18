@@ -67,6 +67,10 @@ const createCourse = async (courseData) => {
   const coursePrice = price ?? pricing ?? priceUSD ?? 0;
   const courseVideoUrl = video_url || videoUrl;
 
+  if (!courseVideoUrl) {
+    throw new Error("Video URL is required");
+  }
+
   // Validate price for paid courses
   if (isPaid && (coursePrice <= 0 || Number.isNaN(Number(coursePrice)))) {
     throw new Error("Price must be greater than 0 for paid courses");
@@ -166,7 +170,7 @@ const updateCourse = async (id, tenantId, updateData) => {
   });
   if (!course) throw new Error("Course Not Found");
 
-  const { title, image, description, category, videoUrl, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount, level } = updateData;
+  const { title, image, description, category, video_url, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount, level } = updateData;
 
   if (title !== undefined && title.length === 0)
     throw new Error("Title is required");
@@ -182,9 +186,10 @@ const updateCourse = async (id, tenantId, updateData) => {
   if (image) course.image = image;
   if (description) course.description = description;
   if (category) course.category = category;
-  if (videoUrl) {
-    course.video_url = videoUrl;
-    course.videoUrl = videoUrl;
+  const nextVideoUrl = video_url || videoUrl;
+  if (nextVideoUrl) {
+    course.video_url = nextVideoUrl;
+    course.videoUrl = nextVideoUrl;
   }
   if (tags) course.tags = tags;
   if (level) course.level = level;

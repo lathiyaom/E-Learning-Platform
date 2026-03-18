@@ -145,11 +145,9 @@ holidaySchema.virtual("isMultiDay").get(function () {
 });
 
 // Validation: endDate must be after or equal to date
-holidaySchema.pre("save", function (next) {
+holidaySchema.pre("save", function () {
   if (this.endDate && this.endDate < this.date) {
-    next(new Error("End date must be after or equal to start date"));
-  } else {
-    next();
+    throw new Error("End date must be after or equal to start date");
   }
 });
 

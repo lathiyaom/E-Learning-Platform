@@ -131,6 +131,7 @@ const AdminAnalyticsDashboard = () => {
         )}
       </div>
     </div>
+   
   );
 };
 

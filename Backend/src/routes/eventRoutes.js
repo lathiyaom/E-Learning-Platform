@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const eventController = require("../controllers/eventController");
-const { authenticate, authorize, isTenantOwner } = require("../middlewares/authMiddleware");
+const { authenticate, authorize } = require("../middlewares/authMiddleware");
 const tenantScope = require("../middlewares/tenantScope.middleware");
 
 // Create event (admin only)
-router.post("/create", authenticate, isTenantOwner, authorize("admin"), tenantScope, eventController.createEvent);
+router.post("/create", authenticate, authorize("admin", "superadmin"), tenantScope, eventController.createEvent);
 
 // Get all events
 router.get("/all", authenticate, tenantScope, eventController.getAllEvents);
@@ -23,9 +23,9 @@ router.post("/:id/register", authenticate, tenantScope, eventController.register
 router.post("/:id/unregister", authenticate, tenantScope, eventController.unregisterFromEvent);
 
 // Update event (admin only)
-router.patch("/:id", authenticate, isTenantOwner, authorize("admin"), tenantScope, eventController.updateEvent);
+router.patch("/:id", authenticate, authorize("admin", "superadmin"), tenantScope, eventController.updateEvent);
 
 // Delete event (admin only)
-router.delete("/:id", authenticate, isTenantOwner, authorize("admin"), tenantScope, eventController.deleteEvent);
+router.delete("/:id", authenticate, authorize("admin", "superadmin"), tenantScope, eventController.deleteEvent);
 
 module.exports = router;

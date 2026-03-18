@@ -38,7 +38,9 @@ router.get("/contacts", authenticate, tenantScope, async (req, res) => {
     }
 
     const contacts = await User.find(query)
-      .select("firstName lastName email userType currentOrganization organizations")
+      .select(
+        "firstName lastName email userType currentOrganization organizations",
+      )
       .sort({ firstName: 1, lastName: 1 });
 
     return res.status(200).json({
@@ -56,131 +58,140 @@ router.get("/contacts", authenticate, tenantScope, async (req, res) => {
 });
 
 // Start or get conversation
-router.post("/start-conversation", authenticate, tenantScope, async (req, res) => {
-  try {
-    const { teacher_id, student_id, subject, course_context } = req.body;
-    const currentUserId = req.user.id;
-    const currentUserType = req.user.userType;
-    const organizationId = req.tenantId;
+router.post(
+  "/start-conversation",
+  authenticate,
+  tenantScope,
+  async (req, res) => {
+    try {
+      const { teacher_id, student_id, subject, course_context } = req.body;
+      const currentUserId = req.user.id;
+      const currentUserType = req.user.userType;
+      const organizationId = req.tenantId;
 
-    if (!organizationId) {
-      return res.status(400).json({
-        success: false,
-        message: "Organization context is required to start conversation",
-      });
-    }
-
-    let finalStudentId, finalTeacherId, contactId;
-
-    if (currentUserType === "student") {
-      // Student is starting conversation with a teacher
-      contactId = teacher_id;
-      if (!contactId) {
+      if (!organizationId) {
         return res.status(400).json({
           success: false,
-          message: "teacher_id is required",
+          message: "Organization context is required to start conversation",
         });
       }
-      const teacher = await User.findById(contactId);
-      if (!teacher || teacher.userType !== "teacher") {
-        return res.status(404).json({
+
+      let finalStudentId, finalTeacherId, contactId;
+
+      if (currentUserType === "student") {
+        // Student is starting conversation with a teacher
+        contactId = teacher_id;
+        if (!contactId) {
+          return res.status(400).json({
+            success: false,
+            message: "teacher_id is required",
+          });
+        }
+        const teacher = await User.findById(contactId);
+        if (!teacher || teacher.userType !== "teacher") {
+          return res.status(404).json({
+            success: false,
+            message: "Teacher not found",
+          });
+        }
+        finalStudentId = currentUserId;
+        finalTeacherId = contactId;
+
+        // Check organization match
+        const teacherOrgIds = (teacher.organizations || []).map((id) =>
+          id.toString(),
+        );
+        const teacherTenantId = teacher.tenant_id?.toString();
+        const sameOrganization =
+          teacherOrgIds.includes(organizationId.toString()) ||
+          teacherTenantId === organizationId.toString();
+
+        if (!sameOrganization) {
+          return res.status(400).json({
+            success: false,
+            message: "Teacher is not available in your organization",
+          });
+        }
+      } else if (currentUserType === "teacher") {
+        // Teacher is starting conversation with a student
+        contactId = student_id || teacher_id; // support both field names from frontend
+        if (!contactId) {
+          return res.status(400).json({
+            success: false,
+            message: "student_id is required",
+          });
+        }
+        const student = await User.findById(contactId);
+        if (!student || student.userType !== "student") {
+          return res.status(404).json({
+            success: false,
+            message: "Student not found",
+          });
+        }
+        finalStudentId = contactId;
+        finalTeacherId = currentUserId;
+
+        // Check organization match
+        const studentOrgIds = (student.organizations || []).map((id) =>
+          id.toString(),
+        );
+        const studentTenantId = student.tenant_id?.toString();
+        const sameOrganization =
+          studentOrgIds.includes(organizationId.toString()) ||
+          studentTenantId === organizationId.toString();
+
+        if (!sameOrganization) {
+          return res.status(400).json({
+            success: false,
+            message: "Student is not available in your organization",
+          });
+        }
+      } else {
+        return res.status(403).json({
           success: false,
-          message: "Teacher not found",
+          message: "Only students and teachers can start conversations",
         });
       }
-      finalStudentId = currentUserId;
-      finalTeacherId = contactId;
 
-      // Check organization match
-      const teacherOrgIds = (teacher.organizations || []).map((id) => id.toString());
-      const teacherTenantId = teacher.tenant_id?.toString();
-      const sameOrganization =
-        teacherOrgIds.includes(organizationId.toString()) ||
-        teacherTenantId === organizationId.toString();
-
-      if (!sameOrganization) {
-        return res.status(400).json({
-          success: false,
-          message: "Teacher is not available in your organization",
-        });
-      }
-    } else if (currentUserType === "teacher") {
-      // Teacher is starting conversation with a student
-      contactId = student_id || teacher_id; // support both field names from frontend
-      if (!contactId) {
-        return res.status(400).json({
-          success: false,
-          message: "student_id is required",
-        });
-      }
-      const student = await User.findById(contactId);
-      if (!student || student.userType !== "student") {
-        return res.status(404).json({
-          success: false,
-          message: "Student not found",
-        });
-      }
-      finalStudentId = contactId;
-      finalTeacherId = currentUserId;
-
-      // Check organization match
-      const studentOrgIds = (student.organizations || []).map((id) => id.toString());
-      const studentTenantId = student.tenant_id?.toString();
-      const sameOrganization =
-        studentOrgIds.includes(organizationId.toString()) ||
-        studentTenantId === organizationId.toString();
-
-      if (!sameOrganization) {
-        return res.status(400).json({
-          success: false,
-          message: "Student is not available in your organization",
-        });
-      }
-    } else {
-      return res.status(403).json({
-        success: false,
-        message: "Only students and teachers can start conversations",
-      });
-    }
-
-    // Check if conversation already exists
-    let conversation = await Conversation.findOne({
-      student_id: finalStudentId,
-      teacher_id: finalTeacherId
-    });
-
-    if (!conversation) {
-      // Create new conversation
-      conversation = new Conversation({
+      // Check if conversation already exists
+      let conversation = await Conversation.findOne({
         student_id: finalStudentId,
         teacher_id: finalTeacherId,
-        organization_id: organizationId,
-        subject: subject || "",
-        course_context: course_context || null
       });
-      await conversation.save();
+
+      if (!conversation) {
+        // Create new conversation
+        conversation = new Conversation({
+          student_id: finalStudentId,
+          teacher_id: finalTeacherId,
+          organization_id: organizationId,
+          subject: subject || "",
+          course_context: course_context || null,
+        });
+        await conversation.save();
+      }
+
+      // Populate conversation details
+      await conversation.populate([
+        { path: "student_id", select: "firstName lastName email" },
+        { path: "teacher_id", select: "firstName lastName email" },
+        { path: "course_context", select: "title" },
+      ]);
+
+      res.status(200).json({
+        success: true,
+        message: "Conversation started successfully",
+        data: conversation,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to start conversation",
+        error: error.message,
+      });
     }
-
-    // Populate conversation details
-    await conversation.populate([
-      { path: 'student_id', select: 'firstName lastName email' },
-      { path: 'teacher_id', select: 'firstName lastName email' },
-      { path: 'course_context', select: 'title' }
-    ]);
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation started successfully",
-      data: conversation
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to start conversation",
-      error: error.message
-    });
-  }
-});
+  },
+);
 
 // Send message
 router.post("/send-message", authenticate, tenantScope, async (req, res) => {
@@ -193,15 +204,18 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
     if (!conversation) {
       return res.status(404).json({
         success: false,
-        message: "Conversation not found"
+        message: "Conversation not found",
       });
     }
 
     // Check if user is participant
-    if (!conversation.student_id.equals(senderId) && !conversation.teacher_id.equals(senderId)) {
+    if (
+      !conversation.student_id.equals(senderId) &&
+      !conversation.teacher_id.equals(senderId)
+    ) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to send message in this conversation"
+        message: "Not authorized to send message in this conversation",
       });
     }
 
@@ -211,7 +225,7 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
       sender_id: senderId,
       message,
       message_type: message_type || "text",
-      reply_to: reply_to || null
+      reply_to: reply_to || null,
     });
 
     await newMessage.save();
@@ -219,7 +233,7 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
     // Update conversation last message info
     conversation.last_message = message;
     conversation.last_message_at = new Date();
-    
+
     // Update unread flags
     if (conversation.student_id.equals(senderId)) {
       conversation.unread_teacher = true;
@@ -228,13 +242,13 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
       conversation.unread_student = true;
       conversation.unread_teacher = false;
     }
-    
+
     await conversation.save();
 
     // Populate message details
     await newMessage.populate([
-      { path: 'sender_id', select: 'firstName lastName email userType' },
-      { path: 'reply_to', select: 'message sender_id' }
+      { path: "sender_id", select: "firstName lastName email userType" },
+      { path: "reply_to", select: "message sender_id" },
     ]);
 
     // Emit real-time Socket.IO event
@@ -247,11 +261,12 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
       });
 
       // Notify conversation list update (for sidebar)
-      const populatedConv = await Conversation.findById(conversation_id)
-        .populate([
-          { path: 'student_id', select: 'firstName lastName email' },
-          { path: 'teacher_id', select: 'firstName lastName email' },
-        ]);
+      const populatedConv = await Conversation.findById(
+        conversation_id,
+      ).populate([
+        { path: "student_id", select: "firstName lastName email" },
+        { path: "teacher_id", select: "firstName lastName email" },
+      ]);
 
       io.emit("conversation_updated", {
         conversation: populatedConv,
@@ -261,94 +276,102 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Message sent successfully",
-      data: newMessage
+      data: newMessage,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Failed to send message",
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // Get conversation messages
-router.get("/messages/:conversationId", authenticate, tenantScope, async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user.id;
-    const { page = 1, limit = 50 } = req.query;
+router.get(
+  "/messages/:conversationId",
+  authenticate,
+  tenantScope,
+  async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.id;
+      const { page = 1, limit = 50 } = req.query;
 
-    // Verify conversation exists and user is participant
-    const conversation = await Conversation.findById(conversationId);
-    if (!conversation) {
-      return res.status(404).json({
-        success: false,
-        message: "Conversation not found"
-      });
-    }
+      // Verify conversation exists and user is participant
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          message: "Conversation not found",
+        });
+      }
 
-    if (!conversation.student_id.equals(userId) && !conversation.teacher_id.equals(userId)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this conversation"
-      });
-    }
+      if (
+        !conversation.student_id.equals(userId) &&
+        !conversation.teacher_id.equals(userId)
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "Not authorized to view this conversation",
+        });
+      }
 
-    // Get messages
-    const messages = await Message.find({
-      conversation_id: conversationId,
-      deleted: false
-    })
-    .populate('sender_id', 'firstName lastName email userType')
-    .populate('reply_to', 'message sender_id')
-    .sort({ created_at: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
-
-    // Mark messages as read for current user
-    await Message.updateMany(
-      {
+      // Get messages
+      const messages = await Message.find({
         conversation_id: conversationId,
-        sender_id: { $ne: userId },
-        read_at: null
-      },
-      {
-        read_at: new Date(),
-        status: "read"
-      }
-    );
+        deleted: false,
+      })
+        .populate("sender_id", "firstName lastName email userType")
+        .populate("reply_to", "message sender_id")
+        .sort({ created_at: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
 
-    // Update conversation unread flags
-    if (conversation.student_id.equals(userId)) {
-      conversation.unread_student = false;
-    } else {
-      conversation.unread_teacher = false;
+      // Mark messages as read for current user
+      await Message.updateMany(
+        {
+          conversation_id: conversationId,
+          sender_id: { $ne: userId },
+          read_at: null,
+        },
+        {
+          read_at: new Date(),
+          status: "read",
+        },
+      );
+
+      // Update conversation unread flags
+      if (conversation.student_id.equals(userId)) {
+        conversation.unread_student = false;
+      } else {
+        conversation.unread_teacher = false;
+      }
+      await conversation.save();
+
+      const total = await Message.countDocuments({
+        conversation_id: conversationId,
+        deleted: false,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: messages.reverse(), // Reverse to show oldest first
+        pagination: {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch messages",
+        error: error.message,
+      });
     }
-    await conversation.save();
-
-    const total = await Message.countDocuments({
-      conversation_id: conversationId,
-      deleted: false
-    });
-
-    res.status(200).json({
-      success: true,
-      data: messages.reverse(), // Reverse to show oldest first
-      pagination: {
-        current: page,
-        pages: Math.ceil(total / limit),
-        total
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch messages",
-      error: error.message
-    });
-  }
-});
+  },
+);
 
 // Get user's conversations
 router.get("/conversations", authenticate, tenantScope, async (req, res) => {
@@ -369,9 +392,9 @@ router.get("/conversations", authenticate, tenantScope, async (req, res) => {
 
     const conversations = await Conversation.find(filter)
       .populate([
-        { path: 'student_id', select: 'firstName lastName email' },
-        { path: 'teacher_id', select: 'firstName lastName email' },
-        { path: 'course_context', select: 'title' }
+        { path: "student_id", select: "firstName lastName email" },
+        { path: "teacher_id", select: "firstName lastName email" },
+        { path: "course_context", select: "title" },
       ])
       .sort({ last_message_at: -1 })
       .limit(limit * 1)
@@ -385,102 +408,115 @@ router.get("/conversations", authenticate, tenantScope, async (req, res) => {
       pagination: {
         current: page,
         pages: Math.ceil(total / limit),
-        total
-      }
+        total,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Failed to fetch conversations",
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // Mark conversation as read
-router.patch("/conversations/:conversationId/read", authenticate, tenantScope, async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user.id;
+router.patch(
+  "/conversations/:conversationId/read",
+  authenticate,
+  tenantScope,
+  async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.id;
 
-    const conversation = await Conversation.findById(conversationId);
-    if (!conversation) {
-      return res.status(404).json({
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          message: "Conversation not found",
+        });
+      }
+
+      // Update unread flags
+      if (conversation.student_id.equals(userId)) {
+        conversation.unread_student = false;
+      } else {
+        conversation.unread_teacher = false;
+      }
+
+      await conversation.save();
+
+      // Mark all messages as read for this user
+      await Message.updateMany(
+        {
+          conversation_id: conversationId,
+          sender_id: { $ne: userId },
+          read_at: null,
+        },
+        {
+          read_at: new Date(),
+          status: "read",
+        },
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Conversation marked as read",
+      });
+    } catch (error) {
+      res.status(500).json({
         success: false,
-        message: "Conversation not found"
+        message: "Failed to mark conversation as read",
+        error: error.message,
       });
     }
-
-    // Update unread flags
-    if (conversation.student_id.equals(userId)) {
-      conversation.unread_student = false;
-    } else {
-      conversation.unread_teacher = false;
-    }
-
-    await conversation.save();
-
-    // Mark all messages as read for this user
-    await Message.updateMany(
-      {
-        conversation_id: conversationId,
-        sender_id: { $ne: userId },
-        read_at: null
-      },
-      {
-        read_at: new Date(),
-        status: "read"
-      }
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation marked as read"
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to mark conversation as read",
-      error: error.message
-    });
-  }
-});
+  },
+);
 
 // Archive conversation
-router.patch("/conversations/:conversationId/archive", authenticate, tenantScope, async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user.id;
+router.patch(
+  "/conversations/:conversationId/archive",
+  authenticate,
+  tenantScope,
+  async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.id;
 
-    const conversation = await Conversation.findById(conversationId);
-    if (!conversation) {
-      return res.status(404).json({
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          message: "Conversation not found",
+        });
+      }
+
+      if (
+        !conversation.student_id.equals(userId) &&
+        !conversation.teacher_id.equals(userId)
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "Not authorized to archive this conversation",
+        });
+      }
+
+      conversation.status = "archived";
+      await conversation.save();
+
+      res.status(200).json({
+        success: true,
+        message: "Conversation archived successfully",
+      });
+    } catch (error) {
+      res.status(500).json({
         success: false,
-        message: "Conversation not found"
+        message: "Failed to archive conversation",
+        error: error.message,
       });
     }
-
-    if (!conversation.student_id.equals(userId) && !conversation.teacher_id.equals(userId)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to archive this conversation"
-      });
-    }
-
-    conversation.status = "archived";
-    await conversation.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation archived successfully"
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to archive conversation",
-      error: error.message
-    });
-  }
-});
+  },
+);
 
 module.exports = router;
