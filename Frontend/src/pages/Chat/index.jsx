@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { selectCurrentUser } from "../../redux/slice/authSlice";
@@ -12,7 +6,6 @@ import { chatApi } from "../../api";
 import {
   connectSocket,
   disconnectSocket,
-  getSocket,
   joinConversation,
   leaveConversation,
   sendTyping,
@@ -24,264 +17,126 @@ import ChatWindow from "./components/ChatWindow";
 import ChatProfile from "./components/ChatProfile";
 import "./chat.css";
 
-/**
- * ChatPage - Main chat component with improved state management
- * Features:
- * - Idempotent message handling (no duplicates)
- * - Proper socket.io token synchronization
- * - Error recovery and graceful degradation
- * - Responsive design
- * - React Query-like server state with optimistic updates
- */
+const getCurrentUserId = (user) => String(user?._id || user?.id || "");
+const normalizeRole = (role) => String(role || "").toLowerCase();
 
-/**
- * ChatPage - Main chat component with improved state management
- * Features:
- * - Idempotent message handling (no duplicates)
- * - Proper socket.io token synchronization
- * - Error recovery and graceful degradation
- * - Responsive design
- * - React Query-like server state with optimistic updates
- */
+const guessCurrentModel = (user) => {
+  const role = normalizeRole(user?.userType);
+  if (["admin", "superadmin"].includes(role)) {
+    return "Tenant";
+  }
+  return user?.role === "tenant" ? "Tenant" : "User";
+};
+
+const safeDate = (dateString) => {
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
+const formatConversationTime = (dateString) => {
+  const date = safeDate(dateString);
+  if (!date) return "";
+
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  if (diffDays === 1) {
+    return "Yesterday";
+  }
+
+  if (diffDays < 7) {
+    return date.toLocaleDateString("en-US", { weekday: "short" });
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const getParticipantName = (participant) => {
+  if (!participant) return "Unknown";
+  if (participant.name) return participant.name;
+  const fullName = `${participant.firstName || ""} ${participant.lastName || ""}`.trim();
+  return fullName || "Unknown";
+};
+
+const isRoleLikeFallbackName = (value) =>
+  ["Teacher", "Student", "Organization Admin", "Super Admin", "Contact", "Unknown"].includes(
+    String(value || "").trim(),
+  );
+
+const roleLabelMap = {
+  student: "Student",
+  teacher: "Teacher",
+  admin: "Organization Admin",
+  superadmin: "Super Admin",
+};
+
 function ChatPage() {
   const user = useSelector(selectCurrentUser);
 
-  // ========== STATE MANAGEMENT ==========
-  // Server state (from API)
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [contacts, setContacts] = useState([]);
 
-  // UI state
-  const [selectedChat, setSelectedChat] = useState(null);
+  const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Loading & error states
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [contacts, setContacts] = useState([]);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
-
-  // Real-time state
-  const [typingUsers, setTypingUsers] = useState({});
-  const [onlineUserIds, setOnlineUserIds] = useState(new Set());
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Socket connection state
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
-  // ========== REFS ==========
+  const [typingUsers, setTypingUsers] = useState({});
+  const [onlineParticipantKeys, setOnlineParticipantKeys] = useState(new Set());
+
+  const [isMobileConversationListOpen, setIsMobileConversationListOpen] = useState(true);
+
   const typingTimeoutRef = useRef(null);
-  const prevConversationIdRef = useRef(null);
-  const pendingMessagesRef = useRef(new Map()); // Track optimistic messages
-  const socketRef = useRef(null);
+  const activeConversationRef = useRef(null);
+  const pendingOptimisticRef = useRef(new Set());
 
-  // ========== UTILITY: Generate idempotency key ==========
-  const generateIdempotencyKey = useCallback(
-    (conversationId, messageText, timestamp = Date.now()) => {
-      return `${conversationId}-${timestamp}-${messageText.length}`;
-    },
-    [],
-  );
-
-  // ========== SOCKET.IO SETUP ==========
-  useEffect(() => {
-    if (!(user?._id || user?.id)) return;
-
-    try {
-      const socket = connectSocket();
-      if (!socket) {
-        console.warn("Failed to connect socket");
-        return;
+  const currentUserId = useMemo(() => getCurrentUserId(user), [user]);
+  const currentUserModel = useMemo(() => guessCurrentModel(user), [user]);
+  const markConversationUpdated = useCallback((conversationPayload) => {
+    setConversations((prev) => {
+      const existingIndex = prev.findIndex((entry) => entry._id === conversationPayload._id);
+      if (existingIndex === -1) {
+        return [conversationPayload, ...prev];
       }
 
-      socketRef.current = socket;
-
-      // Socket connect event
-      const handleConnect = () => {
-        setIsSocketConnected(true);
-        emitUserOnline((user._id || user.id));
-      };
-
-      const handleDisconnect = () => {
-        setIsSocketConnected(false);
-      };
-
-      // Message and event handlers
-      socket.on("connect", handleConnect);
-      socket.on("disconnect", handleDisconnect);
-      socket.on("new_message", handleNewMessage);
-      socket.on("conversation_updated", handleConversationUpdated);
-      socket.on("user_typing", handleUserTyping);
-      socket.on("user_stop_typing", handleUserStopTyping);
-      socket.on("user_status_change", handleUserStatusChange);
-      socket.on("message_delivered", handleMessageDelivered);
-
-      // On initial connect
-      if (socket.connected) {
-        handleConnect();
-      }
-
-      return () => {
-        socket.off("connect", handleConnect);
-        socket.off("disconnect", handleDisconnect);
-        socket.off("new_message", handleNewMessage);
-        socket.off("conversation_updated", handleConversationUpdated);
-        socket.off("user_typing", handleUserTyping);
-        socket.off("user_stop_typing", handleUserStopTyping);
-        socket.off("user_status_change", handleUserStatusChange);
-        socket.off("message_delivered", handleMessageDelivered);
-        disconnectSocket();
-        socketRef.current = null;
-      };
-    } catch (error) {
-      console.error("Socket setup error:", error);
-      toast.error("Connection error - some features may not work");
-    }
-  }, [(user?._id || user?.id)]);
-
-  // ========== SOCKET EVENT HANDLERS ==========
-
-  /**
-   * Handle new message from socket
-   * Deduplicates based on message _id and sender
-   */
-  const handleNewMessage = useCallback(
-    (data) => {
-      try {
-        const { conversationId, message: newMsg } = data;
-
-        if (!newMsg?._id) {
-          console.warn("Invalid message data from socket");
-          return;
-        }
-
-        setMessages((prev) => {
-          // Check if message already exists
-          const exists = prev.some((m) => m._id === newMsg._id);
-          if (exists) return prev;
-
-          // Only add if we're viewing this conversation
-          if (selectedChat?._id === conversationId) {
-            return [...prev, newMsg];
-          }
-          return prev;
-        });
-
-        // Remove from pending if it was optimistic
-        pendingMessagesRef.current.delete(newMsg._id);
-      } catch (error) {
-        console.error("Error handling new message:", error);
-      }
-    },
-    [selectedChat?._id],
-  );
-
-  /**
-   * Handle message delivery confirmation
-   * Replaces optimistic message with server confirmation
-   */
-  const handleMessageDelivered = useCallback((data) => {
-    try {
-      const { optimisticId, messageId } = data;
-
-      if (optimisticId && messageId) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg._id === optimisticId
-              ? { ...msg, _id: messageId, isOptimistic: false }
-              : msg,
-          ),
-        );
-
-        pendingMessagesRef.current.delete(optimisticId);
-      }
-    } catch (error) {
-      console.error("Error handling message delivered:", error);
-    }
-  }, []);
-
-  const handleConversationUpdated = useCallback((data) => {
-    try {
-      const { conversation } = data;
-
-      setConversations((prev) => {
-        const idx = prev.findIndex((c) => c._id === conversation._id);
-        if (idx >= 0) {
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], ...conversation };
-          updated.sort(
-            (a, b) => new Date(b.last_message_at) - new Date(a.last_message_at),
-          );
-          return updated;
-        }
-        return [conversation, ...prev];
+      const updated = [...prev];
+      updated[existingIndex] = { ...updated[existingIndex], ...conversationPayload };
+      updated.sort((a, b) => {
+        const aTime = new Date(a.last_message_at || 0).getTime();
+        const bTime = new Date(b.last_message_at || 0).getTime();
+        return bTime - aTime;
       });
-    } catch (error) {
-      console.error("Error handling conversation update:", error);
-    }
+      return updated;
+    });
   }, []);
 
-  const handleUserTyping = useCallback((data) => {
-    try {
-      const { conversationId, userId } = data;
-      setTypingUsers((prev) => ({
-        ...prev,
-        [conversationId]: userId,
-      }));
-    } catch (error) {
-      console.error("Error handling typing indicator:", error);
-    }
-  }, []);
-
-  const handleUserStopTyping = useCallback((data) => {
-    try {
-      const { conversationId } = data;
-      setTypingUsers((prev) => {
-        const updated = { ...prev };
-        delete updated[conversationId];
-        return updated;
-      });
-    } catch (error) {
-      console.error("Error handling stop typing:", error);
-    }
-  }, []);
-
-  const handleUserStatusChange = useCallback((data) => {
-    try {
-      const { userId, status } = data;
-      setOnlineUserIds((prev) => {
-        const updated = new Set(prev);
-        if (status === "online") {
-          updated.add(userId);
-        } else {
-          updated.delete(userId);
-        }
-        return updated;
-      });
-    } catch (error) {
-      console.error("Error handling status change:", error);
-    }
-  }, []);
-
-  // ========== DATA FETCHING ==========
-
-  useEffect(() => {
-    if (!(user?._id || user?.id)) return;
-    fetchConversations();
-    fetchContacts();
-  }, [(user?._id || user?.id)]);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
       const response = await chatApi.getConversations();
-      if (response.data.success) {
+      if (response?.data?.success) {
         setConversations(response.data.data || []);
       } else {
-        throw new Error(
-          response.data.message || "Failed to load conversations",
-        );
+        throw new Error(response?.data?.message || "Failed to load conversations");
       }
     } catch (error) {
       console.error("Error fetching conversations:", error);
@@ -289,366 +144,457 @@ function ChatPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     try {
       const response = await chatApi.getContacts();
-      if (response.data.success) {
+      if (response?.data?.success) {
         setContacts(response.data.data || []);
       }
     } catch (error) {
       console.error("Error fetching contacts:", error);
-      // Graceful degradation - don't show error to user
     }
-  };
+  }, []);
 
-  // ========== CHAT SELECTION & MESSAGE LOADING ==========
-
-  useEffect(() => {
-    if (!selectedChat?._id) return;
-
-    // Leave previous conversation room
-    if (
-      prevConversationIdRef.current &&
-      prevConversationIdRef.current !== selectedChat._id
-    ) {
-      leaveConversation(prevConversationIdRef.current);
-    }
-
-    // Join new conversation room
-    joinConversation(selectedChat._id);
-    prevConversationIdRef.current = selectedChat._id;
-
-    // Fetch messages
-    fetchMessages(selectedChat._id);
-
-    // Mark as read (fire and forget)
-    markAsRead(selectedChat._id).catch((err) =>
-      console.warn("Failed to mark as read:", err),
-    );
-  }, [selectedChat?._id]);
-
-  const fetchMessages = async (conversationId) => {
+  const fetchMessages = useCallback(async (conversationId) => {
     try {
       const response = await chatApi.getMessages(conversationId);
-      if (response.data.success) {
+      if (response?.data?.success) {
         setMessages(response.data.data || []);
-        // Clear pending messages for this conversation
-        pendingMessagesRef.current.clear();
+        pendingOptimisticRef.current.clear();
       } else {
-        throw new Error(response.data.message || "Failed to load messages");
+        throw new Error(response?.data?.message || "Failed to load messages");
       }
     } catch (error) {
       console.error("Error fetching messages:", error);
-      // Show error but keep previously loaded messages (graceful degradation)
-      toast.error("Failed to load messages - showing cached data if available");
+      toast.error("Failed to load messages");
     }
-  };
+  }, []);
 
-  const markAsRead = async (conversationId) => {
+  const markAsRead = useCallback(async (conversationId) => {
     try {
       await chatApi.markAsRead(conversationId);
       setConversations((prev) =>
-        prev.map((conv) =>
-          conv._id === conversationId
-            ? { ...conv, unread_student: false, unread_teacher: false }
-            : conv,
+        prev.map((conversation) =>
+          conversation._id === conversationId
+            ? {
+                ...conversation,
+                isUnread: false,
+                unreadCount: 0,
+              }
+            : conversation,
         ),
       );
     } catch (error) {
-      console.warn("Error marking as read:", error);
+      console.warn("Failed to mark conversation as read:", error);
     }
-  };
+  }, []);
 
-  // ========== SEND MESSAGE WITH IDEMPOTENCY ==========
+  useEffect(() => {
+    if (!currentUserId) return;
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || !selectedChat?._id || sending) return;
+    fetchConversations();
+    fetchContacts();
+  }, [currentUserId, fetchConversations, fetchContacts]);
 
-    const messageText = message.trim();
-    const conversationId = selectedChat._id;
-    const timestamp = Date.now();
-    const idempotencyKey = generateIdempotencyKey(
-      conversationId,
-      messageText,
-      timestamp,
-    );
+  useEffect(() => {
+    if (!currentUserId) return;
 
-    // Clear input immediately
-    setMessage("");
+    const socket = connectSocket();
+    if (!socket) return undefined;
 
-    try {
-      setSending(true);
+    const onConnect = () => {
+      setIsSocketConnected(true);
+      emitUserOnline(currentUserId);
+      if (activeConversationRef.current) {
+        joinConversation(activeConversationRef.current);
+      }
+    };
 
-      // Create optimistic message for immediate UI feedback
-      const optimisticMessage = {
-        _id: `optimistic-${idempotencyKey}`,
-        message: messageText,
-        sender_id: user,
-        created_at: new Date().toISOString(),
-        isOptimistic: true,
-        idempotencyKey,
-      };
+    const onDisconnect = () => {
+      setIsSocketConnected(false);
+    };
 
-      // Add optimistic message to UI
-      setMessages((prev) => [...prev, optimisticMessage]);
-      pendingMessagesRef.current.set(optimisticMessage._id, optimisticMessage);
+    const onConversationUpdated = ({ conversation: payload }) => {
+      if (!payload?._id) return;
+      markConversationUpdated(payload);
+    };
 
-      // Stop typing indicator
-      sendStopTyping(conversationId, (user._id || user.id));
+    const onNewMessage = ({ conversationId, message: serverMessage }) => {
+      if (!serverMessage?._id || !conversationId) return;
 
-      // Send to server
-      const response = await chatApi.sendMessage({
-        conversation_id: conversationId,
-        message: messageText,
-        idempotencyKey, // Send key for server-side deduplication
+      setMessages((prev) => {
+        const exists = prev.some((entry) => entry._id === serverMessage._id);
+        if (exists) return prev;
+
+        if (activeConversationRef.current === conversationId) {
+          const withoutOptimistic = prev.filter((entry) => {
+            if (!entry?.isOptimistic) return true;
+            const sameText = String(entry?.message || "").trim() === String(serverMessage?.message || "").trim();
+            const sameSender =
+              String(entry?.sender_id?._id || entry?.sender_id || "") ===
+              String(serverMessage?.sender_id?._id || serverMessage?.sender_id || "");
+            return !(sameText && sameSender);
+          });
+
+          return [...withoutOptimistic, serverMessage];
+        }
+
+        return prev;
       });
 
-      if (response.data.success) {
-        const serverMessage = response.data.data;
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation._id === conversationId
+            ? {
+                ...conversation,
+                last_message: serverMessage.message,
+                last_message_at: serverMessage.created_at || new Date().toISOString(),
+              }
+            : conversation,
+        ),
+      );
+    };
 
-        // Replace optimistic with server confirmation
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg._id === optimisticMessage._id
-              ? { ...serverMessage, isOptimistic: false }
-              : msg,
-          ),
-        );
+    const onTyping = ({ conversationId, participantKey, userId }) => {
+      if (!conversationId) return;
+      setTypingUsers((prev) => ({
+        ...prev,
+        [conversationId]: participantKey || String(userId || ""),
+      }));
+    };
 
-        pendingMessagesRef.current.delete(optimisticMessage._id);
+    const onStopTyping = ({ conversationId }) => {
+      if (!conversationId) return;
+      setTypingUsers((prev) => {
+        const next = { ...prev };
+        delete next[conversationId];
+        return next;
+      });
+    };
 
-        // Update conversation last message
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv._id === conversationId
-              ? {
-                  ...conv,
-                  last_message: messageText,
-                  last_message_at: new Date().toISOString(),
-                }
-              : conv,
-          ),
-        );
-      } else {
-        // Server error - remove optimistic message and restore input
-        toast.error(response.data.message || "Failed to send message");
-        setMessages((prev) =>
-          prev.filter((m) => m._id !== optimisticMessage._id),
-        );
-        setMessage(messageText);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
+    const onUserStatus = ({ participantKey, userId, model, status }) => {
+      const key = participantKey || `${model || "User"}:${String(userId || "")}`;
+      if (!key || key.endsWith(":")) return;
 
-      // Remove optimistic message and restore input
-      setMessages((prev) => prev.filter((m) => !m.isOptimistic));
-      setMessage(messageText);
+      setOnlineParticipantKeys((prev) => {
+        const next = new Set(prev);
+        if (status === "online") {
+          next.add(key);
+        } else {
+          next.delete(key);
+        }
+        return next;
+      });
+    };
 
-      // Show user-friendly error
-      if (error.response?.status === 401) {
-        toast.error("Session expired - please login again");
-      } else {
-        toast.error(
-          error.response?.data?.message ||
-            "Failed to send message - check your connection",
-        );
-      }
-    } finally {
-      setSending(false);
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("conversation_updated", onConversationUpdated);
+    socket.on("new_message", onNewMessage);
+    socket.on("user_typing", onTyping);
+    socket.on("user_stop_typing", onStopTyping);
+    socket.on("user_status_change", onUserStatus);
+
+    if (socket.connected) {
+      onConnect();
     }
-  };
 
-  // ========== TYPING INDICATOR ==========
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("conversation_updated", onConversationUpdated);
+      socket.off("new_message", onNewMessage);
+      socket.off("user_typing", onTyping);
+      socket.off("user_stop_typing", onStopTyping);
+      socket.off("user_status_change", onUserStatus);
+      disconnectSocket();
+    };
+  }, [currentUserId, markConversationUpdated]);
 
-  const handleMessageChange = (value) => {
-    setMessage(value);
+  useEffect(() => {
+    if (!selectedConversationId) return undefined;
 
-    if (selectedChat?._id && (user?._id || user?.id)) {
-      sendTyping(selectedChat._id, (user._id || user.id));
+    activeConversationRef.current = selectedConversationId;
+    joinConversation(selectedConversationId).catch(() => false);
 
-      // Clear existing timeout
+    fetchMessages(selectedConversationId);
+    markAsRead(selectedConversationId);
+
+    return () => {
+      leaveConversation(selectedConversationId);
+    };
+  }, [selectedConversationId, fetchMessages, markAsRead]);
+
+  const selectedConversation = useMemo(
+    () => conversations.find((entry) => entry._id === selectedConversationId) || null,
+    [conversations, selectedConversationId],
+  );
+
+  const chatsData = useMemo(() => {
+    const items = conversations.map((conversation) => {
+        const otherParticipant =
+          conversation.otherParticipant ||
+          (conversation.participants || []).find((entry) => {
+            const entryId = String(entry.id || entry._id || "");
+            const entryModel = entry.model || entry.participant_model || "User";
+            return !(entryId === currentUserId && entryModel === currentUserModel);
+          }) ||
+          null;
+
+        const otherName = getParticipantName(otherParticipant);
+        const otherParticipantId = String(otherParticipant?.id || otherParticipant?._id || "");
+        const matchingContact = contacts.find(
+          (entry) => String(entry?._id || entry?.id || "") === otherParticipantId,
+        );
+        const contactName = matchingContact
+          ? getParticipantName({
+              name: matchingContact.name,
+              firstName: matchingContact.firstName,
+              lastName: matchingContact.lastName,
+            })
+          : "";
+        const resolvedName =
+          (!otherName || isRoleLikeFallbackName(otherName)) && contactName ? contactName : otherName;
+        const otherRole = normalizeRole(otherParticipant?.role || otherParticipant?.userType);
+        const participantKey =
+          otherParticipant?.participantKey ||
+          `${otherParticipant?.model || "User"}:${String(otherParticipant?.id || otherParticipant?._id || "")}`;
+
+        return {
+          id: conversation._id,
+          _id: conversation._id,
+          name: resolvedName || "Unknown",
+          role: roleLabelMap[otherRole] || "Contact",
+          roleLabel: roleLabelMap[otherRole] || "Contact",
+          email: otherParticipant?.email || "",
+          avatar: otherParticipant?.avatar || null,
+          lastMessage: conversation.last_message || "No messages yet",
+          time: formatConversationTime(conversation.last_message_at),
+          unread: conversation.isUnread ? conversation.unreadCount || 1 : 0,
+          online: onlineParticipantKeys.has(participantKey),
+          isStaff: ["teacher", "admin", "superadmin"].includes(otherRole),
+          participantKey,
+          _raw: conversation,
+        };
+      });
+
+    // Collapse duplicate threads that point to the same other participant.
+    const byParticipant = new Map();
+    items.forEach((item) => {
+      const key = item.participantKey || item.id;
+      const existing = byParticipant.get(key);
+      if (!existing) {
+        byParticipant.set(key, item);
+        return;
+      }
+
+      const existingTime = new Date(existing?._raw?.last_message_at || 0).getTime();
+      const currentTime = new Date(item?._raw?.last_message_at || 0).getTime();
+      if (currentTime > existingTime) {
+        byParticipant.set(key, item);
+      }
+    });
+
+    return Array.from(byParticipant.values()).sort(
+      (a, b) => new Date(b?._raw?.last_message_at || 0).getTime() - new Date(a?._raw?.last_message_at || 0).getTime(),
+    );
+  }, [conversations, contacts, currentUserId, currentUserModel, onlineParticipantKeys]);
+
+  const selectedChatData = useMemo(
+    () => chatsData.find((entry) => entry.id === selectedConversationId) || null,
+    [chatsData, selectedConversationId],
+  );
+
+  const messagesData = useMemo(
+    () =>
+      messages.map((messageItem) => {
+        const senderId = String(messageItem.sender_id?._id || messageItem.sender_id || "");
+        const senderModel = messageItem.sender_model || "User";
+
+        const isMe =
+          senderId === currentUserId &&
+          (senderModel === currentUserModel || ["User", "Tenant"].includes(senderModel));
+
+        const senderName = messageItem.sender_id?.firstName
+          ? `${messageItem.sender_id.firstName || ""} ${messageItem.sender_id.lastName || ""}`.trim()
+          : messageItem.sender_id?.OrgOwnerName ||
+            messageItem.sender_id?.name ||
+            (isMe ? "You" : "Unknown");
+
+        return {
+          id: messageItem._id,
+          _id: messageItem._id,
+          content: messageItem.message,
+          sender: senderName,
+          senderModel,
+          createdAt: messageItem.created_at || messageItem.createdAt,
+          created_at: messageItem.created_at,
+          timeRaw: messageItem.created_at || messageItem.createdAt,
+          isMe,
+          type: messageItem.message_type || "text",
+          avatar: messageItem.sender_id?.avatar || null,
+          isOptimistic: Boolean(messageItem.isOptimistic),
+        };
+      }),
+    [messages, currentUserId, currentUserModel],
+  );
+
+  const handleSelectChat = useCallback((chatItem) => {
+    if (!chatItem?.id) return;
+    setSelectedConversationId(chatItem.id);
+    setShowProfile(false);
+    setIsMobileConversationListOpen(false);
+  }, []);
+
+  const handleMessageChange = useCallback(
+    (value) => {
+      setMessage(value);
+
+      if (!selectedConversationId || !currentUserId) return;
+
+      sendTyping(selectedConversationId, currentUserId);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
 
-      // Stop typing after 2 seconds of inactivity
       typingTimeoutRef.current = setTimeout(() => {
-        sendStopTyping(selectedChat._id, (user._id || user.id));
-      }, 2000);
-    }
-  };
-
-  // ========== START NEW CONVERSATION ==========
-
-  const handleStartConversation = async (contactId, subject) => {
-    try {
-      const payload = {
-        subject: subject || "General Inquiry",
-      };
-
-      if (user?.userType === "teacher") {
-        payload.student_id = contactId;
-      } else {
-        payload.teacher_id = contactId;
-      }
-
-      const response = await chatApi.startConversation(payload);
-
-      if (response.data.success) {
-        const newConversation = response.data.data;
-
-        setConversations((prev) => {
-          const exists = prev.some((c) => c._id === newConversation._id);
-          if (exists) return prev;
-          return [newConversation, ...prev];
-        });
-
-        setSelectedChat(newConversation);
-        setShowNewChatModal(false);
-        toast.success("Conversation started!");
-      } else {
-        toast.error(response.data.message || "Failed to start conversation");
-      }
-    } catch (error) {
-      console.error("Error starting conversation:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to start conversation",
-      );
-    }
-  };
-
-  // ========== DATA TRANSFORMATION ==========
-
-  // Get the other participant
-  const getOtherParticipant = useCallback(
-    (conversation) => {
-      if (!conversation) return null;
-      if (user?.userType === "student") {
-        return conversation.teacher_id;
-      }
-      return conversation.student_id;
+        sendStopTyping(selectedConversationId, currentUserId);
+      }, 1500);
     },
-    [user?.userType],
+    [selectedConversationId, currentUserId],
   );
 
-  // Format time elegantly
-  const formatTime = useCallback((dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const handleStartConversation = useCallback(
+    async (targetContact, subject) => {
+      try {
+        const payload = {
+          target_id: targetContact.id,
+          target_model: targetContact.model,
+          target_role: targetContact.role,
+          subject: subject || "General Discussion",
+        };
 
-    if (diffDays === 0) {
-      return date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
+        const response = await chatApi.startConversation(payload);
+        if (!response?.data?.success) {
+          throw new Error(response?.data?.message || "Failed to start conversation");
+        }
+
+        const conversation = response.data.data;
+        markConversationUpdated(conversation);
+        setSelectedConversationId(conversation._id);
+        setShowNewChatModal(false);
+        setIsMobileConversationListOpen(false);
+        toast.success("Conversation ready");
+      } catch (error) {
+        console.error("Failed to start conversation:", error);
+        toast.error(error?.response?.data?.message || error.message || "Failed to start conversation");
+      }
+    },
+    [markConversationUpdated],
+  );
+
+  const handleSendMessage = useCallback(async () => {
+    const text = message.trim();
+    if (!text || !selectedConversationId || sending) return;
+
+    const optimisticId = `optimistic-${selectedConversationId}-${Date.now()}`;
+    const idempotencyKey = `${selectedConversationId}-${Date.now()}-${text.length}`;
+
+    const optimisticMessage = {
+      _id: optimisticId,
+      message: text,
+      sender_id: {
+        _id: currentUserId,
+        firstName: user?.firstName,
+        lastName: user?.lastName,
+        name: user?.name,
+        OrgOwnerName: user?.OrgOwnerName,
+        avatar: user?.avatar || null,
+      },
+      sender_model: currentUserModel,
+      message_type: "text",
+      created_at: new Date().toISOString(),
+      isOptimistic: true,
+    };
+
+    setMessage("");
+    setSending(true);
+    pendingOptimisticRef.current.add(optimisticId);
+    setMessages((prev) => [...prev, optimisticMessage]);
+
+    sendStopTyping(selectedConversationId, currentUserId);
+
+    try {
+      const response = await chatApi.sendMessage({
+        conversation_id: selectedConversationId,
+        message: text,
+        idempotencyKey,
       });
-    } else if (diffDays === 1) {
-      return "Yesterday";
-    } else if (diffDays < 7) {
-      return date.toLocaleDateString("en-US", { weekday: "short" });
+
+      if (!response?.data?.success) {
+        throw new Error(response?.data?.message || "Failed to send message");
+      }
+
+      const serverMessage = response.data.data;
+
+      setMessages((prev) => {
+        const hasServerAlready = prev.some((entry) => entry._id === serverMessage?._id);
+        if (hasServerAlready) {
+          return prev.filter((entry) => entry._id !== optimisticId);
+        }
+
+        return prev.map((entry) =>
+          entry._id === optimisticId ? { ...serverMessage, isOptimistic: false } : entry,
+        );
+      });
+
+      pendingOptimisticRef.current.delete(optimisticId);
+
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation._id === selectedConversationId
+            ? {
+                ...conversation,
+                last_message: text,
+                last_message_at: new Date().toISOString(),
+              }
+            : conversation,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      pendingOptimisticRef.current.delete(optimisticId);
+      setMessages((prev) => prev.filter((entry) => entry._id !== optimisticId));
+      setMessage(text);
+      toast.error(error?.response?.data?.message || error.message || "Failed to send message");
+    } finally {
+      setSending(false);
     }
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+  }, [
+    currentUserId,
+    currentUserModel,
+    message,
+    selectedConversationId,
+    sending,
+    user,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
   }, []);
 
-  // Transform conversations (memoized to prevent unnecessary re-renders)
-  const chatsData = useMemo(
-    () =>
-      conversations.map((conv) => {
-        const other = getOtherParticipant(conv);
-        const isUnread =
-          user?.userType === "student"
-            ? conv.unread_student
-            : conv.unread_teacher;
-        const otherUserId = other?._id || other;
+  if (!user) return null;
 
-        return {
-          id: conv._id,
-          _id: conv._id,
-          name: other
-            ? `${other.firstName || ""} ${other.lastName || ""}`.trim()
-            : "Unknown User",
-          avatar: null,
-          lastMessage: conv.last_message || "No messages yet",
-          time: formatTime(conv.last_message_at),
-          unread: isUnread ? 1 : 0,
-          online: onlineUserIds.has(otherUserId),
-          isStaff: false,
-          _raw: conv,
-        };
-      }),
-    [
-      conversations,
-      getOtherParticipant,
-      onlineUserIds,
-      formatTime,
-      user?.userType,
-    ],
-  );
-
-  // Transform messages (memoized)
-  const messagesData = useMemo(
-    () =>
-      messages.map((msg) => {
-        const senderId = msg.sender_id?._id || msg.sender_id;
-        const isMe = senderId === (user?._id || user?.id);
-        const senderName = msg.sender_id?.firstName
-          ? `${msg.sender_id.firstName} ${msg.sender_id.lastName || ""}`
-          : isMe
-            ? "You"
-            : "Unknown";
-
-        return {
-          id: msg._id,
-          _id: msg._id,
-          content: msg.message,
-          sender: senderName,
-          time: formatTime(msg.created_at || msg.createdAt),
-          isMe,
-          type: msg.message_type || "text",
-          avatar: null,
-          isOptimistic: msg.isOptimistic,
-        };
-      }),
-    [messages, formatTime, (user?._id || user?.id)]
-  );
-
-  // Get selected chat data
-  const selectedChatData = useMemo(
-    () =>
-      selectedChat
-        ? chatsData.find((c) => c.id === selectedChat._id) || null
-        : null,
-    [selectedChat, chatsData],
-  );
-
-  // Handle chat selection
-  const handleSelectChat = useCallback(
-    (chatItem) => {
-      const conv = conversations.find((c) => c._id === chatItem.id);
-      if (conv) {
-        setSelectedChat(conv);
-      }
-    },
-    [conversations],
-  );
-
-  // ========== RENDER ==========
-
-  if (!user) {
-    return null;
-  }
+  const showMainPane = Boolean(selectedConversationId);
 
   return (
-    <div className="flex h-screen w-full bg-white dark:bg-deep-charcoal overflow-hidden">
-      {/* Sidebar - Responsive */}
+    <div className="chat-shell flex w-full bg-white dark:bg-deep-charcoal overflow-hidden">
       <ChatSidebar
         chatsData={chatsData}
         selectedChat={selectedChatData}
@@ -662,10 +608,11 @@ function ChatPage() {
         setSearchQuery={setSearchQuery}
         user={user}
         isSocketConnected={isSocketConnected}
+        isMobileHidden={showMainPane && !isMobileConversationListOpen}
+        onCloseMobile={() => setIsMobileConversationListOpen(false)}
       />
 
-      {/* Main Chat Area - Responsive */}
-      {selectedChatData ? (
+      {showMainPane ? (
         <>
           <ChatWindow
             selectedChat={selectedChatData}
@@ -675,9 +622,13 @@ function ChatPage() {
             showProfile={showProfile}
             setShowProfile={setShowProfile}
             onSendMessage={handleSendMessage}
+            onBackMobile={() => {
+              setIsMobileConversationListOpen(true);
+              setSelectedConversationId(null);
+            }}
             sending={sending}
             typingUsers={typingUsers}
-            conversationId={selectedChat?._id}
+            conversationId={selectedConversationId}
             isSocketConnected={isSocketConnected}
           />
           <ChatProfile

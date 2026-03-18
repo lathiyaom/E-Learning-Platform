@@ -5,103 +5,92 @@ const SOCKET_URL = import.meta.env.VITE_APP_API_URL || "http://localhost:5000";
 
 let socket = null;
 let authUnsubscribe = null;
-let prevToken = null;
+let activeToken = null;
 
 export const getSocket = () => socket;
 
-/**
- * Establish socket connection with auth token
- * Handles reconnection and token refresh
- */
-export const connectSocket = () => {
-  if (socket?.connected) return socket;
+const getCurrentToken = () => store.getState().auth?.accessToken || null;
 
-  const state = store.getState();
-  const token = state.auth?.accessToken;
+const ensureSocket = () => {
+  if (socket) return socket;
 
-  if (!token) {
-    console.warn("Socket: No auth token available");
-    return null;
-  }
+  socket = io(SOCKET_URL, {
+    autoConnect: false,
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 800,
+    reconnectionDelayMax: 5000,
+    timeout: 12000,
+  });
 
-  try {
-    socket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 10000,
-    });
+  socket.on("connect", () => {
+    // no-op: handled by subscribers in page components
+  });
 
-    // Store successfully connected token
-    prevToken = token;
+  socket.on("connect_error", (error) => {
+    const message = error?.message || "Unknown socket connection error";
+    console.error("Socket connection error:", message);
+  });
 
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
-    });
+  socket.on("disconnect", () => {
+    // no-op: handled by subscribers in page components
+  });
 
-    socket.on("connect_error", (err) => {
-      console.error("Socket connection error:", err.message);
-      // If auth error, force disconnect and wait for token refresh
-      if (err.message?.includes("auth") || err.message?.includes("401")) {
-        console.warn("Socket auth failed - waiting for token refresh");
-        socket?.disconnect();
-      }
-    });
-
-    socket.on("disconnect", (reason) => {
-      console.log("Socket disconnected:", reason);
-      // Indicate disconnection for graceful degradation
-      if (
-        reason === "io server disconnect" ||
-        reason === "io client namespace disconnect"
-      ) {
-        // Server explicitly disconnected - might need re-auth
-      }
-    });
-
-    // Subscribe to auth state changes for token updates
-    setupTokenRefreshListener();
-
-    return socket;
-  } catch (error) {
-    console.error("Error creating socket connection:", error);
-    return null;
-  }
+  return socket;
 };
 
-/**
- * Sets up listener for auth token changes
- * Automatically updates socket auth when token refreshes
- */
-export const setupTokenRefreshListener = () => {
-  // Clean up previous subscription
+const setupTokenRefreshListener = () => {
   if (authUnsubscribe) {
     authUnsubscribe();
   }
 
-  // Subscribe to Redux auth changes
   authUnsubscribe = store.subscribe(() => {
-    const state = store.getState();
-    const currentToken = state.auth?.accessToken;
-
-    // Check if token has changed
-    if (currentToken && currentToken !== prevToken) {
-      console.log("Socket: Token refreshed - updating auth");
-      prevToken = currentToken;
-
-      if (socket?.connected) {
-        // Update socket auth for next connection
-        socket.auth = { token: currentToken };
-
-        // Disconnect and reconnect to use new token
-        socket.disconnect();
-        socket.connect();
-      }
+    const nextToken = getCurrentToken();
+    if (nextToken === activeToken) {
+      return;
     }
+
+    activeToken = nextToken;
+
+    if (!socket) {
+      return;
+    }
+
+    if (!nextToken) {
+      socket.disconnect();
+      return;
+    }
+
+    socket.auth = { token: nextToken };
+    if (socket.connected) {
+      socket.disconnect();
+    }
+    socket.connect();
   });
+};
+
+export const connectSocket = () => {
+  const token = getCurrentToken();
+
+  if (!token) {
+    console.warn("Socket connection skipped: missing access token");
+    return null;
+  }
+
+  const instance = ensureSocket();
+  if (!instance) return null;
+
+  activeToken = token;
+  instance.auth = { token };
+
+  setupTokenRefreshListener();
+
+  if (!instance.connected) {
+    instance.connect();
+  }
+
+  return instance;
 };
 
 export const disconnectSocket = () => {
@@ -115,33 +104,48 @@ export const disconnectSocket = () => {
     socket = null;
   }
 
-  prevToken = null;
+  activeToken = null;
 };
 
 // Join a conversation room
-export const joinConversation = (conversationId) => {
-  if (socket?.connected) {
-    socket.emit("join_conversation", conversationId);
-  }
-};
+export const joinConversation = (conversationId) =>
+  new Promise((resolve) => {
+    if (!socket?.connected || !conversationId) {
+      resolve(false);
+      return;
+    }
+
+    socket.timeout(5000).emit(
+      "join_conversation",
+      { conversationId },
+      (error, response) => {
+        if (error) {
+          resolve(false);
+          return;
+        }
+
+        resolve(Boolean(response?.ok));
+      },
+    );
+  });
 
 // Leave a conversation room
 export const leaveConversation = (conversationId) => {
-  if (socket?.connected) {
-    socket.emit("leave_conversation", conversationId);
+  if (socket?.connected && conversationId) {
+    socket.emit("leave_conversation", { conversationId });
   }
 };
 
 // Send typing indicator
 export const sendTyping = (conversationId, userId) => {
-  if (socket?.connected) {
+  if (socket?.connected && conversationId) {
     socket.emit("typing", { conversationId, userId });
   }
 };
 
 // Stop typing indicator
 export const sendStopTyping = (conversationId, userId) => {
-  if (socket?.connected) {
+  if (socket?.connected && conversationId) {
     socket.emit("stop_typing", { conversationId, userId });
   }
 };
@@ -149,7 +153,7 @@ export const sendStopTyping = (conversationId, userId) => {
 // Mark user as online
 export const emitUserOnline = (userId) => {
   if (socket?.connected) {
-    socket.emit("user_online", userId);
+    socket.emit("user_online", { userId });
   }
 };
 

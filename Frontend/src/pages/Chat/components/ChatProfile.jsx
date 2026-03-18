@@ -2,12 +2,15 @@ import React from "react";
 import { Mail, Phone, ShieldCheck, X } from "lucide-react";
 
 const ChatProfile = ({ selectedChat, showProfile, setShowProfile }) => {
+  const displayName = selectedChat?.name || "Unknown";
+  const displayRole = selectedChat?.roleLabel || "Contact";
+
   return (
     <>
       {/* Overlay for mobile/tablet when profile is open */}
       {showProfile && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 xl:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setShowProfile(false)}
         />
       )}
@@ -15,7 +18,7 @@ const ChatProfile = ({ selectedChat, showProfile, setShowProfile }) => {
       <aside
         className={`${
           showProfile ? "translate-x-0" : "translate-x-full"
-        } fixed right-0 top-0 h-full z-50 xl:static xl:z-auto transition-transform duration-300 ease-in-out w-80 shrink-0 border-l border-slate-100 dark:border-white/5 flex flex-col bg-slate-50/30 dark:bg-navy-charcoal/50`}
+        } fixed right-0 top-0 h-full z-50 lg:static lg:z-auto transition-transform duration-300 ease-in-out w-[86vw] max-w-[340px] lg:w-[320px] xl:w-[360px] shrink-0 border-l border-slate-100 dark:border-white/5 flex flex-col bg-slate-50/30 dark:bg-navy-charcoal/50`}
       >
         {/* Close button */}
         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5">
@@ -55,10 +58,10 @@ const ChatProfile = ({ selectedChat, showProfile, setShowProfile }) => {
             )}
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-            {selectedChat?.name || "Unknown"}
+            {displayName}
           </h3>
           <p className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
-            {selectedChat?.role || "Faculty Member"}
+            {displayRole}
           </p>
 
           <div className="flex gap-2 mt-8">
@@ -84,9 +87,19 @@ const ChatProfile = ({ selectedChat, showProfile, setShowProfile }) => {
                   Name
                 </span>
                 <span className="text-slate-900 dark:text-white">
-                  {selectedChat?.name || "—"}
+                  {displayName}
                 </span>
               </div>
+              {selectedChat?.email && (
+                <div className="flex justify-between items-center text-xs font-bold gap-3">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">
+                    Email
+                  </span>
+                  <span className="text-slate-900 dark:text-white truncate">
+                    {selectedChat.email}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center text-xs font-bold">
                 <span className="text-slate-500 dark:text-slate-400 font-medium">
                   Status

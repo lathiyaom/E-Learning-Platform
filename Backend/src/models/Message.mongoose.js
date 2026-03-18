@@ -9,7 +9,18 @@ const messageSchema = new mongoose.Schema(
     },
     sender_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      required: true,
+      refPath: "sender_model",
+    },
+    sender_model: {
+      type: String,
+      enum: ["User", "Tenant"],
+      default: "User",
+      required: true,
+    },
+    sender_role: {
+      type: String,
+      enum: ["student", "teacher", "admin", "superadmin"],
       required: true,
     },
     message: {
@@ -50,6 +61,11 @@ const messageSchema = new mongoose.Schema(
       type: String,
       enum: ["sent", "delivered", "read", "failed"],
       default: "sent",
+    },
+    idempotency_key: {
+      type: String,
+      default: null,
+      maxlength: 120,
     },
     // For message threading
     reply_to: {
@@ -95,9 +111,17 @@ const messageSchema = new mongoose.Schema(
 // Indexes for efficient queries
 messageSchema.index({ conversation_id: 1, created_at: 1 });
 messageSchema.index({ sender_id: 1 });
+messageSchema.index({ sender_model: 1, sender_id: 1 });
 messageSchema.index({ status: 1 });
 messageSchema.index({ read_at: 1 });
 messageSchema.index({ reply_to: 1 });
+messageSchema.index(
+  { conversation_id: 1, sender_id: 1, sender_model: 1, idempotency_key: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { idempotency_key: { $type: "string", $ne: "" } },
+  },
+);
 
 const Message = mongoose.model("Message", messageSchema);
 

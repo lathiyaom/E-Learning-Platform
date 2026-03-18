@@ -465,12 +465,12 @@ const Attendance = () => {
             </div>
           </article>
 
-          <article className="rounded-2xl border border-slate-200 dark:border-white/10 bg-[#0F1A3A] p-5 dark:text-white ">
-            <h3 className="text-xl font-bold">Need Help?</h3>
-            <p className="mt-2 text-sm text-slate-600 dark:text-white/80">
+          <article className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Need Help?</h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Contact the school IT support for assistance with bulk attendance updates or integration issues.
             </p>
-            <button className="mt-4 rounded-xl bg-white text-slate-900 px-4 py-2 text-sm font-semibold hover:bg-slate-100">
+            <button className="mt-4 rounded-xl bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity">
               Support Center
             </button>
           </article>

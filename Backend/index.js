@@ -32,7 +32,8 @@ validateEnvironment();
 const { connectDB } = require("./src/Db/mongoose");
 // const { testConnection, syncDatabase } = require("./src/Db/sequelize");
 // const supabase = require("./src/Db/supabase");
-require("./src/models/index");
+const { User, Tenant, Conversation } = require("./src/models");
+const { verifyAccessToken } = require("./src/utils/jwtHelper");
 
 const seedSuperAdmin = require("./src/utils/seedSuperAdmin");
 
@@ -151,67 +152,204 @@ const io = new Server(server, {
   transports: ["websocket", "polling"],
   pingTimeout: 60000,
   pingInterval: 25000,
+  connectionStateRecovery: {},
 });
 
-// Track online users
-const onlineUsers = new Map();
+const buildParticipantKey = (model, id) => `${model}:${String(id)}`;
+const buildParticipantRoom = (model, id) => `participant_${model}_${String(id)}`;
+const buildOrganizationRoom = (organizationId) => `organization_${String(organizationId)}`;
+
+const onlineParticipants = new Map();
+
+const extractSocketToken = (socket) => {
+  const authToken = socket.handshake?.auth?.token;
+  const headerToken = socket.handshake?.headers?.authorization;
+
+  if (authToken) return authToken;
+  if (headerToken && headerToken.startsWith("Bearer ")) return headerToken.slice(7);
+  return null;
+};
+
+const isConversationParticipant = (conversation, model, userId) => {
+  const id = String(userId);
+
+  if (Array.isArray(conversation.participants) && conversation.participants.length) {
+    return conversation.participants.some(
+      (participant) =>
+        participant.participant_model === model &&
+        String(participant.participant_id) === id,
+    );
+  }
+
+  if (model !== "User") return false;
+  return String(conversation.student_id) === id || String(conversation.teacher_id) === id;
+};
+
+io.use(async (socket, next) => {
+  try {
+    const token = extractSocketToken(socket);
+    if (!token) {
+      return next(new Error("Socket authentication failed: missing token"));
+    }
+
+    const decoded = verifyAccessToken(token);
+    if (!decoded?.id) {
+      return next(new Error("Socket authentication failed: invalid token"));
+    }
+
+    let account = await Tenant.findById(decoded.id).select("_id userType status sessions token");
+    let model = "Tenant";
+
+    if (!account) {
+      account = await User.findById(decoded.id).select(
+        "_id userType status sessions token tenant_id currentOrganization organizations",
+      );
+      model = "User";
+    }
+
+    if (!account || account.status !== "active") {
+      return next(new Error("Socket authentication failed: account inactive"));
+    }
+
+    const hasSession =
+      Array.isArray(account.sessions) &&
+      account.sessions.some((session) => session.sid === decoded.sid && session.accessToken === token);
+    const hasLegacyToken = account.token === token;
+
+    if (!hasSession && !hasLegacyToken) {
+      return next(new Error("Socket authentication failed: session expired"));
+    }
+
+    const role = String(account.userType || "").toLowerCase();
+    const tenantId =
+      model === "Tenant"
+        ? String(account._id)
+        : String(account.currentOrganization || account.tenant_id || account.organizations?.[0] || "");
+
+    socket.data.user = {
+      id: String(account._id),
+      model,
+      role,
+      tenantId: tenantId || null,
+      participantKey: buildParticipantKey(model, account._id),
+    };
+
+    return next();
+  } catch (error) {
+    return next(new Error("Socket authentication failed"));
+  }
+});
 
 io.on("connection", (socket) => {
-  logger.info(`Socket connected: ${socket.id}`);
+  const user = socket.data.user;
+  const participantRoom = buildParticipantRoom(user.model, user.id);
 
-  // User comes online
-  socket.on("user_online", (userId) => {
-    if (userId) {
-      onlineUsers.set(userId, socket.id);
-      io.emit("user_status_change", { userId, status: "online" });
-    }
+  socket.join(participantRoom);
+  if (user.tenantId) {
+    socket.join(buildOrganizationRoom(user.tenantId));
+  }
+
+  const existing = onlineParticipants.get(user.participantKey) || new Set();
+  existing.add(socket.id);
+  onlineParticipants.set(user.participantKey, existing);
+
+  io.to(participantRoom).emit("socket_authenticated", { connected: true });
+  io.emit("user_status_change", {
+    userId: user.id,
+    model: user.model,
+    participantKey: user.participantKey,
+    status: "online",
   });
 
-  // Join a conversation room
-  socket.on("join_conversation", (conversationId) => {
-    if (conversationId) {
+  socket.on("user_online", () => {
+    io.emit("user_status_change", {
+      userId: user.id,
+      model: user.model,
+      participantKey: user.participantKey,
+      status: "online",
+    });
+  });
+
+  socket.on("join_conversation", async (payload, ack) => {
+    try {
+      const conversationId = typeof payload === "string" ? payload : payload?.conversationId;
+      if (!conversationId) {
+        if (typeof ack === "function") ack({ ok: false, error: "conversationId is required" });
+        return;
+      }
+
+      const conversation = await Conversation.findById(conversationId).select(
+        "participants student_id teacher_id organization_id",
+      );
+      if (!conversation) {
+        if (typeof ack === "function") ack({ ok: false, error: "Conversation not found" });
+        return;
+      }
+
+      if (!isConversationParticipant(conversation, user.model, user.id)) {
+        if (typeof ack === "function") ack({ ok: false, error: "Forbidden" });
+        return;
+      }
+
       socket.join(`conversation_${conversationId}`);
+      if (typeof ack === "function") ack({ ok: true });
+    } catch (error) {
+      if (typeof ack === "function") ack({ ok: false, error: "Failed to join conversation" });
     }
   });
 
-  // Leave a conversation room
-  socket.on("leave_conversation", (conversationId) => {
+  socket.on("leave_conversation", (payload) => {
+    const conversationId = typeof payload === "string" ? payload : payload?.conversationId;
     if (conversationId) {
       socket.leave(`conversation_${conversationId}`);
     }
   });
 
-  // Typing indicator
-  socket.on("typing", ({ conversationId, userId }) => {
-    socket
-      .to(`conversation_${conversationId}`)
-      .emit("user_typing", { conversationId, userId });
-  });
+  const emitTyping = async (event, payload) => {
+    const conversationId = payload?.conversationId;
+    if (!conversationId) return;
 
-  // Stop typing
-  socket.on("stop_typing", ({ conversationId, userId }) => {
-    socket
-      .to(`conversation_${conversationId}`)
-      .emit("user_stop_typing", { conversationId, userId });
-  });
+    const conversation = await Conversation.findById(conversationId).select(
+      "participants student_id teacher_id",
+    );
+    if (!conversation) return;
+    if (!isConversationParticipant(conversation, user.model, user.id)) return;
 
-  // Handle disconnect
+    socket.to(`conversation_${conversationId}`).emit(event, {
+      conversationId,
+      userId: user.id,
+      model: user.model,
+      participantKey: user.participantKey,
+    });
+  };
+
+  socket.on("typing", (payload) => emitTyping("user_typing", payload).catch(() => null));
+  socket.on("stop_typing", (payload) => emitTyping("user_stop_typing", payload).catch(() => null));
+
   socket.on("disconnect", () => {
-    // Remove from online users
-    for (const [userId, socketId] of onlineUsers.entries()) {
-      if (socketId === socket.id) {
-        onlineUsers.delete(userId);
-        io.emit("user_status_change", { userId, status: "offline" });
-        break;
+    const sockets = onlineParticipants.get(user.participantKey);
+    if (sockets) {
+      sockets.delete(socket.id);
+      if (sockets.size === 0) {
+        onlineParticipants.delete(user.participantKey);
+        io.emit("user_status_change", {
+          userId: user.id,
+          model: user.model,
+          participantKey: user.participantKey,
+          status: "offline",
+        });
+      } else {
+        onlineParticipants.set(user.participantKey, sockets);
       }
     }
+
     logger.info(`Socket disconnected: ${socket.id}`);
   });
 });
 
 // Make io accessible to routes
 app.set("io", io);
-app.set("onlineUsers", onlineUsers);
+app.set("onlineUsers", onlineParticipants);
 
 // // Rate Limiting
 // const limiter = rateLimit({

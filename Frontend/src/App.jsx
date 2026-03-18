@@ -14,7 +14,6 @@ import OrganizationRegister from "./pages/Register/OrganizationRegister.jsx";
 import CardDetail from "./pages/Courses/Videocard.jsx";
 import AddCourse from "./pages/Profile/Admin/AddCourse.jsx";
 import ActiveUsers from "./pages/Profile/Admin/ActiveUsers.jsx";
-import DeleteCourses from "./pages/Profile/Admin/DeleteCourses.jsx";
 import UserUpdateForm from "./pages/Profile/Admin/UserUpdateForm.jsx";
 import Settings from "./pages/Profile/Admin/settings.jsx";
 import UserComments from "./pages/Profile/Admin/UserComments.jsx";
@@ -25,8 +24,7 @@ import Attendance from "./pages/Dashboard/Admin/Attendance.jsx";
 import AdminLecturesManagement from "./pages/Dashboard/Admin/AdminLecturesManagement.jsx";
 import AdminEventsManagement from "./pages/Dashboard/Admin/AdminEventsManagement.jsx";
 import AdminHolidaysManagement from "./pages/Dashboard/Admin/AdminHolidaysManagement.jsx";
-import EventManager from "./pages/Admin/EventManager/index.jsx";
-import HolidayManager from "./pages/Admin/HolidayManager/index.jsx";
+
 import TeacherMarketplace from "./pages/Admin/TeacherMarketplace/index.jsx";
 import Resources from "./pages/resources/index.jsx";
 import Schedule from "./pages/schedule/index.jsx";
@@ -142,8 +140,6 @@ function App() {
             <Route path="/admin/lectures/:courseId" element={<ProtectedRoute requiredRole="admin"><AdminLecturesManagement /></ProtectedRoute>} />
             <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><AdminEventsManagement /></ProtectedRoute>} />
             <Route path="/admin/holidays" element={<ProtectedRoute requiredRole="admin"><AdminHolidaysManagement /></ProtectedRoute>} />
-            <Route path="/admin/event-manager" element={<ProtectedRoute requiredRole="admin"><EventManager /></ProtectedRoute>} />
-            <Route path="/admin/holiday-manager" element={<ProtectedRoute requiredRole="admin"><HolidayManager /></ProtectedRoute>} />
             <Route path="/admin/teacher-marketplace" element={<ProtectedRoute requiredRole="admin"><TeacherMarketplace /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><ManageUsers /></ProtectedRoute>} />
             <Route path="/ActiveUsers" element={<ProtectedRoute requiredRole="admin"><ActiveUsers /></ProtectedRoute>} />

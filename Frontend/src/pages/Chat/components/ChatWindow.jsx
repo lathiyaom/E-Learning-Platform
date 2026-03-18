@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import {
+  ArrowLeft,
   Search,
   Video,
   MoreVertical,
@@ -12,9 +13,72 @@ import {
   Loader2,
 } from "lucide-react";
 
-export const ChatHeader = ({ selectedChat, showProfile, setShowProfile }) => (
-  <header className="h-20 shrink-0 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-6 bg-white/50 dark:bg-navy-charcoal/50 backdrop-blur-md z-10">
+const formatMessageTime = (dateString) => {
+  if (!dateString) return "";
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+const getDateDivider = (dateString) => {
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return "Today";
+
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startMessage = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  const dayDiff = Math.round((startToday - startMessage) / (1000 * 60 * 60 * 24));
+
+  if (dayDiff <= 0) return "Today";
+  if (dayDiff === 1) return "Yesterday";
+
+  return parsed.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const groupMessagesByDate = (messages) => {
+  const groups = [];
+  let previousDay = "";
+
+  messages.forEach((message) => {
+    const createdAt = message.createdAt || message.created_at || message.timeRaw;
+    const currentDay = getDateDivider(createdAt);
+
+    if (currentDay !== previousDay) {
+      groups.push({ type: "divider", label: currentDay, id: `divider-${currentDay}-${message.id}` });
+      previousDay = currentDay;
+    }
+
+    groups.push({ type: "message", message, id: `message-${message.id}` });
+  });
+
+  return groups;
+};
+
+export const ChatHeader = ({
+  selectedChat,
+  showProfile,
+  setShowProfile,
+  onBackMobile,
+  isSocketConnected,
+}) => (
+  <header className="h-20 shrink-0 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-4 md:px-6 bg-white/95 dark:bg-navy-charcoal/95 backdrop-blur-md z-10">
     <div className="flex items-center gap-4">
+      <button
+        type="button"
+        onClick={onBackMobile}
+        className="sm:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100"
+        aria-label="Back to conversations"
+      >
+        <ArrowLeft size={18} />
+      </button>
       <div className="size-11 rounded-2xl bg-lavender-light dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold border border-studprimary/10 text-sm font-bold">
         {selectedChat?.name
           ?.split(" ")
@@ -35,10 +99,10 @@ export const ChatHeader = ({ selectedChat, showProfile, setShowProfile }) => (
         <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
           <span
             className={`size-1.5 rounded-full ${
-              selectedChat?.online ? "bg-green-500" : "bg-slate-300"
+              isSocketConnected && selectedChat?.online ? "bg-green-500" : "bg-slate-300"
             }`}
           ></span>
-          {selectedChat?.online ? "Active Now" : "Offline"} • Academic Hub
+          {isSocketConnected ? (selectedChat?.online ? "Active Now" : "Offline") : "Connecting"} • Academic Hub
         </div>
       </div>
     </div>
@@ -59,36 +123,21 @@ export const ChatHeader = ({ selectedChat, showProfile, setShowProfile }) => (
 
 export const MessageList = ({ messagesData, typingUsers, conversationId }) => {
   const scrollRef = useRef(null);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messagesData]);
 
   const isTyping = typingUsers && typingUsers[conversationId];
-
-  // Group messages by date
-  const getDateLabel = (dateStr) => {
-    if (!dateStr) return "Today";
-    const msgDate = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (msgDate.toDateString() === today.toDateString()) return "Today";
-    if (msgDate.toDateString() === yesterday.toDateString()) return "Yesterday";
-    return msgDate.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const groupedItems = groupMessagesByDate(messagesData || []);
 
   return (
     <div
       ref={scrollRef}
-      className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar bg-slate-50/30 dark:bg-transparent scroll-smooth"
+      className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-6 space-y-6 custom-scrollbar bg-slate-50/30 dark:bg-transparent scroll-smooth"
     >
       {messagesData.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -107,93 +156,99 @@ export const MessageList = ({ messagesData, typingUsers, conversationId }) => {
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-4 py-4">
-            <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
-            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-white dark:bg-navy-charcoal px-3">
-              {getDateLabel(messagesData[0]?.time)}
-            </span>
-            <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
-          </div>
+          {groupedItems.map((item) => {
+            if (item.type === "divider") {
+              return (
+                <div key={item.id} className="flex items-center gap-4 py-2">
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
+                  <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-white dark:bg-navy-charcoal px-3">
+                    {item.label}
+                  </span>
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
+                </div>
+              );
+            }
 
-          {messagesData.map((msg, index) => (
-            <div
-              key={msg.id || index}
-              className={`flex flex-col animate-message ${
-                msg.type === "broadcast"
-                  ? "items-center translate-y-2"
-                  : msg.isMe
-                    ? "items-end"
-                    : "items-start"
-              }`}
-            >
-              {msg.type === "broadcast" ? (
-                <div className="bg-studprimary/5 dark:bg-premium-gold/5 border border-studprimary/10 dark:border-premium-gold/10 rounded-3xl p-6 w-full max-w-lg text-center shadow-sm">
-                  <div className="size-12 rounded-2xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold mx-auto mb-4">
-                    <Megaphone size={24} />
-                  </div>
-                  <p className="text-[10px] font-extrabold text-studprimary dark:text-premium-gold uppercase tracking-tighter mb-2">
-                    SYSTEM BROADCAST
-                  </p>
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 italic px-4 leading-relaxed">
-                    "{msg.content}"
-                  </p>
-                  <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-4">
-                    {msg.time}
-                  </p>
-                </div>
-              ) : (
-                <div
-                  className={`flex gap-3 max-w-[85%] md:max-w-[70%] ${
-                    msg.isMe ? "flex-row-reverse" : ""
-                  }`}
-                >
-                  {!msg.isMe && (
-                    <div className="size-9 rounded-full shrink-0 border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                      {msg.avatar ? (
-                        <img
-                          src={msg.avatar}
-                          className="w-full h-full object-cover"
-                          alt={msg.sender}
-                        />
-                      ) : (
-                        <span className="text-xs font-bold text-studprimary dark:text-premium-gold">
-                          {msg.sender
-                            ?.split(" ")
-                            .map((w) => w[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2) || "?"}
-                        </span>
-                      )}
+            const msg = item.message;
+
+            return (
+              <div
+                key={item.id}
+                className={`flex flex-col animate-message ${
+                  msg.type === "broadcast"
+                    ? "items-center translate-y-2"
+                    : msg.isMe
+                      ? "items-end"
+                      : "items-start"
+                }`}
+              >
+                {msg.type === "broadcast" ? (
+                  <div className="bg-studprimary/5 dark:bg-premium-gold/5 border border-studprimary/10 dark:border-premium-gold/10 rounded-3xl p-6 w-full max-w-lg text-center shadow-sm">
+                    <div className="size-12 rounded-2xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center text-studprimary dark:text-premium-gold mx-auto mb-4">
+                      <Megaphone size={24} />
                     </div>
-                  )}
+                    <p className="text-[10px] font-extrabold text-studprimary dark:text-premium-gold uppercase tracking-tighter mb-2">
+                      SYSTEM BROADCAST
+                    </p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 italic px-4 leading-relaxed">
+                      "{msg.content}"
+                    </p>
+                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-4">
+                      {formatMessageTime(msg.createdAt || msg.created_at || msg.timeRaw)}
+                    </p>
+                  </div>
+                ) : (
                   <div
-                    className={`flex flex-col ${msg.isMe ? "items-end" : ""}`}
+                    className={`flex gap-3 max-w-[92%] md:max-w-[74%] ${
+                      msg.isMe ? "flex-row-reverse" : ""
+                    }`}
                   >
-                    <div className="flex items-baseline gap-2 mb-1.5 px-1">
-                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-200">
-                        {msg.isMe ? "You" : msg.sender}
-                      </span>
-                      <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
-                        {msg.time}
-                      </span>
-                    </div>
-                    <div
-                      className={`p-4 rounded-3xl shadow-sm ${
-                        msg.isMe
-                          ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal rounded-tr-none"
-                          : "bg-white dark:bg-white/10 border border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-tl-none"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed font-medium">
-                        {msg.content}
-                      </p>
+                    {!msg.isMe && (
+                      <div className="size-9 rounded-full shrink-0 border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                        {msg.avatar ? (
+                          <img
+                            src={msg.avatar}
+                            className="w-full h-full object-cover"
+                            alt={msg.sender}
+                          />
+                        ) : (
+                          <span className="text-xs font-bold text-studprimary dark:text-premium-gold">
+                            {msg.sender
+                              ?.split(" ")
+                              .map((w) => w[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2) || "?"}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className={`flex flex-col ${msg.isMe ? "items-end" : ""}`}>
+                      <div className="flex items-baseline gap-2 mb-1.5 px-1">
+                        <span className="text-[11px] font-bold text-slate-900 dark:text-slate-200">
+                          {msg.isMe ? "You" : msg.sender}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+                          {formatMessageTime(msg.createdAt || msg.created_at || msg.timeRaw)}
+                        </span>
+                      </div>
+                      <div
+                        className={`p-4 rounded-3xl shadow-sm ${
+                          msg.isMe
+                            ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal rounded-tr-none"
+                            : "bg-white dark:bg-white/10 border border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-tl-none"
+                        } ${msg.isOptimistic ? "opacity-75" : "opacity-100"}`}
+                      >
+                        <p className="text-sm leading-relaxed font-medium break-words whitespace-pre-wrap">
+                          {msg.content}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
 
           {/* Typing indicator */}
           {isTyping && (
@@ -219,6 +274,8 @@ export const MessageList = ({ messagesData, typingUsers, conversationId }) => {
               </div>
             </div>
           )}
+
+          <div ref={bottomRef} />
         </>
       )}
     </div>
@@ -234,7 +291,7 @@ export const MessageInput = ({ message, setMessage, onSend, sending }) => {
   };
 
   return (
-    <footer className="p-6 shrink-0 bg-white dark:bg-navy-charcoal border-t border-slate-100 dark:border-white/5">
+    <footer className="p-4 md:p-6 chat-input-safe shrink-0 bg-white dark:bg-navy-charcoal border-t border-slate-100 dark:border-white/5">
       <div className="bg-slate-50 dark:bg-white/5 rounded-3xl p-3 border border-slate-200 dark:border-white/5 shadow-inner">
         <div className="flex gap-4 px-3 py-2 border-b border-slate-200 dark:border-white/5 mb-2">
           <button className="text-slate-400 hover:text-studprimary dark:hover:text-premium-gold transition-colors">
@@ -257,7 +314,7 @@ export const MessageInput = ({ message, setMessage, onSend, sending }) => {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
-            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm resize-none h-12 dark:text-white transition-all custom-scrollbar py-2"
+            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm resize-none h-11 md:h-12 dark:text-white transition-all custom-scrollbar py-2"
           />
           <button
             onClick={onSend}
@@ -284,6 +341,7 @@ const ChatWindow = ({
   showProfile,
   setShowProfile,
   onSendMessage,
+  onBackMobile,
   sending,
   typingUsers,
   conversationId,
@@ -295,6 +353,8 @@ const ChatWindow = ({
         selectedChat={selectedChat}
         showProfile={showProfile}
         setShowProfile={setShowProfile}
+        onBackMobile={onBackMobile}
+        isSocketConnected={isSocketConnected}
       />
       <MessageList
         messagesData={messagesData}
