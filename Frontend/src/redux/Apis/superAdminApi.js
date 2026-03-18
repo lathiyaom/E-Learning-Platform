@@ -55,8 +55,17 @@ export const superAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    getAllPlatformUsers: builder.query({
-      query: () => "/SuperAdmin/Users",
+    getPlatformUsers: builder.query({
+      query: ({ page = 1, limit = 20, search = '', roleFilter = 'all', statusFilter = 'all' } = {}) => {
+        const params = new URLSearchParams({ 
+          page: String(page), 
+          limit: String(limit) 
+        });
+        if (search) params.append('search', search);
+        if (roleFilter !== 'all') params.append('roleFilter', roleFilter);
+        if (statusFilter !== 'all') params.append('statusFilter', statusFilter);
+        return `/SuperAdmin/users?${params.toString()}`;
+      },
       providesTags: (result) =>
         result?.data
           ? [
@@ -64,6 +73,15 @@ export const superAdminApi = apiSlice.injectEndpoints({
               { type: "User", id: "LIST" },
             ]
           : [{ type: "User", id: "LIST" }],
+      transformResponse: (response) => ({
+        data: response.data,
+        pagination: response.pagination
+      }),
+    }),
+    // Legacy
+    getAllPlatformUsers: builder.query({
+      query: () => "/SuperAdmin/Users?limit=999",
+      transformResponse: (response) => response.data || [],
     }),
 
     getPlatformStats: builder.query({
@@ -109,7 +127,9 @@ export const {
   usePromoteTenantMutation,
   useDemoteTenantMutation,
   useChangeTenantStatusMutation,
-  useGetAllPlatformUsersQuery,
+  useGetPlatformUsersQuery,
+  useLazyGetPlatformUsersQuery,
+  useGetAllPlatformUsersQuery, // Legacy
   useLazyGetAllPlatformUsersQuery,
   useGetPlatformStatsQuery,
   useLazyGetPlatformStatsQuery,

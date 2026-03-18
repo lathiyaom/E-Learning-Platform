@@ -200,12 +200,80 @@ const changeTenantStatus = async (tenantId, status, requesterId) => {
   return tenantObj;
 };
 
-// Get all users across all tenants (platform-wide view)
+// Get all users across all tenants (platform-wide view) - paginated & filtered
+const getPlatformUsers = async (filters = {}) => {
+  const { 
+    page = 1, 
+    limit = 10, 
+    search = '', 
+    roleFilter = 'all', 
+    statusFilter = 'all' 
+  } = filters;
+  
+  const query = {};
+  
+  // Role filter (map frontend lowercase to enum)
+  if (roleFilter !== 'all') {
+    query.userType = roleFilter.toUpperCase();
+  }
+  
+  // Status filter (frontend expects isActive bool, but store uses status enum)
+  if (statusFilter !== 'all') {
+    if (statusFilter === 'active') {
+      query.status = 'active';
+    } else if (statusFilter === 'inactive') {
+      query.$or = [{ status: 'inactive' }, { status: 'suspended' }];
+    }
+  }
+  
+  // Search across name fields & email
+  if (search.trim()) {
+    query.$or = [
+      { firstName: { $regex: search, $options: 'i' } },
+      { lastName: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } }
+    ];
+  }
+  
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const total = await User.countDocuments(query);
+  
+  const users = await User.find(query)
+    .populate('tenant_id', 'institutionName name')
+    .select('-password -token -refreshToken -sessions')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+  
+  // Transform for frontend
+  const transformedUsers = users.map(user => ({
+    _id: user._id,
+    name: `${user.firstName} ${user.lastName}`.trim(),
+    email: user.email,
+    phone: user.phoneNo,
+    userType: user.userType,
+    institutionName: user.tenant_id?.institutionName || user.tenant_id?.name || 'N/A',
+    isActive: user.status === 'active',
+    createdAt: user.createdAt
+  }));
+  
+  return {
+    data: transformedUsers,
+    pagination: {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      pages: Math.ceil(total / parseInt(limit)),
+      hasNext: skip + parseInt(limit) < total,
+      hasPrev: parseInt(page) > 1
+    }
+  };
+};
+
+// Legacy - unpaginated
 const getAllUsersAcrossPlatform = async () => {
-  const users = await User.find()
-    .select("-password -token -refreshToken")
-    .sort({ createdAt: -1 });
-  return users;
+  const { data } = await getPlatformUsers({ limit: 9999 });
+  return data;
 };
 
 // Get platform dashboard stats

@@ -1,9 +1,9 @@
 const superAdminService = require("../services/superAdminService");
+const logger = require("../utils/logger");
 const { Tenant } = require("../models");
 const User = require("../models/User.mongoose");
 const crypto = require("crypto");
 const { sendTeacherInvitationEmail } = require("../utils/emailService");
-const logger = require("../utils/logger");
 
 /**
  * SuperAdmin Controller — Platform-level operations
@@ -185,20 +185,27 @@ const changeTenantStatus = async (req, res) => {
   }
 };
 
-// GET /SuperAdmin/Users — All users across all tenants
-const getAllUsers = async (req, res) => {
+// GET /SuperAdmin/users — All users across all tenants (paginated/filtered)
+const getPlatformUsers = async (req, res) => {
   try {
-    const users = await superAdminService.getAllUsersAcrossPlatform();
+    const { page = 1, limit = 10, search, roleFilter, statusFilter } = req.query;
+    const result = await superAdminService.getPlatformUsers({
+      page,
+      limit,
+      search,
+      roleFilter: roleFilter || 'all',
+      statusFilter: statusFilter || 'all'
+    });
 
     return res.status(200).json({
-      message: "All platform users retrieved",
+      message: "Platform users retrieved successfully",
       success: true,
-      data: users,
+      ...result
     });
   } catch (error) {
-    console.error("SuperAdmin - Get all users error:", error.message);
+    console.error("SuperAdmin - Get platform users error:", error.message);
     return res.status(500).json({
-      message: "Internal server error",
+      message: error.message || "Internal server error",
       success: false,
     });
   }
@@ -218,6 +225,38 @@ const getPlatformStats = async (req, res) => {
     console.error("SuperAdmin - Stats error:", error.message);
     return res.status(500).json({
       message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+// GET /SuperAdmin/Users — All users across platform (paginated/filtered) - BACKWARD COMPATIBLE
+const getAllUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, roleFilter, statusFilter } = req.query;
+    
+    logger.info("SuperAdmin getAllUsers called", {
+      page, limit, hasSearch: !!search, roleFilter, statusFilter,
+      userId: req.user?.id
+    });
+
+    const result = await superAdminService.getPlatformUsers({
+      page,
+      limit,
+      search,
+      roleFilter: roleFilter || 'all',
+      statusFilter: statusFilter || 'all'
+    });
+
+    return res.status(200).json({
+      message: "Platform users retrieved successfully",
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    logger.error("SuperAdmin - Get all users error:", error.message);
+    return res.status(500).json({
+      message: error.message || "Internal server error",
       success: false,
     });
   }

@@ -12,7 +12,7 @@ const InvitationAction = () => {
     }
 
     const apiBase = import.meta.env.VITE_APP_API_URL || "http://localhost:5000";
-    window.location.href = `${apiBase}/TeacherInvitation/${token}/${action}`;
+    window.location.href = `${apiBase}/SuperAdmin/TeacherInvitation/${token}/${action}`; // Fixed path
   }, [token, action, navigate]);
 
   return (

@@ -15,40 +15,49 @@ import {
 } from "lucide-react";
 
 const UserManagement = () => {
-  const { data, isLoading, isError, error } = useGetAllPlatformUsersQuery();
-  const [searchParams] = useSearchParams();
-  const initialRole = searchParams.get("role") || "all";
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState(initialRole);
-
-  useEffect(() => {
-    const role = searchParams.get("role");
-    if (role) {
-      setRoleFilter(role);
-    } else {
-      setRoleFilter("all");
-    }
-  }, [searchParams]);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageParam = parseInt(searchParams.get("page")) || 1;
+  
+  const [localFilters, setLocalFilters] = useState({
+    searchTerm: searchParams.get("search") || '',
+    roleFilter: searchParams.get("role") || 'all',
+    statusFilter: searchParams.get("status") || 'all'
+  });
+  
+  const { data, isLoading, isError, error, refetch } = useGetPlatformUsersQuery({
+    page: pageParam,
+    limit: 20,
+    search: localFilters.searchTerm,
+    roleFilter: localFilters.roleFilter,
+    statusFilter: localFilters.statusFilter
+  });
 
   const users = data?.data || [];
+  const pagination = data?.pagination || {};
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.institutionName?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Sync URL params
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (localFilters.searchTerm) params.set('search', localFilters.searchTerm);
+    else params.delete('search');
+    if (localFilters.roleFilter !== 'all') params.set('role', localFilters.roleFilter);
+    else params.delete('role');
+    if (localFilters.statusFilter !== 'all') params.set('status', localFilters.statusFilter);
+    else params.delete('status');
+    params.set('page', String(pageParam));
+    
+    setSearchParams(params, { replace: true });
+  }, [localFilters, pageParam, setSearchParams]);
 
-    const matchesRole =
-      roleFilter === "all" || user.userType?.toLowerCase() === roleFilter;
+  const updateFilters = (updates) => {
+    setLocalFilters(prev => ({ ...prev, ...updates }));
+  };
 
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && user.isActive) ||
-      (statusFilter === "inactive" && !user.isActive);
-
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(newPage));
+    setSearchParams(params);
+  };
 
   const getRoleBadge = (role) => {
     const styles = {
@@ -126,8 +135,8 @@ const UserManagement = () => {
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                 Total Users
               </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {users.length}
+  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                {pagination.total || users.length}
               </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
@@ -232,8 +241,8 @@ const UserManagement = () => {
         </div>
 
         <div className="mt-4 flex items-center justify-between text-sm">
-          <p className="text-slate-600 dark:text-slate-400">
-            Showing {filteredUsers.length} of {users.length} users
+  <p className="text-slate-600 dark:text-slate-400">
+            Showing {users.length} of {pagination.total || 0} users
           </p>
           <button
             onClick={exportToCSV}

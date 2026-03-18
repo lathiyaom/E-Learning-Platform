@@ -172,9 +172,8 @@ const SuperAdminLayout = ({
             </div>
             <div className="flex items-center gap-3">
               <DarkModeToggle />
-              <button className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500">
-                <Bell className="h-4 w-4" />
-              </button>
+              {/* Bell icon removed as per requirements */}
+
               <AvatarDropdown
                 placeholder={user?.email?.charAt(0)?.toUpperCase() || "S"}
                 size="md"
