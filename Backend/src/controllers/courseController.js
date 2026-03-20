@@ -8,6 +8,13 @@ const CreateCourse = async (req, res) => {
   const tenantId = req.tenantId || (req.user?.role === "tenant" ? req.user.id : req.user?.tenantId);
 
   try {
+    if (String(req.user?.userType || "").toLowerCase() === "superadmin") {
+      return res.status(403).json({
+        message: "Super Admin cannot create courses.",
+        success: false,
+      });
+    }
+
     logger.info("Course creation attempt", { userId, tenantId, title: req.body?.title });
 
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -122,6 +129,13 @@ const allPlatformCourses = async (req, res) => {
 
 const DeleteCourse = async (req, res) => {
   try {
+    if (String(req.user?.userType || "").toLowerCase() === "superadmin") {
+      return res.status(403).json({
+        message: "Super Admin cannot delete courses.",
+        success: false,
+      });
+    }
+
     const { id } = req.params;
     const userId = req.user?.id;
     const tenantId = req.tenantId;
@@ -142,8 +156,8 @@ const DeleteCourse = async (req, res) => {
     }
 
     // Check ownership: only creator or admin/superadmin can delete
-    const isOwner = course.createdBy.toString() === userId;
-    const isAdmin = req.user.userType === "admin" || req.user.userType === "superadmin";
+    const isOwner = course.createdBy && String(course.createdBy) === String(userId);
+    const isAdmin = String(req.user.userType || "").toLowerCase() === "admin";
 
     if (!isOwner && !isAdmin) {
       logger.logSecurity("Unauthorized course deletion attempt", "medium", { 
@@ -204,6 +218,13 @@ const getcourseById = async (req, res) => {
 
 const UpdateCourse = async (req, res) => {
   try {
+    if (String(req.user?.userType || "").toLowerCase() === "superadmin") {
+      return res.status(403).json({
+        message: "Super Admin cannot update courses.",
+        success: false,
+      });
+    }
+
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({
         message: "Request body is empty or not properly parsed",
@@ -226,8 +247,8 @@ const UpdateCourse = async (req, res) => {
     }
 
     // Check ownership: only creator or admin/superadmin can update
-    const isOwner = course.createdBy.toString() === req.user.id;
-    const isAdmin = req.user.userType === "admin" || req.user.userType === "superadmin";
+    const isOwner = course.createdBy && String(course.createdBy) === String(req.user.id);
+    const isAdmin = String(req.user.userType || "").toLowerCase() === "admin";
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({

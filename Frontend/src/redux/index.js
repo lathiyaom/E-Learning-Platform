@@ -95,3 +95,13 @@ export {
   useUnsubscribeMutation,
   useGetSubscriberCountQuery,
 } from "./Apis/newsletterApi";
+
+// Subject exports
+export {
+  useGetSubjectsQuery,
+  useCreateSubjectMutation,
+  useUpdateSubjectMutation,
+  useArchiveSubjectMutation,
+  useRestoreSubjectMutation,
+  useDeleteSubjectMutation,
+} from "./Apis/subjectApi";

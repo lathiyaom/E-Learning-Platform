@@ -28,6 +28,11 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    subjectId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
+      default: null,
+    },
     image: {
       type: String,
       required: true,
@@ -92,6 +97,7 @@ const courseSchema = new mongoose.Schema(
 courseSchema.index({ organization_id: 1 });
 courseSchema.index({ teacher_id: 1 });
 courseSchema.index({ organization_id: 1, teacher_id: 1 });
+courseSchema.index({ tenantId: 1, subjectId: 1 });
 // Legacy indexes for backward compatibility
 courseSchema.index({ tenantId: 1 });
 courseSchema.index({ createdBy: 1 });

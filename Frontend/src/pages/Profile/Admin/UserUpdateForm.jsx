@@ -63,10 +63,9 @@ function UserUpdateForm({ userId, onClose }) {
       try {
         await updateUser({ email: userData.email, ...userData }).unwrap();
         SuccessToster("Profile updated successfully", 2500);
-      setTimeout(() => {
+        setTimeout(() => {
           if (onClose) onClose();
-        window.location.reload();
-      }, 2000);
+        }, 500);
       } catch (error) {
         ErrorToster(error?.data?.message || "Failed to update profile", 2500);
       }
@@ -100,7 +99,7 @@ function UserUpdateForm({ userId, onClose }) {
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full">
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D8A25E] mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-studprimary mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading user data...</p>
           </div>
         </div>
@@ -112,7 +111,7 @@ function UserUpdateForm({ userId, onClose }) {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-lg max-w-3xl w-full max-h-[100vh] overflow-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#343131] to-[#D8A25E] p-5 text-white rounded-t-xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-navy-charcoal to-studprimary p-5 text-white rounded-t-xl flex justify-between items-center">
           <h2 className="text-xl font-semibold">Update User Profile</h2>
           <button
             onClick={onClose}
@@ -126,7 +125,7 @@ function UserUpdateForm({ userId, onClose }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* First Name */}
             <div>
-              <label className="block text-[#343131] font-medium mb-2">
+              <label className="block text-slate-800 font-medium mb-2">
                 First Name
               </label>
               <div className="relative">
@@ -139,14 +138,14 @@ function UserUpdateForm({ userId, onClose }) {
                   name="firstName"
                   value={userData.firstName}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-studprimary/30 focus:border-transparent transition-all duration-300"
                   placeholder="First Name"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[#343131] font-medium mb-2">
+              <label className="block text-slate-800 font-medium mb-2">
                 Last Name
               </label>
               <div className="relative">
@@ -159,7 +158,7 @@ function UserUpdateForm({ userId, onClose }) {
                   name="lastName"
                   value={userData.lastName}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-studprimary/30 focus:border-transparent transition-all duration-300"
                   placeholder="Last Name"
                 />
               </div>
@@ -167,7 +166,7 @@ function UserUpdateForm({ userId, onClose }) {
 
             {/* Email - Read Only */}
             <div>
-              <label className="block text-[#343131] font-medium mb-2">
+              <label className="block text-slate-800 font-medium mb-2">
                 Email
               </label>
               <div className="relative">
@@ -188,7 +187,7 @@ function UserUpdateForm({ userId, onClose }) {
 
             {/* Phone */}
             <div>
-              <label className="block text-[#343131] font-medium mb-2">
+              <label className="block text-slate-800 font-medium mb-2">
                 Phone Number
               </label>
               <div className="relative">
@@ -201,7 +200,7 @@ function UserUpdateForm({ userId, onClose }) {
                   name="phoneNo"
                   value={userData.phoneNo}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-studprimary/30 focus:border-transparent transition-all duration-300"
                   placeholder="Phone Number"
                 />
               </div>
@@ -209,7 +208,7 @@ function UserUpdateForm({ userId, onClose }) {
 
             {/* Age */}
             <div>
-              <label className="block text-[#343131] font-medium mb-2">
+              <label className="block text-slate-800 font-medium mb-2">
                 Age
               </label>
               <div className="relative">
@@ -222,7 +221,7 @@ function UserUpdateForm({ userId, onClose }) {
                   name="age"
                   value={userData.age}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-studprimary/30 focus:border-transparent transition-all duration-300"
                   placeholder="Age"
                 />
               </div>
@@ -230,7 +229,7 @@ function UserUpdateForm({ userId, onClose }) {
 
             {/* Gender */}
             <div>
-              <label className="block text-[#343131] font-medium mb-2">
+              <label className="block text-slate-800 font-medium mb-2">
                 Gender
               </label>
               <div className="relative">
@@ -242,7 +241,7 @@ function UserUpdateForm({ userId, onClose }) {
                   name="gender"
                   value={userData.gender}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300 appearance-none"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-studprimary/30 focus:border-transparent transition-all duration-300 appearance-none"
                 >
                   <option value="">Select Gender</option>
                   <option value="male">Male</option>
@@ -255,7 +254,7 @@ function UserUpdateForm({ userId, onClose }) {
 
           {/* About - Full Width */}
           <div className="mb-6">
-            <label className="block text-[#343131] font-medium mb-2">
+            <label className="block text-slate-800 font-medium mb-2">
               About
             </label>
             <div className="relative">
@@ -265,7 +264,7 @@ function UserUpdateForm({ userId, onClose }) {
                 value={userData.about}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300"
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-studprimary/30 focus:border-transparent transition-all duration-300"
                 placeholder="Tell us about yourself..."
               ></textarea>
             </div>
@@ -283,7 +282,7 @@ function UserUpdateForm({ userId, onClose }) {
             <button
               type="submit"
               disabled={isUpdating}
-              className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#343131] to-[#D8A25E] text-white hover:opacity-90 transition-all flex items-center justify-center gap-2"
+              className="px-6 py-3 rounded-lg bg-gradient-to-r from-navy-charcoal to-studprimary text-white hover:opacity-90 transition-all flex items-center justify-center gap-2"
             >
               {isUpdating ? (
                 <>

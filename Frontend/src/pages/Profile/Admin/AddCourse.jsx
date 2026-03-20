@@ -13,7 +13,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { useCreateCourseMutation } from "../../../redux";
+import { useCreateCourseMutation, useGetSubjectsQuery } from "../../../redux";
 import { getBreadcrumbs } from "../../../utils/breadcrumbs";
 
 function AddCourse() {
@@ -24,6 +24,7 @@ function AddCourse() {
     image: "",
     description: "",
     category: "",
+    subjectId: "",
     level: "Easy",
     rating: 0,
     reviewCount: 0,
@@ -39,6 +40,8 @@ function AddCourse() {
   // RTK Query mutation
   const [createCourse, { isSuccess, isLoading: isPending, error }] =
     useCreateCourseMutation();
+  const { data: subjectsResponse } = useGetSubjectsQuery({ status: "active" });
+  const subjects = subjectsResponse?.data || [];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -204,6 +207,26 @@ function AddCourse() {
                       placeholder="Enter course title"
                       required
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-semibold text-[#343131] mb-3">
+                      <Hash size={18} className="mr-2 text-[#D8A25E]" />
+                      Subject
+                    </label>
+                    <select
+                      name="subjectId"
+                      value={courseData.subjectId}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300 text-[#343131]"
+                    >
+                      <option value="">Select a subject (optional)</option>
+                      {subjects.map((subject) => (
+                        <option key={subject._id || subject.id} value={subject._id || subject.id}>
+                          {subject.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="space-y-2">

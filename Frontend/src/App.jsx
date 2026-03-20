@@ -13,10 +13,11 @@ import SignUp from "./pages/Sign-Up/index.jsx";
 import OrganizationRegister from "./pages/Register/OrganizationRegister.jsx";
 import CardDetail from "./pages/Courses/Videocard.jsx";
 import AddCourse from "./pages/Profile/Admin/AddCourse.jsx";
-import ActiveUsers from "./pages/Profile/Admin/ActiveUsers.jsx";
+// import ActiveUsers from "./pages/Profile/Admin/ActiveUsers.jsx";
 import UserUpdateForm from "./pages/Profile/Admin/UserUpdateForm.jsx";
-import Settings from "./pages/Profile/Admin/settings.jsx";
-import UserComments from "./pages/Profile/Admin/UserComments.jsx";
+// import Settings from "./pages/Profile/Admin/settings.jsx";
+import AdminSetting from "./pages/Dashboard/Admin/AdminSetting.jsx";
+// import UserComments from "./pages/Profile/Admin/UserComments.jsx";
 import ManageUsers from "./pages/Dashboard/Admin/Users.jsx";
 import ManageCourses from "./pages/Dashboard/Admin/Courses.jsx";
 import AssignTeachers from "./pages/Dashboard/Admin/AssignTeachers.jsx";
@@ -24,6 +25,7 @@ import Attendance from "./pages/Dashboard/Admin/Attendance.jsx";
 import AdminLecturesManagement from "./pages/Dashboard/Admin/AdminLecturesManagement.jsx";
 import AdminEventsManagement from "./pages/Dashboard/Admin/AdminEventsManagement.jsx";
 import AdminHolidaysManagement from "./pages/Dashboard/Admin/AdminHolidaysManagement.jsx";
+import Subjects from "./pages/Dashboard/Admin/Subjects.jsx";
 
 import TeacherMarketplace from "./pages/Admin/TeacherMarketplace/index.jsx";
 import Resources from "./pages/resources/index.jsx";
@@ -140,14 +142,15 @@ function App() {
             <Route path="/admin/lectures/:courseId" element={<ProtectedRoute requiredRole="admin"><AdminLecturesManagement /></ProtectedRoute>} />
             <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><AdminEventsManagement /></ProtectedRoute>} />
             <Route path="/admin/holidays" element={<ProtectedRoute requiredRole="admin"><AdminHolidaysManagement /></ProtectedRoute>} />
+            <Route path="/admin/subjects" element={<ProtectedRoute requiredRole="admin"><Subjects /></ProtectedRoute>} />
             <Route path="/admin/teacher-marketplace" element={<ProtectedRoute requiredRole="admin"><TeacherMarketplace /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><ManageUsers /></ProtectedRoute>} />
-            <Route path="/ActiveUsers" element={<ProtectedRoute requiredRole="admin"><ActiveUsers /></ProtectedRoute>} />
+            {/* <Route path="/ActiveUsers" element={<ProtectedRoute requiredRole="admin"><ActiveUsers /></ProtectedRoute>} /> */}
             <Route path="/managecourses" element={<ProtectedRoute requiredRole="admin"><ManageCourses /></ProtectedRoute>} />
             <Route path="/AddCourse" element={<ProtectedRoute requiredRole="admin"><AddCourse /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute requiredRole="admin"><Settings /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute requiredRole="admin"><AdminSetting /></ProtectedRoute>} />
             <Route path="/updateForm" element={<ProtectedRoute requiredRole="admin"><UserUpdateForm /></ProtectedRoute>} />
-            <Route path="/Comments" element={<ProtectedRoute requiredRole="admin"><UserComments /></ProtectedRoute>} />
+            {/* <Route path="/Comments" element={<ProtectedRoute requiredRole="admin"><UserComments /></ProtectedRoute>} /> */}
             
             {/* Teacher Routes - Protected */}
             <Route path="/teacher" element={<ProtectedRoute requiredRole="teacher"><TeacherDashboard /></ProtectedRoute>} />

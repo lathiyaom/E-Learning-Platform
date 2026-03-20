@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
-const { CourseMaterial } = require("../models");
+const { CourseMaterial, Course } = require("../models");
 const { authenticate, authorize } = require("../middlewares/authMiddleware");
 const tenantScope = require("../middlewares/tenantScope.middleware");
 
@@ -45,11 +45,33 @@ const upload = multer({
 });
 
 // Upload course material
-router.post("/upload", authenticate, authorize("teacher"), tenantScope, upload.single("file"), async (req, res) => {
+router.post("/upload", authenticate, authorize("teacher", "admin"), tenantScope, upload.single("file"), async (req, res) => {
   try {
     const { course_id, title, description, type, is_downloadable } = req.body;
     const teacherId = req.user.id;
     const organizationId = req.tenantId;
+    const isAdmin = String(req.user.userType || "").toLowerCase() === "admin";
+    const course = await Course.findOne({
+      _id: course_id,
+      $or: [{ tenantId: organizationId }, { organization_id: organizationId }],
+    }).select("teacher_id createdBy");
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found in your organization",
+      });
+    }
+
+    const ownerTeacherId = course.teacher_id || course.createdBy || teacherId;
+
+    if (!isAdmin && String(ownerTeacherId) !== String(teacherId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Teachers can upload files only for their own courses",
+      });
+    }
+
 
     if (!req.file) {
       return res.status(400).json({
@@ -77,7 +99,7 @@ router.post("/upload", authenticate, authorize("teacher"), tenantScope, upload.s
     const material = new CourseMaterial({
       course_id,
       organization_id: organizationId,
-      teacher_id: teacherId,
+      teacher_id: ownerTeacherId,
       title: title || req.file.originalname,
       type,
       file_url: uploadResult.secure_url,
@@ -157,17 +179,18 @@ router.get("/course/:courseId", authenticate, tenantScope, async (req, res) => {
 });
 
 // Update material
-router.patch("/:id", authenticate, authorize("teacher"), tenantScope, async (req, res) => {
+router.patch("/:id", authenticate, authorize("teacher", "admin"), tenantScope, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, is_downloadable, order } = req.body;
     const teacherId = req.user.id;
+    const isAdmin = String(req.user.userType || "").toLowerCase() === "admin";
 
-    const material = await CourseMaterial.findOne({
-      _id: id,
-      teacher_id: teacherId,
-      organization_id: req.tenantId
-    });
+    const filter = isAdmin
+      ? { _id: id, organization_id: req.tenantId }
+      : { _id: id, teacher_id: teacherId, organization_id: req.tenantId };
+
+    const material = await CourseMaterial.findOne(filter);
 
     if (!material) {
       return res.status(404).json({
@@ -199,16 +222,17 @@ router.patch("/:id", authenticate, authorize("teacher"), tenantScope, async (req
 });
 
 // Delete material
-router.delete("/:id", authenticate, authorize("teacher"), tenantScope, async (req, res) => {
+router.delete("/:id", authenticate, authorize("teacher", "admin"), tenantScope, async (req, res) => {
   try {
     const { id } = req.params;
     const teacherId = req.user.id;
+    const isAdmin = String(req.user.userType || "").toLowerCase() === "admin";
 
-    const material = await CourseMaterial.findOne({
-      _id: id,
-      teacher_id: teacherId,
-      organization_id: req.tenantId
-    });
+    const filter = isAdmin
+      ? { _id: id, organization_id: req.tenantId }
+      : { _id: id, teacher_id: teacherId, organization_id: req.tenantId };
+
+    const material = await CourseMaterial.findOne(filter);
 
     if (!material) {
       return res.status(404).json({

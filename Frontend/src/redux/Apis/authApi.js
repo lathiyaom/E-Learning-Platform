@@ -1,4 +1,8 @@
 import { apiSlice } from "./apiSlice";
+import { updateUserProfile } from "../slice/authSlice";
+
+const resolveUpdatedUser = (result) =>
+  result?.data?.data || result?.data?.user || result?.user || result?.data || null;
 
 export const authApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -63,6 +67,25 @@ export const authApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: userData,
       }),
+      async onQueryStarted({ email, id }, { dispatch, getState, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const updatedUser = resolveUpdatedUser(data);
+          const currentUser = getState()?.auth?.user;
+
+          if (!updatedUser || !currentUser) return;
+
+          const isCurrentUserMatch =
+            (id && (String(currentUser.id || currentUser._id) === String(id))) ||
+            (email && String(currentUser.email || "").toLowerCase() === String(email).toLowerCase());
+
+          if (isCurrentUserMatch) {
+            dispatch(updateUserProfile(updatedUser));
+          }
+        } catch {
+          // No-op: handled by existing mutation error flow.
+        }
+      },
       invalidatesTags: (result, error, { email }) => [
         { type: "User", id: email },
         "User",

@@ -1,11 +1,34 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosintence";
+import { updateUserProfile } from "../slice/authSlice";
 
 const initialState = {
   profile: null,
   settings: null,
   loading: false,
   error: null,
+};
+
+const mapProfilePayloadToAuthShape = (payload) => {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  // Tenant settings payload from /Profile/settings for admin organization account.
+  if (payload.organizationName !== undefined) {
+    return {
+      name: payload.organizationName,
+      firstName: payload.organizationName,
+      email: payload.organizationEmail,
+      phoneNo: payload.organizationPhone,
+      OrgOwnerName: payload.ownerName,
+      OrgOwnerEmail: payload.ownerEmail,
+      OrgOwnerPhone: payload.ownerPhone,
+      about: payload.organizationAbout,
+    };
+  }
+
+  return payload;
 };
 
 // Get profile
@@ -24,10 +47,15 @@ export const getProfile = createAsyncThunk(
 // Update profile
 export const updateProfile = createAsyncThunk(
   "profile/update",
-  async (profileData, { rejectWithValue }) => {
+  async (profileData, { rejectWithValue, dispatch }) => {
     try {
       const response = await axiosInstance.patch("/Profile/update", profileData);
-      return response.data.data;
+      const payload = response.data.data;
+      const authPatch = mapProfilePayloadToAuthShape(payload);
+      if (authPatch) {
+        dispatch(updateUserProfile(authPatch));
+      }
+      return payload;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update profile");
     }
@@ -54,10 +82,15 @@ export const changePassword = createAsyncThunk(
 // Upload avatar
 export const uploadAvatar = createAsyncThunk(
   "profile/uploadAvatar",
-  async (avatarUrl, { rejectWithValue }) => {
+  async (avatarUrl, { rejectWithValue, dispatch }) => {
     try {
       const response = await axiosInstance.post("/Profile/upload-avatar", { avatarUrl });
-      return response.data.data;
+      const payload = response.data.data;
+      const authPatch = mapProfilePayloadToAuthShape(payload);
+      if (authPatch) {
+        dispatch(updateUserProfile(authPatch));
+      }
+      return payload;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to upload avatar");
     }
@@ -80,10 +113,15 @@ export const getSettings = createAsyncThunk(
 // Update settings
 export const updateSettings = createAsyncThunk(
   "profile/updateSettings",
-  async (settings, { rejectWithValue }) => {
+  async (settings, { rejectWithValue, dispatch }) => {
     try {
       const response = await axiosInstance.patch("/Profile/settings", settings);
-      return response.data.data;
+      const payload = response.data.data;
+      const authPatch = mapProfilePayloadToAuthShape(payload);
+      if (authPatch) {
+        dispatch(updateUserProfile(authPatch));
+      }
+      return payload;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update settings");
     }

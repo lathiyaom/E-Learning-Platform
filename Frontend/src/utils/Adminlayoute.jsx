@@ -252,6 +252,13 @@ const AdminLayout = ({
         breadcrumb: "Courses",
       },
       {
+        id: "subjects",
+        icon: BookOpenText,
+        label: "Subjects",
+        link: "/admin/subjects",
+        breadcrumb: "Subjects",
+      },
+      {
         id: "lectures",
         icon: Book,
         label: "Lectures",

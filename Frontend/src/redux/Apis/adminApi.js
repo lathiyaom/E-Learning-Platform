@@ -1,4 +1,8 @@
 import { apiSlice } from "./apiSlice";
+import { updateUserProfile } from "../slice/authSlice";
+
+const resolveUpdatedAdminUser = (result) =>
+  result?.data?.data || result?.data?.user || result?.user || result?.data || null;
 
 export const adminApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -50,6 +54,24 @@ export const adminApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: userData,
       }),
+      async onQueryStarted({ id }, { dispatch, getState, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const updatedUser = resolveUpdatedAdminUser(data);
+          const currentUser = getState()?.auth?.user;
+
+          if (!updatedUser || !currentUser) return;
+
+          const isCurrentUserMatch =
+            id && String(currentUser.id || currentUser._id) === String(id);
+
+          if (isCurrentUserMatch) {
+            dispatch(updateUserProfile(updatedUser));
+          }
+        } catch {
+          // No-op: handled by caller mutation error handling.
+        }
+      },
       invalidatesTags: (result, error, { id }) => [
         { type: "AdminUser", id },
         { type: "AdminUser", id: "LIST" },

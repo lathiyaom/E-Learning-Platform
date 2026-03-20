@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCreateCourseMutation, useUpdateCourseMutation, useGetCourseByIdQuery } from "../../../redux/Apis/courseApi";
+import { useGetSubjectsQuery } from "../../../redux";
 import { Loader2 } from "lucide-react";
 import AdminLayout from "../../../utils/Adminlayoute";
 
@@ -10,13 +11,16 @@ const CourseForm = () => {
   const editId = searchParams.get("edit");
 
   const { data: courseData, isLoading: loadingCourse } = useGetCourseByIdQuery(editId, { skip: !editId });
+  const { data: subjectsResponse } = useGetSubjectsQuery({ status: "active" });
   const [createCourse, { isLoading: creating }] = useCreateCourseMutation();
   const [updateCourse, { isLoading: updating }] = useUpdateCourseMutation();
+  const activeSubjects = subjectsResponse?.data || [];
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
+    subjectId: "",
     level: "Easy",
     video_url: "",
     image: "",
@@ -35,6 +39,7 @@ const CourseForm = () => {
         title: course.title || "",
         description: course.description || "",
         category: course.category || "",
+        subjectId: course.subjectId?._id || course.subjectId || "",
         level: course.level || "Easy",
         video_url: course.video_url || course.videoUrl || "",
         image: course.image || "",
@@ -123,6 +128,22 @@ const CourseForm = () => {
               placeholder="Describe what students will learn in this course"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Subject</label>
+            <select
+              value={formData.subjectId}
+              onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
+              className="w-full px-3 py-2 border rounded"
+            >
+              <option value="">Select Subject (optional)</option>
+              {activeSubjects.map((subject) => (
+                <option key={subject._id || subject.id} value={subject._id || subject.id}>
+                  {subject.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

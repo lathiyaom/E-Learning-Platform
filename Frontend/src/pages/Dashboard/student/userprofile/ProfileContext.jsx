@@ -15,7 +15,6 @@ export const ProfileProvider = ({ children }) => {
     data: response,
     isLoading,
     error,
-    refetch,
   } = useGetUserDetailsQuery(email, {
     skip: !email,
   });
@@ -54,32 +53,31 @@ export const ProfileProvider = ({ children }) => {
   };
 
   const handleSave = async () => {
+    const userId = userData?._id || userData?.id;
+    if (!userId) {
+      ErrorToster("Unable to update profile. User ID not found.", 3000);
+      return;
+    }
+
+    const normalizedPhone = String(formData.phoneNo || "").trim();
+    const updatePayload = {
+      email: userData?.email,
+      id: userId,
+      firstName: String(formData.firstName || "").trim(),
+      lastName: String(formData.lastName || "").trim(),
+      about: String(formData.about || "").trim(),
+    };
+
+    if (normalizedPhone) {
+      updatePayload.phoneNo = normalizedPhone;
+    }
+
     try {
-      const userId = userData?._id || userData?.id;
-      if (!userId) {
-        ErrorToster("Unable to update profile. User ID not found.", 3000);
-        return;
-      }
-
-      const normalizedPhone = String(formData.phoneNo || "").trim();
-      const updatePayload = {
-        email: userData?.email,
-        id: userId,
-        firstName: String(formData.firstName || "").trim(),
-        lastName: String(formData.lastName || "").trim(),
-        about: String(formData.about || "").trim(),
-      };
-
-      if (normalizedPhone) {
-        updatePayload.phoneNo = normalizedPhone;
-      }
-
       await updateUser({
         ...updatePayload,
       }).unwrap();
-
       SuccessToster("Profile updated successfully!", 3000);
-      refetch();
+      // Query invalidation from updateUser refreshes user details; avoid refetch errors causing false failure toast.
     } catch (err) {
       ErrorToster(err?.data?.message || "Failed to update profile", 3000);
     }

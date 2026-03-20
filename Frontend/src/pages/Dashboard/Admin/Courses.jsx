@@ -28,6 +28,7 @@ import {
   useGetAllCoursesQuery,
   useUpdateCourseMutation,
 } from "../../../redux/Apis/courseApi";
+import { useGetSubjectsQuery } from "../../../redux";
 import { ErrorToster, SuccessToster } from "../../../components/toster";
 import {
   Table,
@@ -49,6 +50,7 @@ const EMPTY_COURSE = {
   title: "",
   description: "",
   category: "",
+  subjectId: "",
   priceUSD: "",
   image: "",
   videoUrl: "",
@@ -178,6 +180,7 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
           title: course?.title || "",
           description: course?.description || "",
           category: course?.category || "",
+          subjectId: course?.subjectId?._id || course?.subjectId || "",
           priceUSD: String(course?.priceUSD ?? course?.price ?? ""),
           image: course?.image || "",
           videoUrl: course?.videoUrl || course?.video_url || "",
@@ -194,6 +197,8 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
 
   const [createCourse, { isLoading: creating }] = useCreateCourseMutation();
   const [updateCourse, { isLoading: updating }] = useUpdateCourseMutation();
+  const { data: subjectsResponse } = useGetSubjectsQuery({ status: "active" });
+  const subjects = subjectsResponse?.data || [];
   const isBusy = creating || updating;
   const [errors, setErrors] = useState({});
 
@@ -300,6 +305,25 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
                 className={`w-full px-3 py-2.5 rounded-lg border bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 dark:focus:ring-premium-gold/30 resize-none ${errors.description ? "border-red-400 focus:ring-red-200" : "border-slate-300 dark:border-white/10 focus:ring-studprimary/30"}`}
               />
               {errors.description ? <p className="mt-1 text-xs text-red-500">{errors.description}</p> : null}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Subject
+              </label>
+              <select
+                name="subjectId"
+                value={form.subjectId}
+                onChange={handleChange}
+                className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-studprimary/30 dark:focus:ring-premium-gold/30"
+              >
+                <option value="">Select subject (optional)</option>
+                {subjects.map((subject) => (
+                  <option key={subject._id || subject.id} value={subject._id || subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

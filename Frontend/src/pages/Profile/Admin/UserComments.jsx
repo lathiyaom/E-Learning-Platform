@@ -37,7 +37,7 @@ function UserComments() {
       >
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D8A25E] mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-studprimary mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading ...</p>
           </div>
         </div>
@@ -57,7 +57,7 @@ function UserComments() {
             <p className="text-red-600 mb-4">Error: {error.message}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-[#D8A25E] text-white rounded-md hover:opacity-90"
+              className="px-4 py-2 bg-studprimary text-white rounded-md hover:opacity-90"
             >
               Retry
             </button>
@@ -77,31 +77,31 @@ function UserComments() {
           {contacts.map((comment) => (
             <div
               key={comment._id || comment.id}
-              className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 relative pb-14"
+              className="bg-white dark:bg-premium-surface rounded-xl shadow-gold hover:shadow-xl transition-all duration-300 overflow-hidden border border-card-border dark:border-premium-border relative pb-14"
             >
-              <div className="bg-[#343131] text-white px-4 py-2 flex justify-between items-center">
+              <div className="bg-gradient-to-r from-navy-charcoal to-sidebar-dark text-white px-4 py-2 flex justify-between items-center">
                 <h3 className="font-medium text-sm">Feedback</h3>
                 {comment.subject && (
-                  <span className="inline-block px-3 py-1 bg-[#D8A25E] text-white rounded-full text-xs font-medium capitalize">
+                  <span className="inline-block px-3 py-1 bg-studprimary text-white rounded-full text-xs font-medium capitalize">
                     {comment.subject}
                   </span>
                 )}
               </div>
 
-              <div className="p-5 border-b border-gray-100">
+              <div className="p-5 border-b border-card-border dark:border-premium-border">
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#343131] to-[#D8A25E] flex items-center justify-center text-white text-xl font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-navy-charcoal to-studprimary flex items-center justify-center text-white text-xl font-bold">
                     {comment.fullname.charAt(0)}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-[#343131]">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">
                       {comment.fullname}
                     </h3>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm text-gray-600 dark:text-slate-300">
                       <a
                         href={`mailto:${comment.email}`}
-                        className="flex items-center gap-1 hover:text-[#D8A25E] transition-colors"
+                        className="flex items-center gap-1 hover:text-studprimary dark:hover:text-premium-gold transition-colors"
                       >
                         <Mail size={14} />
                         <span className="truncate max-w-[200px]">
@@ -112,7 +112,7 @@ function UserComments() {
                       {comment.phone && (
                         <a
                           href={`tel:${comment.phone}`}
-                          className="flex items-center gap-1 hover:text-[#D8A25E] transition-colors"
+                          className="flex items-center gap-1 hover:text-studprimary dark:hover:text-premium-gold transition-colors"
                         >
                           <Phone size={14} />
                           <span>{comment.phone}</span>
@@ -125,18 +125,18 @@ function UserComments() {
 
               <div className="p-5">
                 <div className="flex items-start gap-2 mb-2">
-                  <MessageCircle size={18} className="text-[#D8A25E] mt-1" />
-                  <h4 className="font-medium text-[#343131]">Message</h4>
+                  <MessageCircle size={18} className="text-studprimary dark:text-premium-gold mt-1" />
+                  <h4 className="font-medium text-slate-900 dark:text-white">Message</h4>
                 </div>
                 <div className="pl-6">
-                  <p className="text-gray-700 whitespace-pre-line bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-line bg-lavender-light dark:bg-premium-surface-2 p-4 rounded-lg border border-card-border dark:border-premium-border">
                     {comment.message}
                   </p>
                 </div>
               </div>
               {/* footer section  */}
-              <div className="bg-gray-50 px-5 py-3 flex flex-wrap justify-between items-center gap-2 absolute bottom-0 left-0 right-0 border-t border-gray-100">
-                <div className="flex items-center text-xs text-gray-500 ">
+              <div className="bg-lavender-light dark:bg-premium-surface-2 px-5 py-3 flex flex-wrap justify-between items-center gap-2 absolute bottom-0 left-0 right-0 border-t border-card-border dark:border-premium-border">
+                <div className="flex items-center text-xs text-gray-500 dark:text-slate-400 ">
                   <Calendar size={14} className="mr-1" />
                   <span>
                     {comment.createdAt
@@ -153,7 +153,7 @@ function UserComments() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button className="px-3 py-1.5 text-sm font-medium rounded-md bg-white border border-[#D8A25E] text-[#D8A25E] hover:bg-[#D8A25E] hover:text-white transition-colors duration-200">
+                  <button className="px-3 py-1.5 text-sm font-medium rounded-md bg-white dark:bg-premium-surface border border-studprimary text-studprimary dark:border-premium-gold dark:text-premium-gold hover:bg-studprimary hover:text-white transition-colors duration-200">
                     Reply
                   </button>
                   <button
@@ -170,12 +170,12 @@ function UserComments() {
         </div>
 
         {contacts.length === 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div className="bg-white dark:bg-premium-surface rounded-xl shadow-gold p-8 text-center border border-card-border dark:border-premium-border">
             <Flag className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-medium text-gray-700 mb-2">
+            <h3 className="text-xl font-medium text-gray-700 dark:text-white mb-2">
               No Comments Yet
             </h3>
-            <p className="text-gray-500">
+            <p className="text-gray-500 dark:text-slate-400">
               When users send comments or feedback, they will appear here.
             </p>
           </div>

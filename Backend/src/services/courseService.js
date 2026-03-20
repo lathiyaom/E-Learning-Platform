@@ -1,4 +1,23 @@
-const { Course } = require("../models");
+const { Course, Subject } = require("../models");
+
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const resolveSubjectForTenant = async (subjectId, tenantId) => {
+  if (!subjectId) return null;
+  if (!tenantId) throw new Error("Tenant ID is required to map subject");
+
+  const subject = await Subject.findOne({
+    _id: subjectId,
+    tenantId,
+    status: "active",
+  });
+
+  if (!subject) {
+    throw new Error("Selected subject is invalid or not active for this organization");
+  }
+
+  return subject;
+};
 
 const buildCourseSortClause = (sortBy = "popular") => {
   let sortClause = { rating: -1, reviewCount: -1 };
@@ -47,11 +66,15 @@ const createCourse = async (courseData) => {
     priceUSD,
     currency,
     isPaid,
+    subjectId,
     tenantId,
     createdBy,
   } = courseData;
 
-  if (!title || !image || !description || !category) {
+  const subject = await resolveSubjectForTenant(subjectId, tenantId);
+  const normalizedCategory = String(category || subject?.name || "").trim();
+
+  if (!title || !image || !description || !normalizedCategory) {
     throw new Error("Please enter necessary details");
   }
 
@@ -78,7 +101,10 @@ const createCourse = async (courseData) => {
 
   // Check for duplicate course title within same tenant (but exclude own updates)
   const existingCourse = await Course.findOne({
-    title,
+    title: {
+      $regex: `^${escapeRegex(String(title).trim())}$`,
+      $options: "i",
+    },
     _id: { $ne: courseData.courseId }, // Exclude if updating
     $or: [{ tenantId }, { organization_id: tenantId }],
   });
@@ -92,7 +118,8 @@ const createCourse = async (courseData) => {
     title,
     image,
     description,
-    category,
+    category: normalizedCategory,
+    subjectId: subject?._id || null,
     rating: rating || 0,
     reviewCount: reviewCount || 0,
     video_url: courseVideoUrl,
@@ -122,18 +149,19 @@ const getAllCourses = async (tenantId, sortBy = "popular") => {
   }
   // If no tenantId (e.g., teacher not assigned), return all courses
 
-  const courses = await Course.find(query).sort(sortClause);
-
+  const courses = await enrichCourseQuery(Course.find(query)).sort(sortClause);
   return courses;
 };
+
+const enrichCourseQuery = (query) => query.populate("subjectId", "name code stream status");
 
 const getPlatformCourses = async (sortBy = "popular") => {
   const sortClause = buildCourseSortClause(sortBy);
 
   // Courses can be linked with either legacy `tenantId` or newer `organization_id`.
-  const courses = await Course.find({
+  const courses = await enrichCourseQuery(Course.find({
     $or: [{ tenantId: { $exists: true, $ne: null } }, { organization_id: { $exists: true, $ne: null } }],
-  })
+  }))
     .sort(sortClause)
     .populate("tenantId", "name code")
     .populate("organization_id", "name code")
@@ -152,7 +180,7 @@ const getCourseById = async (id, tenantId) => {
       }
     : { _id: id };
 
-  const course = await Course.findOne(query)
+  const course = await enrichCourseQuery(Course.findOne(query))
     .populate("teacher_id", "firstName lastName email")
     .populate("createdBy", "firstName lastName email");
   if (!course) throw new Error("Course Not Found");
@@ -170,7 +198,9 @@ const updateCourse = async (id, tenantId, updateData) => {
   });
   if (!course) throw new Error("Course Not Found");
 
-  const { title, image, description, category, video_url, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount, level } = updateData;
+  const { title, image, description, category, subjectId, video_url, videoUrl, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount, level } = updateData;
+
+  const subject = await resolveSubjectForTenant(subjectId, tenantId);
 
   if (title !== undefined && title.length === 0)
     throw new Error("Title is required");
@@ -186,6 +216,12 @@ const updateCourse = async (id, tenantId, updateData) => {
   if (image) course.image = image;
   if (description) course.description = description;
   if (category) course.category = category;
+  if (subjectId !== undefined) {
+    course.subjectId = subject ? subject._id : null;
+    if (!category && subject?.name) {
+      course.category = subject.name;
+    }
+  }
   const nextVideoUrl = video_url || videoUrl;
   if (nextVideoUrl) {
     course.video_url = nextVideoUrl;

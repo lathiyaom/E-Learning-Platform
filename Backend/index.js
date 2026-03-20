@@ -136,6 +136,7 @@ const lectureProgressRoutes = require("./src/routes/lectureProgressRoutes");
 const teacherAssignmentRoutes = require("./src/routes/teacherAssignmentRoutes");
 const superAdminTeachersRoute = require("./src/routes/superAdminTeachersRoute");
 const teacherApplicationRoutes = require("./src/routes/teacherApplicationRoutes");
+const subjectRoutes = require("./src/routes/subjectRoutes");
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -504,6 +505,7 @@ app.use("/Progress", lectureProgressRoutes);
 app.use("/Admin", teacherAssignmentRoutes);
 app.use("/SuperAdmin", superAdminTeachersRoute);
 app.use("/TeacherApplication", teacherApplicationRoutes);
+app.use("/Subject", subjectRoutes);
 
 // 404 Handler
 app.use(notFoundHandler);

@@ -21,6 +21,7 @@ const Event = require("./Event.mongoose");
 const Holiday = require("./Holiday.mongoose");
 const Lecture = require("./Lecture.mongoose");
 const Rating = require("./Rating.mongoose");
+const Subject = require("./Subject.mongoose");
 
 // System Models
 const ActivityLog = require("./ActivityLog.mongoose");
@@ -47,6 +48,7 @@ module.exports = {
   Holiday,
   Lecture,
   Rating,
+  Subject,
   ActivityLog,
   Conversation,
   Message,

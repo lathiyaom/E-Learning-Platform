@@ -12,6 +12,7 @@ import {
   Minus,
 } from "lucide-react";
 import { useGetCourseByIdQuery, useUpdateCourseMutation } from "../../../redux/Apis/courseApi";
+import { useGetSubjectsQuery } from "../../../redux";
 import { SuccessToster, ErrorToster } from "../../../components/toster";
 function CourseUpdateForm({ courseId, onClose }) {
   const [newTag, setNewTag] = useState("");
@@ -21,6 +22,7 @@ function CourseUpdateForm({ courseId, onClose }) {
     description: "",
     image: "",
     category: "",
+    subjectId: "",
     videoUrl: "",
     tags: [],
     id: courseId || "",
@@ -37,6 +39,8 @@ function CourseUpdateForm({ courseId, onClose }) {
   console.log("🚀 ~ CourseUpdateForm ~ courseDataFromAPI:", courseDataFromAPI)
 
   const [updateCourse, { isLoading: isUpdating }] = useUpdateCourseMutation();
+  const { data: subjectsResponse } = useGetSubjectsQuery({ status: "active" });
+  const subjects = subjectsResponse?.data || [];
   console.log("🚀 ~ CourseUpdateForm ~ updateCourse:", updateCourse)
 
   useEffect(() => {
@@ -51,6 +55,7 @@ function CourseUpdateForm({ courseId, onClose }) {
         description: course.description || "",
         image: course.image || "",
         category: course.category || "",
+        subjectId: course.subjectId?._id || course.subjectId || "",
         videoUrl: course.videoUrl || "",
         tags: course.tags || [],
         id: course.id || courseId || "",
@@ -181,6 +186,31 @@ function CourseUpdateForm({ courseId, onClose }) {
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300"
                   placeholder="Course Title"
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[#343131] font-medium mb-2">
+                Subject
+              </label>
+              <div className="relative">
+                <Tag
+                  className="absolute left-3 top-3 text-gray-400"
+                  size={18}
+                />
+                <select
+                  name="subjectId"
+                  value={courseData.subjectId}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#D8A25E] focus:border-transparent transition-all duration-300 appearance-none"
+                >
+                  <option value="">Select Subject (optional)</option>
+                  {subjects.map((subject) => (
+                    <option key={subject._id || subject.id} value={subject._id || subject.id}>
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
