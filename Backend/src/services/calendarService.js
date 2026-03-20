@@ -12,7 +12,11 @@ const calendarService = {
       const calendarData = {};
 
       // Get all dates for the month
-      for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+      for (
+        let date = new Date(startDate);
+        date <= endDate;
+        date.setDate(date.getDate() + 1)
+      ) {
         const dateKey = date.toISOString().split("T")[0];
         calendarData[dateKey] = {
           lectures: [],
@@ -53,10 +57,14 @@ const calendarService = {
         }
       });
 
-      
       // Get events
       const eventQuery = {
-        tenantId,
+        $or: [
+          { organization_id: tenantId },
+          { tenantId: tenantId },
+          { tenantId: null },
+          { organization_id: null },
+        ],
         eventDate: { $gte: startDate, $lte: endDate },
       };
 
@@ -78,8 +86,10 @@ const calendarService = {
       // Get holidays (platform + organization)
       const holidays = await Holiday.find({
         $or: [
+          { organization_id: tenantId },
+          { tenantId: tenantId },
           { tenantId: null },
-          { tenantId },
+          { organization_id: null },
         ],
         date: { $gte: startDate, $lte: endDate },
       });
@@ -112,7 +122,15 @@ const calendarService = {
       startOfWeek.setDate(now.getDate() - now.getDay());
 
       const weekData = {};
-      const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const days = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
 
       for (let i = 0; i < 7; i++) {
         const date = new Date(startOfWeek);
@@ -142,8 +160,10 @@ const calendarService = {
     try {
       const holiday = await Holiday.findOne({
         $or: [
+          { organization_id: tenantId },
+          { tenantId: tenantId },
           { tenantId: null },
-          { tenantId },
+          { organization_id: null },
         ],
         date: {
           $gte: new Date(date).setHours(0, 0, 0, 0),

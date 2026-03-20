@@ -1,7 +1,23 @@
 const { Event } = require("../models");
 
-const CURRENT_EVENT_TYPES = ["holiday", "meeting", "workshop", "deadline", "celebration", "other"];
-const LEGACY_EVENT_TYPES = ["seminar", "workshop", "webinar", "competition", "cultural", "sports", "conference", "other"];
+const CURRENT_EVENT_TYPES = [
+  "holiday",
+  "meeting",
+  "workshop",
+  "deadline",
+  "celebration",
+  "other",
+];
+const LEGACY_EVENT_TYPES = [
+  "seminar",
+  "workshop",
+  "webinar",
+  "competition",
+  "cultural",
+  "sports",
+  "conference",
+  "other",
+];
 
 const mapLegacyTypeToCurrent = (value) => {
   if (!value) return "other";
@@ -79,20 +95,29 @@ const normalizeEvent = (eventDoc) => {
     type: event.type || event.event_type,
     createdBy: event.createdBy || event.created_by,
     tenantId: event.tenantId || event.organization_id,
-    targetAudience: event.targetAudience || mapRoleToTargetAudience(event.target_role || "all"),
-    registrationRequired: event.registrationRequired ?? event.requires_registration ?? false,
+    targetAudience:
+      event.targetAudience ||
+      mapRoleToTargetAudience(event.target_role || "all"),
+    registrationRequired:
+      event.registrationRequired ?? event.requires_registration ?? false,
     maxParticipants: event.maxParticipants ?? event.max_participants ?? null,
   };
 };
 
 const buildEventPayload = (body, req) => {
   const eventType = mapLegacyTypeToCurrent(body.event_type || body.type);
-  const legacyType = LEGACY_EVENT_TYPES.includes(String(body.type || "").toLowerCase())
+  const legacyType = LEGACY_EVENT_TYPES.includes(
+    String(body.type || "").toLowerCase(),
+  )
     ? String(body.type).toLowerCase()
     : "other";
 
-  const startDate = body.start_date || combineDateAndTime(body.eventDate, body.startTime);
-  const endDate = body.end_date || combineDateAndTime(body.eventDate, body.endTime, true) || startDate;
+  const startDate =
+    body.start_date || combineDateAndTime(body.eventDate, body.startTime);
+  const endDate =
+    body.end_date ||
+    combineDateAndTime(body.eventDate, body.endTime, true) ||
+    startDate;
 
   return {
     organization_id: req.tenantId,
@@ -107,14 +132,18 @@ const buildEventPayload = (body, req) => {
     startTime: body.startTime || formatTime(startDate),
     endTime: body.endTime || formatTime(endDate),
     location: body.location || "",
-    target_role: body.target_role || mapTargetAudienceToRole(body.targetAudience),
-    targetAudience: body.targetAudience || mapRoleToTargetAudience(body.target_role || "all"),
+    target_role:
+      body.target_role || mapTargetAudienceToRole(body.targetAudience),
+    targetAudience:
+      body.targetAudience || mapRoleToTargetAudience(body.target_role || "all"),
     is_recurring: body.is_recurring ?? body.isRecurring ?? false,
     recurring_pattern: body.recurring_pattern || null,
     recurring_end_date: body.recurring_end_date || null,
     is_public: body.is_public ?? true,
-    requires_registration: body.requires_registration ?? body.registrationRequired ?? false,
-    registrationRequired: body.registrationRequired ?? body.requires_registration ?? false,
+    requires_registration:
+      body.requires_registration ?? body.registrationRequired ?? false,
+    registrationRequired:
+      body.registrationRequired ?? body.requires_registration ?? false,
     registration_deadline: body.registration_deadline || null,
     max_participants: body.max_participants ?? body.maxParticipants ?? null,
     maxParticipants: body.maxParticipants ?? body.max_participants ?? null,
@@ -128,24 +157,44 @@ const buildEventPayload = (body, req) => {
     tags: Array.isArray(body.tags)
       ? body.tags
       : typeof body.tags === "string" && body.tags.trim()
-        ? body.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        ? body.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
         : [],
   };
 };
+
+const buildEventScopeQuery = (tenantId) => ({
+  $or: [
+    { organization_id: tenantId },
+    { tenantId: tenantId },
+    { tenantId: null },
+    { organization_id: null },
+  ],
+});
 
 const eventController = {
   createEvent: async (req, res) => {
     try {
       const role = String(req.user.userType || "").toLowerCase();
       if (!["admin", "superadmin"].includes(role)) {
-        return res.status(403).json({ success: false, message: "Unauthorized to create event" });
+        return res
+          .status(403)
+          .json({ success: false, message: "Unauthorized to create event" });
       }
 
       const payload = buildEventPayload(req.body, req);
-      if (!payload.title || !payload.description || !payload.start_date || !payload.end_date) {
+      if (
+        !payload.title ||
+        !payload.description ||
+        !payload.start_date ||
+        !payload.end_date
+      ) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: title, description, start_date, end_date",
+          message:
+            "Missing required fields: title, description, start_date, end_date",
         });
       }
 
@@ -165,21 +214,17 @@ const eventController = {
     try {
       const { type, status, page = 1, limit = 10, search } = req.query;
       const skip = (Number(page) - 1) * Number(limit);
-      const query = {
-        $or: [{ organization_id: req.tenantId }, { tenantId: req.tenantId }],
-      };
+      const query = buildEventScopeQuery(req.tenantId);
 
       if (type) {
-        query.$and = [{ $or: [{ event_type: mapLegacyTypeToCurrent(type) }, { type }] }];
+        query.$and = [
+          { $or: [{ event_type: mapLegacyTypeToCurrent(type) }, { type }] },
+        ];
       }
       if (status) {
         query.status = status;
       }
       if (search) {
-        query.$or = [
-          { organization_id: req.tenantId },
-          { tenantId: req.tenantId },
-        ];
         query.$and = [
           ...(query.$and || []),
           {
@@ -218,11 +263,13 @@ const eventController = {
     try {
       const event = await Event.findOne({
         _id: req.params.id,
-        $or: [{ organization_id: req.tenantId }, { tenantId: req.tenantId }],
+        ...buildEventScopeQuery(req.tenantId),
       });
 
       if (!event) {
-        return res.status(404).json({ success: false, message: "Event not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Event not found" });
       }
 
       return res.status(200).json({
@@ -245,7 +292,7 @@ const eventController = {
       const skip = (Number(page) - 1) * Number(limit);
 
       const query = {
-        $or: [{ organization_id: req.tenantId }, { tenantId: req.tenantId }],
+        ...buildEventScopeQuery(req.tenantId),
         status: { $ne: "cancelled" },
         $and: [
           {
@@ -289,23 +336,41 @@ const eventController = {
     try {
       const event = await Event.findOne({
         _id: req.params.id,
-        $or: [{ organization_id: req.tenantId }, { tenantId: req.tenantId }],
+        ...buildEventScopeQuery(req.tenantId),
       });
 
       if (!event) {
-        return res.status(404).json({ success: false, message: "Event not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Event not found" });
       }
 
       const registrations = event.registeredParticipants || [];
       if (!(event.registrationRequired ?? event.requires_registration)) {
-        return res.status(400).json({ success: false, message: "Registration is not required for this event" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Registration is not required for this event",
+          });
       }
-      if (registrations.some((participantId) => String(participantId) === String(req.user.id))) {
-        return res.status(400).json({ success: false, message: "Already registered for this event" });
+      if (
+        registrations.some(
+          (participantId) => String(participantId) === String(req.user.id),
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Already registered for this event",
+          });
       }
       const maxParticipants = event.maxParticipants ?? event.max_participants;
       if (maxParticipants && registrations.length >= maxParticipants) {
-        return res.status(400).json({ success: false, message: "Event registration is full" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Event registration is full" });
       }
 
       event.registeredParticipants = [...registrations, req.user.id];
@@ -325,15 +390,17 @@ const eventController = {
     try {
       const event = await Event.findOne({
         _id: req.params.id,
-        $or: [{ organization_id: req.tenantId }, { tenantId: req.tenantId }],
+        ...buildEventScopeQuery(req.tenantId),
       });
 
       if (!event) {
-        return res.status(404).json({ success: false, message: "Event not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Event not found" });
       }
 
       const registrations = (event.registeredParticipants || []).filter(
-        (participantId) => String(participantId) !== String(req.user.id)
+        (participantId) => String(participantId) !== String(req.user.id),
       );
       event.registeredParticipants = registrations;
       await event.save();
@@ -352,18 +419,25 @@ const eventController = {
     try {
       const role = String(req.user.userType || "").toLowerCase();
       if (!["admin", "superadmin"].includes(role)) {
-        return res.status(403).json({ success: false, message: "Unauthorized" });
+        return res
+          .status(403)
+          .json({ success: false, message: "Unauthorized" });
       }
 
       const event = await Event.findOne({
         _id: req.params.id,
-        $or: [{ organization_id: req.tenantId }, { tenantId: req.tenantId }],
+        ...buildEventScopeQuery(req.tenantId),
       });
       if (!event) {
-        return res.status(404).json({ success: false, message: "Event not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Event not found" });
       }
 
-      const payload = buildEventPayload({ ...event.toObject(), ...req.body }, req);
+      const payload = buildEventPayload(
+        { ...event.toObject(), ...req.body },
+        req,
+      );
       payload.created_by = event.created_by || payload.created_by;
       payload.createdBy = event.createdBy || payload.createdBy;
 
@@ -384,16 +458,20 @@ const eventController = {
     try {
       const role = String(req.user.userType || "").toLowerCase();
       if (!["admin", "superadmin"].includes(role)) {
-        return res.status(403).json({ success: false, message: "Unauthorized" });
+        return res
+          .status(403)
+          .json({ success: false, message: "Unauthorized" });
       }
 
       const event = await Event.findOneAndDelete({
         _id: req.params.id,
-        $or: [{ organization_id: req.tenantId }, { tenantId: req.tenantId }],
+        ...buildEventScopeQuery(req.tenantId),
       });
 
       if (!event) {
-        return res.status(404).json({ success: false, message: "Event not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Event not found" });
       }
 
       return res.status(200).json({

@@ -42,6 +42,13 @@ const formatDate = (value) => {
   });
 };
 
+const formatDateRange = (startVal, endVal) => {
+  const startStr = formatDate(startVal);
+  if (!endVal) return startStr;
+  const endStr = formatDate(endVal);
+  return (startStr === endStr || endStr === "Date TBD") ? startStr : `${startStr} - ${endStr}`;
+};
+
 function AdminDashboard() {
   const breadcrumbItems = getBreadcrumbs("DASHBOARD");
 
@@ -378,7 +385,7 @@ function AdminDashboard() {
                       {event.title || "Untitled Event"}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {formatDate(event.startDate || event.eventDate)}
+                      {formatDateRange(event.startDate || event.start_date || event.eventDate, event.endDate || event.end_date)}
                     </p>
                   </div>
                 ))
@@ -414,7 +421,7 @@ function AdminDashboard() {
                       {holiday.title || "Untitled Holiday"}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {formatDate(holiday.date || holiday.startDate || holiday.holidayDate)}
+                      {formatDateRange(holiday.date || holiday.startDate || holiday.start_date || holiday.holidayDate, holiday.endDate || holiday.end_date)}
                     </p>
                   </div>
                 ))

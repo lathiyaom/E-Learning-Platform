@@ -1,7 +1,13 @@
 const { Holiday } = require("../models");
 
 const CURRENT_HOLIDAY_TYPES = ["public", "restricted", "optional"];
-const LEGACY_HOLIDAY_TYPES = ["platform", "organization", "national", "regional", "religious"];
+const LEGACY_HOLIDAY_TYPES = [
+  "platform",
+  "organization",
+  "national",
+  "regional",
+  "religious",
+];
 
 const mapLegacyHolidayTypeToCurrent = (value) => {
   if (!value) return "restricted";
@@ -32,8 +38,12 @@ const normalizeHoliday = (holidayDoc) => {
 };
 
 const buildHolidayPayload = (body, req) => {
-  const holidayType = mapLegacyHolidayTypeToCurrent(body.holiday_type || body.type);
-  const legacyType = LEGACY_HOLIDAY_TYPES.includes(String(body.type || "").toLowerCase())
+  const holidayType = mapLegacyHolidayTypeToCurrent(
+    body.holiday_type || body.type,
+  );
+  const legacyType = LEGACY_HOLIDAY_TYPES.includes(
+    String(body.type || "").toLowerCase(),
+  )
     ? String(body.type).toLowerCase()
     : "organization";
 
@@ -65,7 +75,10 @@ const buildHolidayPayload = (body, req) => {
     tags: Array.isArray(body.tags)
       ? body.tags
       : typeof body.tags === "string" && body.tags.trim()
-        ? body.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        ? body.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
         : [],
     send_reminder: body.send_reminder ?? true,
     reminder_sent: body.reminder_sent ?? false,
@@ -75,8 +88,9 @@ const buildHolidayPayload = (body, req) => {
 const buildHolidayScopeQuery = (tenantId) => ({
   $or: [
     { organization_id: tenantId },
-    { tenantId },
+    { tenantId: tenantId },
     { tenantId: null },
+    { organization_id: null },
   ],
 });
 
@@ -85,7 +99,9 @@ const holidayController = {
     try {
       const role = String(req.user.userType || "").toLowerCase();
       if (!["admin", "superadmin"].includes(role)) {
-        return res.status(403).json({ success: false, message: "Unauthorized to create holiday" });
+        return res
+          .status(403)
+          .json({ success: false, message: "Unauthorized to create holiday" });
       }
 
       const payload = buildHolidayPayload(req.body, req);
@@ -115,7 +131,14 @@ const holidayController = {
       const query = buildHolidayScopeQuery(req.tenantId);
 
       if (type) {
-        query.$and = [{ $or: [{ holiday_type: mapLegacyHolidayTypeToCurrent(type) }, { type }] }];
+        query.$and = [
+          {
+            $or: [
+              { holiday_type: mapLegacyHolidayTypeToCurrent(type) },
+              { type },
+            ],
+          },
+        ];
       }
 
       if (year) {
@@ -191,7 +214,9 @@ const holidayController = {
       });
 
       if (!holiday) {
-        return res.status(404).json({ success: false, message: "Holiday not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Holiday not found" });
       }
 
       return res.status(200).json({
@@ -208,7 +233,9 @@ const holidayController = {
     try {
       const role = String(req.user.userType || "").toLowerCase();
       if (!["admin", "superadmin"].includes(role)) {
-        return res.status(403).json({ success: false, message: "Unauthorized" });
+        return res
+          .status(403)
+          .json({ success: false, message: "Unauthorized" });
       }
 
       const holiday = await Holiday.findOne({
@@ -217,10 +244,15 @@ const holidayController = {
       });
 
       if (!holiday) {
-        return res.status(404).json({ success: false, message: "Holiday not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Holiday not found" });
       }
 
-      const payload = buildHolidayPayload({ ...holiday.toObject(), ...req.body }, req);
+      const payload = buildHolidayPayload(
+        { ...holiday.toObject(), ...req.body },
+        req,
+      );
       payload.created_by = holiday.created_by || payload.created_by;
       payload.createdBy = holiday.createdBy || payload.createdBy;
 
@@ -241,7 +273,9 @@ const holidayController = {
     try {
       const role = String(req.user.userType || "").toLowerCase();
       if (!["admin", "superadmin"].includes(role)) {
-        return res.status(403).json({ success: false, message: "Unauthorized" });
+        return res
+          .status(403)
+          .json({ success: false, message: "Unauthorized" });
       }
 
       const holiday = await Holiday.findOneAndDelete({
@@ -250,7 +284,9 @@ const holidayController = {
       });
 
       if (!holiday) {
-        return res.status(404).json({ success: false, message: "Holiday not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Holiday not found" });
       }
 
       return res.status(200).json({
@@ -267,8 +303,15 @@ const holidayController = {
     try {
       const yearNum = Number(req.params.year);
       const monthNum = Number(req.params.month);
-      if (Number.isNaN(yearNum) || Number.isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
-        return res.status(400).json({ success: false, message: "Invalid year or month" });
+      if (
+        Number.isNaN(yearNum) ||
+        Number.isNaN(monthNum) ||
+        monthNum < 1 ||
+        monthNum > 12
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid year or month" });
       }
 
       const startDate = new Date(yearNum, monthNum - 1, 1);

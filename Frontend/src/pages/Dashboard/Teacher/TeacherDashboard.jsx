@@ -5,6 +5,14 @@ import AdminLayout from "../../../utils/Adminlayoute";
 import { eventApi } from "../../../api/eventApi";
 import { holidayApi } from "../../../api/holidayApi";
 
+const formatDateRange = (startVal, endVal) => {
+  if (!startVal) return "Date TBD";
+  const startStr = new Date(startVal).toLocaleDateString();
+  if (!endVal) return startStr;
+  const endStr = new Date(endVal).toLocaleDateString();
+  return (startStr === endStr || endStr === "Invalid Date") ? startStr : `${startStr} - ${endStr}`;
+};
+
 const TeacherDashboard = () => {
   const { user } = useSelector((state) => state.auth || {});
   const { data: coursesData } = useGetAllCoursesQuery();
@@ -102,7 +110,7 @@ const TeacherDashboard = () => {
                 <div key={event._id} className="rounded-lg border border-slate-200 p-3">
                   <p className="font-semibold text-slate-800">{event.title}</p>
                   <p className="text-xs text-slate-500">
-                    {event.startDate ? new Date(event.startDate).toLocaleDateString() : "Date TBD"}
+                    {formatDateRange(event.start_date || event.eventDate || event.startDate, event.end_date || event.endDate)}
                   </p>
                 </div>
               ))}
@@ -120,7 +128,7 @@ const TeacherDashboard = () => {
                 <div key={holiday._id} className="rounded-lg border border-slate-200 p-3">
                   <p className="font-semibold text-slate-800">{holiday.title}</p>
                   <p className="text-xs text-slate-500">
-                    {holiday.startDate ? new Date(holiday.startDate).toLocaleDateString() : "Date TBD"}
+                    {formatDateRange(holiday.date || holiday.startDate || holiday.start_date, holiday.endDate || holiday.end_date)}
                   </p>
                 </div>
               ))}

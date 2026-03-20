@@ -34,12 +34,10 @@ exports.createAssignment = async (req, res) => {
         .json({ success: false, message: "Course ID is required." });
     }
     if (!title || !description) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Title and description are required.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Title and description are required.",
+      });
     }
 
     // Validate course belongs to teacher
@@ -59,12 +57,10 @@ exports.createAssignment = async (req, res) => {
     // Attempt to extract tenant from user, or fallback to course's tenant
     const finalTenantId = tenantId || course.tenantId || course.organization_id;
     if (!finalTenantId) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Could not resolve a Tenant ID for this assignment.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Could not resolve a Tenant ID for this assignment.",
+      });
     }
 
     const assignment = await Assignment.create({
@@ -442,6 +438,14 @@ exports.submitAssignment = async (req, res) => {
         message: "Assignment not found",
       });
     }
+
+    const tenantId =
+      req.tenantId ||
+      assignment.tenantId ||
+      req.user.tenantId ||
+      req.user.tenant_id ||
+      req.user.organization_id ||
+      assignment.organization_id;
 
     // Check if student is enrolled
     const enrollment = await Enrollment.findOne({
