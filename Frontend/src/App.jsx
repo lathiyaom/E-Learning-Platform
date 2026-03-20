@@ -48,6 +48,7 @@ import TeacherAttendance from "./pages/Dashboard/Teacher/Attendance.jsx";
 import TeacherAssignments from "./pages/Dashboard/Teacher/Assignments.jsx";
 
 import TeacherStudents from "./pages/Dashboard/Teacher/Students.jsx";
+import TeacherMaterials from "./pages/Dashboard/Teacher/TeacherMaterials.jsx";
 import TeacherLectureManagement from "./pages/Dashboard/Teacher/TeacherLectureManagement.jsx";
 import TeacherAnalyticsDashboard from "./pages/Dashboard/Teacher/TeacherAnalyticsDashboard.jsx";
 import CourseForm from "./pages/Dashboard/Teacher/CourseForm.jsx";
@@ -158,6 +159,7 @@ function App() {
             <Route path="/teacher/courses" element={<ProtectedRoute requiredRole="teacher"><MyCourses /></ProtectedRoute>} />
             <Route path="/teacher/attendance" element={<ProtectedRoute requiredRole="teacher"><TeacherAttendance /></ProtectedRoute>} />
             <Route path="/teacher/assignments" element={<ProtectedRoute requiredRole="teacher"><TeacherAssignments /></ProtectedRoute>} />
+            <Route path="/teacher/materials" element={<ProtectedRoute requiredRole="teacher"><TeacherMaterials /></ProtectedRoute>} />
 
                         <Route path="/teacher/students" element={<ProtectedRoute requiredRole="teacher"><TeacherStudents /></ProtectedRoute>} />
             <Route path="/teacher/lectures" element={<ProtectedRoute requiredRole="teacher"><TeacherLectureManagement /></ProtectedRoute>} />

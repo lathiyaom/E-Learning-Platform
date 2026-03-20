@@ -1,5 +1,6 @@
-const cloudinary = require("cloudinary").v2;
-const { CourseMaterial } = require("../models");
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const { CourseMaterial, Course } = require('../models');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -8,46 +9,93 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Configure Multer for file uploads
+const storage = multer.memoryStorage();
+const uploadMiddleware = multer({
+  storage,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'video/mp4',
+      'video/avi',
+      'video/mov',
+      'video/wmv',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'image/jpeg',
+      'image/png',
+      'image/gif'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only videos, PDFs, documents, and images are allowed.'), false);
+    }
+  }
+});
+
 // Upload course material
 const uploadMaterial = async (req, res) => {
   try {
     const { course_id, title, description, type, is_downloadable } = req.body;
     const teacherId = req.user.id;
     const organizationId = req.tenantId;
+    const isAdmin = String(req.user.userType || '').toLowerCase() === 'admin';
+    
+    const course = await Course.findOne({
+      _id: course_id,
+      $or: [{ tenantId: organizationId }, { organization_id: organizationId }],
+    }).select('teacher_id createdBy');
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found in your organization',
+      });
+    }
+
+    const ownerTeacherId = course.teacher_id || course.createdBy || teacherId;
+
+    if (!isAdmin && String(ownerTeacherId) !== String(teacherId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Teachers can upload files only for their own courses',
+      });
+    }
 
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "No file uploaded",
+        message: 'No file uploaded',
       });
     }
 
     // Upload to Cloudinary
     const uploadResult = await new Promise((resolve, reject) => {
-      let resourceType = "auto";
-      if (type === "video") resourceType = "video";
-      else if (type === "pdf" || type === "document") resourceType = "raw";
-
-      cloudinary.uploader
-        .upload_stream(
-          {
-            resource_type: resourceType,
-            folder: `courses/${course_id}/materials`,
-            public_id: `${Date.now()}-${req.file.originalname}`,
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        )
-        .end(req.file.buffer);
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: type === 'video' ? 'video' : 'auto',
+          folder: `courses/${course_id}/materials`,
+          public_id: `${Date.now()}-${req.file.originalname}`,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(req.file.buffer);
     });
 
     // Create material record
     const material = new CourseMaterial({
       course_id,
       organization_id: organizationId,
-      teacher_id: teacherId,
+      teacher_id: ownerTeacherId,
       title: title || req.file.originalname,
       type,
       file_url: uploadResult.secure_url,
@@ -55,25 +103,25 @@ const uploadMaterial = async (req, res) => {
       file_name: req.file.originalname,
       mime_type: req.file.mimetype,
       duration: uploadResult.duration || null,
-      description: description || "",
-      is_downloadable: is_downloadable !== "false",
+      description: description || '',
+      is_downloadable: is_downloadable !== 'false',
       order: 0,
-      status: "active",
+      status: 'active'
     });
 
     await material.save();
 
     res.status(201).json({
       success: true,
-      message: "Material uploaded successfully",
-      data: material,
+      message: 'Material uploaded successfully',
+      data: material
     });
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error('Upload error:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to upload material",
-      error: error.message,
+      message: 'Failed to upload material',
+      error: error.message
     });
   }
 };
@@ -83,30 +131,29 @@ const getCourseMaterials = async (req, res) => {
   try {
     const { courseId } = req.params;
     const userId = req.user.id;
-    const userType = req.user.userType;
+    const userType = String(req.user.userType || req.user.role || '').toLowerCase();
 
     // Get materials with proper filtering based on user role
     let materials;
-    if (userType === "teacher") {
+    if (userType === 'teacher') {
       // Teachers can see all materials for their courses
       materials = await CourseMaterial.find({
         course_id: courseId,
         teacher_id: userId,
         organization_id: req.tenantId,
-        status: "active",
+        status: 'active'
       }).sort({ order: 1, createdAt: 1 });
-    } else if (userType === "student") {
-      // Students can see materials from enrolled courses
+    } else if (userType === 'student') {
       materials = await CourseMaterial.find({
         course_id: courseId,
-        status: "active",
+        status: 'active'
       }).sort({ order: 1, createdAt: 1 });
     } else {
       // Admins can see all materials in their organization
       materials = await CourseMaterial.find({
         course_id: courseId,
         organization_id: req.tenantId,
-        status: "active",
+        status: 'active'
       }).sort({ order: 1, createdAt: 1 });
     }
 
@@ -116,18 +163,17 @@ const getCourseMaterials = async (req, res) => {
 
       if (
         matObj.file_url &&
-        matObj.file_url.includes("res.cloudinary.com") &&
-        matObj.file_url.includes("/upload/")
+        matObj.file_url.includes('res.cloudinary.com') &&
+        matObj.file_url.includes('/upload/')
       ) {
         try {
-          const parts = matObj.file_url.split("/upload/");
-          const isRaw = matObj.file_url.includes("/raw/upload/");
-          const isVideo = matObj.file_url.includes("/video/upload/");
-          const rType = isRaw ? "raw" : isVideo ? "video" : "image";
+          const parts = matObj.file_url.split('/upload/');
+          const isRaw = matObj.file_url.includes('/raw/upload/');
+          const isVideo = matObj.file_url.includes('/video/upload/');
+          const rType = isRaw ? 'raw' : isVideo ? 'video' : 'image';
 
           const afterUpload = parts[1];
-          // Determine public ID (strip version number e.g. v1234567890/)
-          const publicId = afterUpload.replace(/^v\d+\//, "");
+          const publicId = afterUpload.replace(/^v\d+\//, '');
 
           matObj.file_url = cloudinary.utils.url(publicId, {
             resource_type: rType,
@@ -135,7 +181,7 @@ const getCourseMaterials = async (req, res) => {
             secure: true,
           });
         } catch (err) {
-          console.error("Failed to sign URL for material:", matObj._id, err);
+          console.error('Failed to sign URL for material:', matObj._id, err);
         }
       }
       return matObj;
@@ -144,13 +190,14 @@ const getCourseMaterials = async (req, res) => {
     res.status(200).json({
       success: true,
       data: materialsWithSignedUrls,
-      count: materialsWithSignedUrls.length,
+      count: materialsWithSignedUrls.length
     });
   } catch (error) {
+    console.error('Fetch materials error:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch materials",
-      error: error.message,
+      message: 'Failed to fetch materials',
+      error: error.message
     });
   }
 };
@@ -161,17 +208,18 @@ const updateMaterial = async (req, res) => {
     const { id } = req.params;
     const { title, description, is_downloadable, order } = req.body;
     const teacherId = req.user.id;
+    const isAdmin = String(req.user.userType || '').toLowerCase() === 'admin';
 
-    const material = await CourseMaterial.findOne({
-      _id: id,
-      teacher_id: teacherId,
-      organization_id: req.tenantId,
-    });
+    const filter = isAdmin
+      ? { _id: id, organization_id: req.tenantId }
+      : { _id: id, teacher_id: teacherId, organization_id: req.tenantId };
+
+    const material = await CourseMaterial.findOne(filter);
 
     if (!material) {
       return res.status(404).json({
         success: false,
-        message: "Material not found",
+        message: 'Material not found'
       });
     }
 
@@ -185,14 +233,15 @@ const updateMaterial = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Material updated successfully",
-      data: material,
+      message: 'Material updated successfully',
+      data: material
     });
   } catch (error) {
+    console.error('Update error:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to update material",
-      error: error.message,
+      message: 'Failed to update material',
+      error: error.message
     });
   }
 };
@@ -202,46 +251,46 @@ const deleteMaterial = async (req, res) => {
   try {
     const { id } = req.params;
     const teacherId = req.user.id;
+    const isAdmin = String(req.user.userType || '').toLowerCase() === 'admin';
 
-    const material = await CourseMaterial.findOne({
-      _id: id,
-      teacher_id: teacherId,
-      organization_id: req.tenantId,
-    });
+    const filter = isAdmin
+      ? { _id: id, organization_id: req.tenantId }
+      : { _id: id, teacher_id: teacherId, organization_id: req.tenantId };
+
+    const material = await CourseMaterial.findOne(filter);
 
     if (!material) {
       return res.status(404).json({
         success: false,
-        message: "Material not found",
+        message: 'Material not found'
       });
     }
 
     // Delete from Cloudinary
-    const publicId = material.file_url.split("/").pop().split(".")[0];
-    await cloudinary.uploader.destroy(
-      `courses/${material.course_id}/materials/${publicId}`,
-      {
-        resource_type: material.type === "video" ? "video" : "image",
-      }
-    );
+    const publicId = material.file_url.split('/').pop().split('.')[0];
+    await cloudinary.uploader.destroy(`courses/${material.course_id}/materials/${publicId}`, {
+      resource_type: material.type === 'video' ? 'video' : 'image'
+    });
 
     // Delete from database
     await CourseMaterial.findByIdAndDelete(id);
 
     res.status(200).json({
       success: true,
-      message: "Material deleted successfully",
+      message: 'Material deleted successfully'
     });
   } catch (error) {
+    console.error('Delete error:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to delete material",
-      error: error.message,
+      message: 'Failed to delete material',
+      error: error.message
     });
   }
 };
 
 module.exports = {
+  uploadMiddleware,
   uploadMaterial,
   getCourseMaterials,
   updateMaterial,

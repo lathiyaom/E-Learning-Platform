@@ -20,6 +20,7 @@ import {
   Clock,
   Bell,
   UserPlus,
+  FileText,
 } from "lucide-react";
 import AvatarDropdown from "../components/Avatar";
 import DarkModeToggle from "../components/DarkModeToggle";
@@ -111,6 +112,13 @@ const AdminLayout = ({
         label: "Assignments",
         link: "/teacher/assignments",
         breadcrumb: "Assignments",
+      },
+      {
+        id: "materials",
+        icon: FileText,
+        label: "Materials",
+        link: "/teacher/materials",
+        breadcrumb: "Materials",
       },
       {
         id: "analytics",
