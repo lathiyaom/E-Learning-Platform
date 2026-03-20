@@ -28,6 +28,8 @@ const TeacherLectureManagement = () => {
         videoUrl: "",
     });
     const [materials, setMaterials] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadMessage, setUploadMessage] = useState({ text: "", type: "" });
 
     // Fetch courses from API
     const { data: coursesData } = useGetAllCoursesQuery();
@@ -240,6 +242,29 @@ const TeacherLectureManagement = () => {
                                                 </p>
                                             </div>
                                         </div>
+
+                                        {/* Display Uploaded Materials if any */}
+                                        {lecture.materials && lecture.materials.length > 0 && (
+                                            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                                <span className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1 mb-2">
+                                                    <FileUp className="w-3 h-3" /> Attached Materials:
+                                                </span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {lecture.materials.map((mat, i) => (
+                                                        <a 
+                                                            key={i} 
+                                                            href={mat.url} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs px-2 py-1.5 rounded-md transition border border-slate-200 dark:border-slate-600 max-w-full"
+                                                            title={mat.name}
+                                                        >
+                                                            <span className="truncate max-w-[150px] sm:max-w-[200px]">{mat.name}</span>
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Action Buttons */}
@@ -464,7 +489,10 @@ const TeacherLectureManagement = () => {
                                 Lecture Materials
                             </h2>
                             <button
-                                onClick={() => setShowMaterialsModal(false)}
+                                onClick={() => {
+                                    setShowMaterialsModal(false);
+                                    setUploadMessage({text: "", type: ""});
+                                }}
                                 className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                             >
                                 X
@@ -482,33 +510,85 @@ const TeacherLectureManagement = () => {
                                 <p className="text-slate-600 dark:text-slate-400 mb-4">
                                     Materials attached to this lecture
                                 </p>
-                                <label className="inline-block bg-blue-100 hover:bg-blue-200 text-blue-600 dark:bg-blue-900 dark:text-blue-300 px-4 py-2 rounded-lg cursor-pointer transition">
-                                    Upload Material
+
+                                {uploadMessage.text && (
+                                    <div className={`mb-4 p-3 rounded text-sm ${uploadMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                        {uploadMessage.text}
+                                    </div>
+                                )}
+
+                                <label className={`inline-block px-4 py-2 rounded-lg transition ${isUploading ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200 text-blue-600 cursor-pointer dark:bg-blue-900 dark:text-blue-300'}`}>
+                                    {isUploading ? "Uploading... Please wait" : "Upload Material"}
                                     <input 
                                         type="file" 
                                         className="hidden" 
+                                        disabled={isUploading}
                                         onChange={async (e) => {
                                             const file = e.target.files?.[0];
                                             if (!file) return;
+                                            
+                                            setIsUploading(true);
+                                            setUploadMessage({ text: "Uploading file... This may take a moment based on file size.", type: "info" });
+                                            
                                             const formData = new FormData();
                                             formData.append("file", file);
-                                            formData.append("course_id", selectedLecture.courseId || selectedCourse);
+                                            // Handle populated objects safely
+                                            const courseIdValue = selectedLecture.courseId?._id || selectedLecture.courseId || selectedCourse;
+                                            formData.append("course_id", courseIdValue);
                                             formData.append("title", file.name);
                                             formData.append("type", file.type.includes("video") ? "video" : "document");
+                                            
                                             try {
-                                                const token = localStorage.getItem("token") || document.cookie.split("token=")[1]?.split(";")[0];
-                                                const res = await fetch("http://localhost:5000/Material/upload", {
+                                                const storedUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+                                                const token = storedUser?.accessToken || document.cookie.split("token=")[1]?.split(";")[0];
+                                                
+                                                const baseUrl = import.meta.env.VITE_APP_API_URL || "http://localhost:5000";
+                                                const res = await fetch(`${baseUrl}/Material/upload`, {
                                                     method: "POST",
                                                     headers: { Authorization: `Bearer ${token}` },
                                                     body: formData
                                                 });
+                                                
                                                 if (res.ok) {
-                                                    alert("Uploaded successfully");
+                                                    const resultData = await res.json();
+                                                    // Now attach this material to the lecture
+                                                    const attachRes = await fetch(`${baseUrl}/Lecture/${selectedLecture._id}/materials`, {
+                                                        method: "POST",
+                                                        headers: { 
+                                                            "Content-Type": "application/json",
+                                                            Authorization: `Bearer ${token}` 
+                                                        },
+                                                        body: JSON.stringify({
+                                                            name: file.name,
+                                                            url: resultData.data.file_url,
+                                                            type: resultData.data.type === "video" ? "video" : "doc"
+                                                        })
+                                                    });
+                                                    
+                                                    if (attachRes.ok) {
+                                                        const attachData = await attachRes.json();
+                                                        setUploadMessage({ text: "Uploaded and attached successfully!", type: "success" });
+                                                        setMaterials(attachData.data?.materials || [...materials, { name: file.name, url: resultData.data.file_url }]);
+                                                        // Refresh lecture list so new materials appear in the background card
+                                                        if (selectedCourse) {
+                                                            dispatch(getLecturesByCourse({ courseId: selectedCourse, page: currentPage }));
+                                                        }
+                                                    } else {
+                                                        const attErr = await attachRes.json().catch(() => ({}));
+                                                        setUploadMessage({ text: "Uploaded to course, but failed to attach to lecture. " + (attErr.message || ''), type: "error" });
+                                                    }
                                                 } else {
-                                                    alert("Upload failed");
+                                                    const errData = await res.json().catch(() => ({}));
+                                                    setUploadMessage({ 
+                                                        text: "Upload failed: " + (errData.message || res.statusText) + (errData.error ? " Details: " + errData.error : ""), 
+                                                        type: "error" 
+                                                    });
                                                 }
                                             } catch (error) {
-                                                alert("Upload failed: " + error.message);
+                                                setUploadMessage({ text: "Upload failed: " + error.message, type: "error" });
+                                            } finally {
+                                                setIsUploading(false);
+                                                e.target.value = null; // reset input so same file can be clicked again
                                             }
                                         }}
                                     />
@@ -542,7 +622,13 @@ const TeacherLectureManagement = () => {
                                 ))}
                             </div>
 
-                            <button className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition">
+                            <button 
+                                onClick={() => {
+                                    setShowMaterialsModal(false);
+                                    setUploadMessage({text: "", type: ""});
+                                }}
+                                className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition"
+                            >
                                 Done
                             </button>
                         </div>

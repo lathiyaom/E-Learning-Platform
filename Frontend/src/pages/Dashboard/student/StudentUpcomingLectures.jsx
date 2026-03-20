@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Clock, MapPin, Users, Calendar, Loader2, Play, BookOpen } from "lucide-react";
+import { Clock, MapPin, Users, Calendar, Loader2, Play, BookOpen, Download } from "lucide-react";
 import { getUpcomingLectures } from "../../../redux/Apis/lectureApi";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { getBreadcrumbs } from "../../../utils/breadcrumbs";
@@ -133,6 +133,32 @@ const StudentUpcomingLectures = () => {
                         <Play className="w-4 h-4" />
                         Join Lecture
                       </a>
+                    </div>
+                  )}
+
+                  {/* Materials Section */}
+                  {lecture.materials && lecture.materials.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-blue-500" />
+                        Download Materials
+                      </h4>
+                      <div className="flex flex-wrap gap-3">
+                        {lecture.materials.map((mat, i) => (
+                           <a
+                             key={i}
+                             href={mat.url}
+                             target="_blank"
+                             download={mat.name}
+                             rel="noopener noreferrer"
+                             className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 dark:hover:text-blue-400 rounded-lg text-sm transition shadow-sm border border-slate-200 dark:border-slate-600"
+                             title={mat.name}
+                           >
+                             <Download className="w-4 h-4" />
+                             <span className="truncate max-w-[200px]">{mat.name}</span>
+                           </a>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

@@ -137,6 +137,26 @@ export default function StudentCourseDetails() {
                       <p className="text-sm">
                         {new Date(l.lectureDate).toLocaleDateString()} - {l.startTime} to {l.endTime}
                       </p>
+                      
+                      {/* Lecture Materials injected here */}
+                      {l.materials && l.materials.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {l.materials.map((mat, i) => (
+                            <a
+                              key={i}
+                              href={mat.url}
+                              target="_blank"
+                              download={mat.name}
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2 py-1 rounded transition border border-slate-200"
+                              title={mat.name}
+                            >
+                              <Download size={12} />
+                              <span className="truncate max-w-[150px]">{mat.name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => {
