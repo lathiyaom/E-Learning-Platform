@@ -90,9 +90,10 @@ export const superAdminApi = apiSlice.injectEndpoints({
     }),
 
     getAllTeachers: builder.query({
-      query: ({ search = "", page = 1, limit = 20 } = {}) => {
+      query: ({ search = "", page = 1, limit = 20, unassignedOnly = false } = {}) => {
         const params = new URLSearchParams({ page: String(page), limit: String(limit) });
         if (search) params.append("search", search);
+        if (unassignedOnly) params.append("unassignedOnly", "true");
         return `/SuperAdmin/Teachers?${params.toString()}`;
       },
       providesTags: (result) =>
@@ -102,18 +103,6 @@ export const superAdminApi = apiSlice.injectEndpoints({
               { type: "Teacher", id: "LIST" },
             ]
           : [{ type: "Teacher", id: "LIST" }],
-    }),
-
-    inviteTeacherToOrg: builder.mutation({
-      query: ({ teacherId, organizationId }) => ({
-        url: "/SuperAdmin/InviteTeacher",
-        method: "POST",
-        body: { teacherId, organizationId },
-      }),
-      invalidatesTags: (result, error, { teacherId }) => [
-        { type: "Teacher", id: teacherId },
-        { type: "Teacher", id: "LIST" },
-      ],
     }),
   }),
   overrideExisting: false,
@@ -135,5 +124,4 @@ export const {
   useLazyGetPlatformStatsQuery,
   useGetAllTeachersQuery,
   useLazyGetAllTeachersQuery,
-  useInviteTeacherToOrgMutation,
 } = superAdminApi;

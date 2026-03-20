@@ -22,6 +22,15 @@ export const teacherOrganizationApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Teacher"],
     }),
 
+    sendTeacherInvites: builder.mutation({
+      query: (data) => ({
+        url: "/Teacher/assign",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Teacher"],
+    }),
+
     removeTeacherFromOrganization: builder.mutation({
       query: (teacherId) => ({
         url: `/Teacher/remove/${teacherId}`,
@@ -67,6 +76,7 @@ export const {
   useGetUnassignedTeachersQuery,
   useGetOrganizationTeachersQuery,
   useAssignTeachersToOrganizationMutation,
+  useSendTeacherInvitesMutation,
   useRemoveTeacherFromOrganizationMutation,
   useGetMyOrganizationsQuery,
   useSwitchOrganizationMutation,

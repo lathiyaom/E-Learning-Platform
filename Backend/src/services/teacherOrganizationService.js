@@ -4,6 +4,10 @@
  */
 
 const { User, Tenant, Course, Enrollment, Attendance, Rating, Feedback } = require("../models");
+const crypto = require("crypto");
+const { sendTeacherInvitationEmail } = require("../utils/emailService");
+
+const getInvitationFrontendUrl = () => process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
 
 const teacherOrganizationService = {
   /**
@@ -44,7 +48,8 @@ const teacherOrganizationService = {
   },
 
   /**
-   * Assign multiple teachers to an organization
+   * Send invitations to multiple teachers for an organization.
+   * Teachers are assigned only after accepting the email invitation.
    */
   assignTeachersToOrganization: async (tenantId, teacherIds) => {
     try {
@@ -64,19 +69,72 @@ const teacherOrganizationService = {
         throw new Error("Some teachers not found or invalid");
       }
 
-      // Add organization to each teacher's organizations array
-      const result = await User.updateMany(
-        { _id: { $in: teacherIds } },
-        {
-          $addToSet: { organizations: tenantId },
-          $set: { currentOrganization: tenantId }, // Set as current if first assignment
+      const admin = await Tenant.findById(tenantId).select("name institutionName");
+      const frontendUrl = getInvitationFrontendUrl();
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+      let invitedCount = 0;
+      const skipped = [];
+
+      for (const teacher of teachers) {
+        const alreadyAssigned = Array.isArray(teacher.organizations)
+          && teacher.organizations.some((orgId) => orgId.toString() === tenantId.toString());
+
+        if (alreadyAssigned) {
+          skipped.push({
+            id: teacher._id,
+            email: teacher.email,
+            reason: "already_assigned",
+          });
+          continue;
         }
-      );
+
+        const hasActiveInvite = teacher.pendingOrgInvitation?.token
+          && teacher.pendingOrgInvitation?.expiresAt
+          && new Date(teacher.pendingOrgInvitation.expiresAt) > now;
+
+        if (hasActiveInvite) {
+          skipped.push({
+            id: teacher._id,
+            email: teacher.email,
+            reason: "already_has_pending_invitation",
+          });
+          continue;
+        }
+
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+        teacher.pendingOrgInvitation = {
+          token: hashedToken,
+          organizationId: tenantId,
+          invitedBy: tenantId,
+          expiresAt,
+        };
+
+        await teacher.save({ validateBeforeSave: false });
+
+        const acceptLink = `${frontendUrl}/teacher/invitation/${rawToken}/accept`;
+        const rejectLink = `${frontendUrl}/teacher/invitation/${rawToken}/reject`;
+
+        await sendTeacherInvitationEmail({
+          email: teacher.email,
+          teacherName: `${teacher.firstName} ${teacher.lastName}`.trim(),
+          organizationName: tenant.institutionName || tenant.name,
+          adminName: admin?.institutionName || admin?.name || "Organization Admin",
+          acceptLink,
+          rejectLink,
+        });
+
+        invitedCount += 1;
+      }
 
       return {
-        message: `${result.modifiedCount} teachers assigned to organization`,
-        assignedCount: result.modifiedCount,
-        teachers: teachers.map(t => ({
+        message: `${invitedCount} invitation(s) sent successfully`,
+        invitedCount,
+        skipped,
+        teachers: teachers.map((t) => ({
           id: t._id,
           name: `${t.firstName} ${t.lastName}`,
           email: t.email,

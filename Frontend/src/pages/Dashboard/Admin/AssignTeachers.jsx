@@ -3,7 +3,7 @@ import AdminLayout from "../../../utils/Adminlayoute";
 import {
   useGetUnassignedTeachersQuery,
   useGetOrganizationTeachersQuery,
-  useAssignTeachersToOrganizationMutation,
+  useSendTeacherInvitesMutation,
   useRemoveTeacherFromOrganizationMutation,
 } from "../../../redux/Apis/teacherOrganizationApi";
 import { useSelector } from "react-redux";
@@ -132,6 +132,7 @@ const AssignTeachers = () => {
   const [selectedTeachers, setSelectedTeachers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [availablePage, setAvailablePage] = useState(1);
+  const [pendingPage, setPendingPage] = useState(1);
   const [assignedPage, setAssignedPage] = useState(1);
   const currentUser = useSelector(selectCurrentUser);
   // For admin/superadmin, user.id is the tenant/organization id
@@ -142,20 +143,50 @@ const AssignTeachers = () => {
     skip: !tenantId,
   });
   
-  const [assignTeachers, { isLoading: assigning }] = useAssignTeachersToOrganizationMutation();
+  const [sendTeacherInvites, { isLoading: sendingInvites }] = useSendTeacherInvitesMutation();
   const [removeTeacher, { isLoading: removing }] = useRemoveTeacherFromOrganizationMutation();
 
   const unassignedTeachers = useMemo(() => unassignedData?.data || [], [unassignedData]);
   const assignedTeachers = useMemo(() => assignedData?.data || [], [assignedData]);
 
-  const filteredUnassigned = useMemo(
+  const pendingInviteTeachers = useMemo(
     () =>
-      unassignedTeachers.filter((teacher) => {
+      unassignedTeachers.filter(
+        (teacher) =>
+          teacher?.pendingOrgInvitation?.organizationId
+          && String(teacher.pendingOrgInvitation.organizationId) === String(tenantId)
+      ),
+    [unassignedTeachers, tenantId]
+  );
+
+  const openTeachers = useMemo(
+    () =>
+      unassignedTeachers.filter(
+        (teacher) =>
+          !teacher?.pendingOrgInvitation?.organizationId
+          || String(teacher.pendingOrgInvitation.organizationId) !== String(tenantId)
+      ),
+    [unassignedTeachers, tenantId]
+  );
+
+  const filteredOpenTeachers = useMemo(
+    () =>
+      openTeachers.filter((teacher) => {
         const query = safeText(searchTerm);
         const fullName = `${safeText(teacher?.firstName)} ${safeText(teacher?.lastName)}`;
         return fullName.includes(query) || safeText(teacher?.email).includes(query);
       }),
-    [unassignedTeachers, searchTerm]
+    [openTeachers, searchTerm]
+  );
+
+  const filteredPendingTeachers = useMemo(
+    () =>
+      pendingInviteTeachers.filter((teacher) => {
+        const query = safeText(searchTerm);
+        const fullName = `${safeText(teacher?.firstName)} ${safeText(teacher?.lastName)}`;
+        return fullName.includes(query) || safeText(teacher?.email).includes(query);
+      }),
+    [pendingInviteTeachers, searchTerm]
   );
 
   const filteredAssigned = useMemo(
@@ -168,11 +199,13 @@ const AssignTeachers = () => {
     [assignedTeachers, searchTerm]
   );
 
-  const availableTotalPages = Math.max(1, Math.ceil(filteredUnassigned.length / PAGE_SIZE));
+  const availableTotalPages = Math.max(1, Math.ceil(filteredOpenTeachers.length / PAGE_SIZE));
+  const pendingTotalPages = Math.max(1, Math.ceil(filteredPendingTeachers.length / PAGE_SIZE));
   const assignedTotalPages = Math.max(1, Math.ceil(filteredAssigned.length / PAGE_SIZE));
 
   useEffect(() => {
     setAvailablePage(1);
+    setPendingPage(1);
     setAssignedPage(1);
   }, [searchTerm]);
 
@@ -183,14 +216,25 @@ const AssignTeachers = () => {
   }, [availablePage, availableTotalPages]);
 
   useEffect(() => {
+    if (pendingPage > pendingTotalPages) {
+      setPendingPage(pendingTotalPages);
+    }
+  }, [pendingPage, pendingTotalPages]);
+
+  useEffect(() => {
     if (assignedPage > assignedTotalPages) {
       setAssignedPage(assignedTotalPages);
     }
   }, [assignedPage, assignedTotalPages]);
 
   const paginatedUnassigned = useMemo(
-    () => paginate(filteredUnassigned, availablePage, PAGE_SIZE),
-    [filteredUnassigned, availablePage]
+    () => paginate(filteredOpenTeachers, availablePage, PAGE_SIZE),
+    [filteredOpenTeachers, availablePage]
+  );
+
+  const paginatedPending = useMemo(
+    () => paginate(filteredPendingTeachers, pendingPage, PAGE_SIZE),
+    [filteredPendingTeachers, pendingPage]
   );
 
   const paginatedAssigned = useMemo(
@@ -213,12 +257,17 @@ const AssignTeachers = () => {
     }
 
     try {
-      const result = await assignTeachers({ teacherIds: selectedTeachers }).unwrap();
-      SuccessToster(result.message || "Teachers assigned successfully");
+      const result = await sendTeacherInvites({ teacherIds: selectedTeachers }).unwrap();
+      SuccessToster(result.message || "Invitation(s) sent successfully");
+
+      if (Array.isArray(result?.skipped) && result.skipped.length > 0) {
+        ErrorToster(`${result.skipped.length} teacher(s) skipped (already assigned or already invited)`);
+      }
+
       setSelectedTeachers([]);
       refetch();
     } catch (error) {
-      ErrorToster(error?.data?.message || "Failed to assign teachers");
+      ErrorToster(error?.data?.message || "Failed to send invitations");
     }
   };
 
@@ -254,11 +303,14 @@ const AssignTeachers = () => {
             <div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Assign Teachers</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                Manage teacher allocations across your organization efficiently.
+                Invite teachers to your organization. Assignment happens only after they accept the email.
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                 <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 dark:border-white/15 dark:bg-slate-800 dark:text-slate-200">
-                  Available: {unassignedTeachers.length}
+                  Available: {openTeachers.length}
+                </span>
+                <span className="rounded-full border border-blue-300 bg-blue-50 px-3 py-1 text-blue-700 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200">
+                  Pending Invites: {pendingInviteTeachers.length}
                 </span>
                 <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 dark:border-white/15 dark:bg-slate-800 dark:text-slate-200">
                   Assigned: {assignedTeachers.length}
@@ -272,11 +324,11 @@ const AssignTeachers = () => {
             <Button
               type="button"
               onClick={handleAssignTeachers}
-              disabled={assigning || selectedTeachers.length === 0}
+              disabled={sendingInvites || selectedTeachers.length === 0}
               className="h-10 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-slate-900 hover:bg-amber-400 disabled:opacity-50"
             >
               <UserPlus className="mr-2 h-4 w-4" />
-              {assigning ? "Assigning..." : selectedTeachers.length > 0 ? `Quick Assign (${selectedTeachers.length})` : "Quick Assign"}
+              {sendingInvites ? "Sending..." : selectedTeachers.length > 0 ? `Send Invites (${selectedTeachers.length})` : "Send Invites"}
             </Button>
           </div>
         </div>
@@ -294,7 +346,7 @@ const AssignTeachers = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_1fr]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr_1fr]">
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -303,10 +355,10 @@ const AssignTeachers = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Available Teachers
+                    Ready to Invite
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {filteredUnassigned.length} match(es)
+                    {filteredOpenTeachers.length} match(es)
                   </p>
                 </div>
               </div>
@@ -333,7 +385,53 @@ const AssignTeachers = () => {
               currentPage={availablePage}
               totalPages={availableTotalPages}
               onPageChange={setAvailablePage}
-              totalItems={filteredUnassigned.length}
+              totalItems={filteredOpenTeachers.length}
+            />
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-500/10">
+                  <Mail className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    Pending Invitations
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {filteredPendingTeachers.length} match(es)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {paginatedPending.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
+                  No pending invitations found.
+                </div>
+              ) : (
+                paginatedPending.map((teacher) => (
+                  <TeacherCard
+                    key={teacher._id}
+                    teacher={teacher}
+                    action={{
+                      onClick: () => {},
+                      icon: <span className="text-[10px] font-semibold">Pending</span>,
+                      variant:
+                        "cursor-default text-blue-700 bg-blue-100 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-500/10",
+                    }}
+                  />
+                ))
+              )}
+            </div>
+
+            <CompactPagination
+              currentPage={pendingPage}
+              totalPages={pendingTotalPages}
+              onPageChange={setPendingPage}
+              totalItems={filteredPendingTeachers.length}
             />
           </section>
 

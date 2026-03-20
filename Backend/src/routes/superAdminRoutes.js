@@ -3,6 +3,11 @@ const router = express.Router();
 const superAdminController = require("../controllers/superAdminController");
 const { authenticate, authorize, isTenantOwner } = require("../middlewares/authMiddleware");
 
+// Backward-compatible public invitation callbacks.
+// Old emails may still point to /SuperAdmin/TeacherInvitation/:token/:action.
+router.get("/TeacherInvitation/:token/accept", superAdminController.acceptTeacherInvitation);
+router.get("/TeacherInvitation/:token/reject", superAdminController.rejectTeacherInvitation);
+
 // All routes require: authenticated + from tenants table + superadmin role
 router.use(authenticate, isTenantOwner, authorize("superadmin"));
 

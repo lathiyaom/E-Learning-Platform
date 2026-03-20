@@ -1,123 +1,72 @@
 import React, { useMemo, useState } from "react";
 import SuperAdminLayout from "../../../utils/SuperAdminLayout";
-import {
-  useGetAllTeachersQuery,
-  useGetAllTenantsQuery,
-  useInviteTeacherToOrgMutation,
-} from "../../../redux/Apis/superAdminApi";
-import { ErrorToster, SuccessToster } from "../../../components/toster";
-import { Search, Send, X } from "lucide-react";
+import { useGetAllTeachersQuery } from "../../../redux/Apis/superAdminApi";
+import { Search } from "lucide-react";
 
-const InviteModal = ({ teacher, organizations, onClose, onInvite, isLoading }) => {
-  const [organizationId, setOrganizationId] = useState("");
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!organizationId) return;
-    onInvite(teacher._id, organizationId);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 shadow-2xl">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Invite Teacher to Organization</h3>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <form onSubmit={submit} className="p-5 space-y-4">
-          <div>
-            <p className="text-sm text-slate-600 dark:text-slate-300">Teacher</p>
-            <p className="font-medium text-slate-900 dark:text-white">
-              {teacher.firstName} {teacher.lastName}
-            </p>
-            <p className="text-xs text-slate-500">{teacher.email}</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Organization *</label>
-            <select
-              value={organizationId}
-              onChange={(e) => setOrganizationId(e.target.value)}
-              required
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
-            >
-              <option value="">Select organization</option>
-              {organizations.map((org) => (
-                <option key={org._id} value={org._id}>
-                  {org.institutionName || org.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !organizationId}
-              className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
-            >
-              {isLoading ? "Sending..." : "Send Invite"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+const formatDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString();
 };
 
 const TeacherManagement = () => {
   const [search, setSearch] = useState("");
+  const [dateSort, setDateSort] = useState("desc");
   const [page, setPage] = useState(1);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
 
   const { data: teachersData, isLoading, error, refetch } = useGetAllTeachersQuery({
     search,
     page,
     limit: 12,
+    unassignedOnly: true,
   });
-  const { data: orgData } = useGetAllTenantsQuery();
-  const [inviteTeacherToOrg, { isLoading: inviting }] = useInviteTeacherToOrgMutation();
 
-  const teachers = teachersData?.data || [];
+  const teachers = useMemo(() => {
+    const source = teachersData?.data || [];
+    const sorted = [...source].sort((a, b) => {
+      const aTime = new Date(a.createdAt || 0).getTime();
+      const bTime = new Date(b.createdAt || 0).getTime();
+      return dateSort === "asc" ? aTime - bTime : bTime - aTime;
+    });
+    return sorted;
+  }, [teachersData, dateSort]);
+
   const pagination = teachersData?.pagination || {};
-  const organizations = useMemo(
-    () => (orgData?.data || []).filter((org) => org.userType !== "superadmin"),
-    [orgData]
-  );
-
-  const handleInvite = async (teacherId, organizationId) => {
-    try {
-      await inviteTeacherToOrg({ teacherId, organizationId }).unwrap();
-      SuccessToster("Invitation email sent to teacher", 2500);
-      setSelectedTeacher(null);
-      refetch();
-    } catch (err) {
-      ErrorToster(err?.data?.message || "Failed to send invitation", 3000);
-    }
-  };
 
   return (
-    <SuperAdminLayout pageTitle="Teachers" subheader="View all teachers and assign them to organizations">
+    <SuperAdminLayout pageTitle="Teachers" subheader="Unassigned teachers across platform">
       <div className="space-y-6">
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search teacher by name or email"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
-            />
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px_auto]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search teacher by name or email"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+              />
+            </div>
+            <select
+              value={dateSort}
+              onChange={(e) => setDateSort(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+            >
+              <option value="desc">Newest Join Date</option>
+              <option value="asc">Oldest Join Date</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Refresh
+            </button>
           </div>
         </div>
 
@@ -138,10 +87,9 @@ const TeacherManagement = () => {
                     {[
                       "Teacher",
                       "Email",
-                      "Organizations",
+                      "Phone",
+                      "Join Date",
                       "Availability",
-                      "Invited",
-                      "Action",
                     ].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                         {h}
@@ -157,35 +105,21 @@ const TeacherManagement = () => {
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{teacher.email}</td>
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        {(teacher.organizations || []).length === 0
-                          ? "Not assigned"
-                          : teacher.organizations
-                              .map((org) => org.institutionName || org.name)
-                              .join(", ")}
+                        {teacher.phoneNo || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        {formatDate(teacher.createdAt)}
                       </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                            teacher.available_for_org
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-slate-200 text-slate-700"
+                            teacher.pendingOrgInvitation?.expiresAt
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-emerald-100 text-emerald-700"
                           }`}
                         >
-                          {teacher.available_for_org ? "Available" : "Assigned"}
+                          {teacher.pendingOrgInvitation?.expiresAt ? "Pending Invite" : "Available"}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        {teacher.pendingOrgInvitation?.expiresAt
-                          ? "Pending"
-                          : "None"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => setSelectedTeacher(teacher)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <Send className="h-4 w-4" /> Invite
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -220,15 +154,6 @@ const TeacherManagement = () => {
         )}
       </div>
 
-      {selectedTeacher && (
-        <InviteModal
-          teacher={selectedTeacher}
-          organizations={organizations}
-          onClose={() => setSelectedTeacher(null)}
-          onInvite={handleInvite}
-          isLoading={inviting}
-        />
-      )}
     </SuperAdminLayout>
   );
 };

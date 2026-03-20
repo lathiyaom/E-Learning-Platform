@@ -323,19 +323,35 @@ const getOrganizationsOverview = async (req, res) => {
 // GET /SuperAdmin/Teachers — All teachers across platform with org info
 const getAllTeachers = async (req, res) => {
   try {
-    const { search = "", page = 1, limit = 20, assignedOnly, available } = req.query;
+    const { search = "", page = 1, limit = 20, assignedOnly, available, unassignedOnly } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const filter = { userType: "teacher" };
+    const andConditions = [];
+
     if (search) {
-      filter.$or = [
+      andConditions.push({
+        $or: [
         { firstName: { $regex: search, $options: "i" } },
         { lastName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
-      ];
+        ],
+      });
     }
     if (available === "true") filter.available_for_org = true;
     if (assignedOnly === "true") filter["organizations.0"] = { $exists: true };
+    if (unassignedOnly === "true") {
+      andConditions.push({
+        $or: [
+        { organizations: { $exists: false } },
+        { organizations: { $size: 0 } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      filter.$and = andConditions;
+    }
 
     const total = await User.countDocuments(filter);
     const teachers = await User.find(filter)
@@ -414,7 +430,7 @@ const inviteTeacherToOrg = async (req, res) => {
     await teacher.save({ validateBeforeSave: false });
 
     // Build accept/reject links
-    const frontendUrl = process.env.FRONTEND_URL_PROD || process.env.FRONTEND_URL_DEV || "http://localhost:3000";
+    const frontendUrl = process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
     const acceptLink = `${frontendUrl}/teacher/invitation/${rawToken}/accept`;
     const rejectLink = `${frontendUrl}/teacher/invitation/${rawToken}/reject`;
 
@@ -482,7 +498,7 @@ const acceptTeacherInvitation = async (req, res) => {
     const orgName = organization?.institutionName || organization?.name || "the organization";
 
     // Redirect to frontend with success message
-    const frontendUrl = process.env.FRONTEND_URL_PROD || process.env.FRONTEND_URL_DEV || "http://localhost:3000";
+    const frontendUrl = process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
     return res.redirect(`${frontendUrl}/teacher/invitation-result?status=accepted&org=${encodeURIComponent(orgName)}`);
   } catch (error) {
     logger.error("Accept invitation error:", error.message);
@@ -508,7 +524,7 @@ const rejectTeacherInvitation = async (req, res) => {
     teacher.pendingOrgInvitation = { token: null, organizationId: null, invitedBy: null, expiresAt: null };
     await teacher.save({ validateBeforeSave: false });
 
-    const frontendUrl = process.env.FRONTEND_URL_PROD || process.env.FRONTEND_URL_DEV || "http://localhost:3000";
+    const frontendUrl = process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
     return res.redirect(`${frontendUrl}/teacher/invitation-result?status=rejected`);
   } catch (error) {
     logger.error("Reject invitation error:", error.message);

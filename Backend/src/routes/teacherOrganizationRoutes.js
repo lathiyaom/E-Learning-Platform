@@ -27,7 +27,7 @@ router.post(
   "/assign",
   authenticate,
   tenantScope,
-  authorize("admin", "superadmin"),
+  authorize("admin"),
   teacherOrganizationController.assignTeachersToOrganization
 );
 
@@ -35,7 +35,7 @@ router.delete(
   "/remove/:teacherId",
   authenticate,
   tenantScope,
-  authorize("admin", "superadmin"),
+  authorize("admin"),
   teacherOrganizationController.removeTeacherFromOrganization
 );
 
