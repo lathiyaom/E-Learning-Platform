@@ -19,6 +19,7 @@ import {
   useSubmitAssignmentMutation,
   useGetAssignmentQuery,
 } from "../../../redux/Apis/assignmentApi";
+import { useGetMyEnrollmentsQuery } from "../../../redux/Apis/enrollmentApi";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { SuccessToster, ErrorToster } from "../../../components/toster";
 
@@ -38,6 +39,9 @@ const StudentAssignments = () => {
     page: currentPage,
     limit: 10,
   });
+
+  const { data: enrollmentsData } = useGetMyEnrollmentsQuery();
+  const enrolledCourses = enrollmentsData?.data?.map(e => e.courseId) || [];
 
   const [submitAssignment] = useSubmitAssignmentMutation();
   const { data: assignmentDetails } = useGetAssignmentQuery(selectedAssignment?._id, {
@@ -134,9 +138,9 @@ const StudentAssignments = () => {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
               >
                 <option value="">All Courses</option>
-                {Array.from(new Set(assignments.map(a => a.courseId?.title))).filter(Boolean).map(courseTitle => (
-                  <option key={courseTitle} value={courseTitle}>
-                    {courseTitle}
+                {Array.from(new Map(enrolledCourses.filter(Boolean).map(c => [c._id, c])).values()).map(course => (
+                  <option key={course._id} value={course._id}>
+                    {course.title}
                   </option>
                 ))}
               </select>

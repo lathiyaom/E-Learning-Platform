@@ -167,6 +167,34 @@ exports.getStudentAssignments = async (req, res) => {
     };
     if (courseId) query.courseId = courseId;
 
+    if (status && status !== "all") {
+      const allStudentSubmissions = await AssignmentSubmission.find({
+        studentId,
+      });
+
+      const submittedAssignmentIds = allStudentSubmissions
+        .filter((s) => s.status === "submitted")
+        .map((s) => s.assignmentId);
+      const gradedAssignmentIds = allStudentSubmissions
+        .filter((s) => s.status === "graded")
+        .map((s) => s.assignmentId);
+      const allSubmittedIds = allStudentSubmissions.map((s) => s.assignmentId);
+
+      const now = new Date();
+
+      if (status === "submitted") {
+        query._id = { $in: submittedAssignmentIds };
+      } else if (status === "graded") {
+        query._id = { $in: gradedAssignmentIds };
+      } else if (status === "pending") {
+        query._id = { $nin: allSubmittedIds };
+        query.dueDate = { $gte: now };
+      } else if (status === "overdue") {
+        query._id = { $nin: allSubmittedIds };
+        query.dueDate = { $lt: now };
+      }
+    }
+
     const assignments = await Assignment.find(query)
       .populate("courseId", "title code")
       .sort({ dueDate: 1 })
