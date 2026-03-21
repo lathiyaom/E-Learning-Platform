@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import SuperAdminLayout from "../../../utils/SuperAdminLayout";
-import { useGetAllPlatformUsersQuery } from "../../../redux/Apis/superAdminApi";
+import { useGetPlatformUsersQuery, useGetPlatformStatsQuery } from "../../../redux/Apis/superAdminApi";
 import {
   Users,
   Search,
@@ -32,6 +32,9 @@ const UserManagement = () => {
     statusFilter: localFilters.statusFilter
   });
 
+  const { data: statsData } = useGetPlatformStatsQuery();
+  const stats = statsData?.data || { users: { total: 0, students: 0, teachers: 0, admins: 0 } };
+
   const users = data?.data || [];
   const pagination = data?.pagination || {};
 
@@ -61,17 +64,17 @@ const UserManagement = () => {
 
   const getRoleBadge = (role) => {
     const styles = {
-      SUPERADMIN: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-      ADMIN: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      TEACHER: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-      STUDENT: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      superadmin: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      admin: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      teacher: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      student: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     };
-    return styles[role] || styles.STUDENT;
+    return styles[role?.toLowerCase()] || styles.student;
   };
 
   const exportToCSV = () => {
     const headers = ["Name", "Email", "Role", "Institution", "Status", "Created At"];
-    const rows = filteredUsers.map((user) => [
+    const rows = users.map((user) => [
       user.name || "N/A",
       user.email,
       user.userType,
@@ -119,9 +122,9 @@ const UserManagement = () => {
     );
   }
 
-  const pageTitle = roleFilter === "teacher" 
+  const pageTitle = localFilters.roleFilter === "teacher" 
     ? "Teachers Management" 
-    : roleFilter === "student" 
+    : localFilters.roleFilter === "student" 
       ? "Students Management" 
       : "User Management";
 
@@ -136,7 +139,7 @@ const UserManagement = () => {
                 Total Users
               </p>
   <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {pagination.total || users.length}
+                {stats.users.total}
               </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
@@ -152,7 +155,7 @@ const UserManagement = () => {
                 Students
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {users.filter((u) => u.userType === "STUDENT").length}
+                {stats.users.students}
               </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
@@ -168,7 +171,7 @@ const UserManagement = () => {
                 Teachers
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {users.filter((u) => u.userType === "TEACHER").length}
+                {stats.users.teachers}
               </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -184,7 +187,7 @@ const UserManagement = () => {
                 Admins
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {users.filter((u) => u.userType === "ADMIN" || u.userType === "SUPERADMIN").length}
+                {stats.users.admins ?? (stats.users.total - stats.users.students - stats.users.teachers)}
               </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
@@ -203,8 +206,8 @@ const UserManagement = () => {
             <input
               type="text"
               placeholder="Search by name, email, or institution..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={localFilters.searchTerm}
+              onChange={(e) => updateFilters({ searchTerm: e.target.value })}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -213,8 +216,8 @@ const UserManagement = () => {
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              value={localFilters.roleFilter}
+              onChange={(e) => updateFilters({ roleFilter: e.target.value })}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
             >
               <option value="all">All Roles</option>
@@ -229,8 +232,8 @@ const UserManagement = () => {
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              value={localFilters.statusFilter}
+              onChange={(e) => updateFilters({ statusFilter: e.target.value })}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
             >
               <option value="all">All Status</option>
@@ -281,7 +284,7 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {filteredUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-12 text-center">
                     <Users className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
@@ -291,7 +294,7 @@ const UserManagement = () => {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                users.map((user) => (
                   <tr
                     key={user._id}
                     className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"

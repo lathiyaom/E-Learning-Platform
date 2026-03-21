@@ -6,7 +6,13 @@ const { Tenant, User } = require("../models");
  */
 
 // Helper function to log activity
-const logActivity = async (actorId, actorType, action, targetId, metadata = {}) => {
+const logActivity = async (
+  actorId,
+  actorType,
+  action,
+  targetId,
+  metadata = {},
+) => {
   try {
     const { ActivityLog } = require("../models");
     await ActivityLog.create({
@@ -38,7 +44,7 @@ const getAllTenants = async (filters = {}) => {
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const total = await Tenant.countDocuments(query);
-  
+
   const tenants = await Tenant.find(query)
     .select("-password -token -refreshToken")
     .sort({ createdAt: -1 })
@@ -52,7 +58,7 @@ const getAllTenants = async (filters = {}) => {
   ]);
 
   const countMap = new Map(
-    userCounts.map((entry) => [entry._id.toString(), entry.count])
+    userCounts.map((entry) => [entry._id.toString(), entry.count]),
   );
 
   const tenantsWithCounts = tenants.map((tenant) => {
@@ -76,8 +82,9 @@ const getAllTenants = async (filters = {}) => {
 const getTenantWithUsers = async (tenantId) => {
   if (!tenantId) throw new Error("Tenant ID is required");
 
-  const tenant = await Tenant.findById(tenantId)
-    .select("-password -token -refreshToken");
+  const tenant = await Tenant.findById(tenantId).select(
+    "-password -token -refreshToken",
+  );
   if (!tenant) throw new Error("Tenant not found");
 
   const users = await User.find({ tenant_id: tenantId })
@@ -136,7 +143,9 @@ const demoteTenant = async (tenantId, requesterId) => {
     userType: "superadmin",
   });
   if (superadminCount <= 1) {
-    throw new Error("Cannot demote the last superadmin. Platform needs at least one.");
+    throw new Error(
+      "Cannot demote the last superadmin. Platform needs at least one.",
+    );
   }
 
   tenant.userType = "admin";
@@ -172,7 +181,9 @@ const changeTenantStatus = async (tenantId, status, requesterId) => {
 
   // Don't allow suspending another superadmin
   if (tenant.userType === "superadmin" && status !== "active") {
-    throw new Error("Cannot suspend or deactivate another superadmin. Demote them first.");
+    throw new Error(
+      "Cannot suspend or deactivate another superadmin. Demote them first.",
+    );
   }
 
   const oldStatus = tenant.status;
@@ -202,71 +213,145 @@ const changeTenantStatus = async (tenantId, status, requesterId) => {
 
 // Get all users across all tenants (platform-wide view) - paginated & filtered
 const getPlatformUsers = async (filters = {}) => {
-  const { 
-    page = 1, 
-    limit = 10, 
-    search = '', 
-    roleFilter = 'all', 
-    statusFilter = 'all' 
+  const {
+    page = 1,
+    limit = 10,
+    search = "",
+    roleFilter = "all",
+    statusFilter = "all",
   } = filters;
-  
-  const query = {};
-  
-  // Role filter (map frontend lowercase to enum)
-  if (roleFilter !== 'all') {
-    query.userType = roleFilter.toUpperCase();
-  }
-  
-  // Status filter (frontend expects isActive bool, but store uses status enum)
-  if (statusFilter !== 'all') {
-    if (statusFilter === 'active') {
-      query.status = 'active';
-    } else if (statusFilter === 'inactive') {
-      query.$or = [{ status: 'inactive' }, { status: 'suspended' }];
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const limitInt = parseInt(limit);
+
+  const userQuery = {};
+  const tenantQuery = {};
+
+  // Status filter Needs to be mapped correctly
+  if (statusFilter !== "all") {
+    if (statusFilter === "active") {
+      userQuery.status = "active";
+      tenantQuery.status = "active";
+    } else if (statusFilter === "inactive") {
+      userQuery.$or = [{ status: "inactive" }, { status: "suspended" }];
+      tenantQuery.$or = [{ status: "inactive" }, { status: "suspended" }];
     }
   }
-  
+
   // Search across name fields & email
   if (search.trim()) {
-    query.$or = [
-      { firstName: { $regex: search, $options: 'i' } },
-      { lastName: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+    userQuery.$or = [
+      { firstName: { $regex: search, $options: "i" } },
+      { lastName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+    tenantQuery.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { OrgOwnerName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
     ];
   }
-  
-  const skip = (parseInt(page) - 1) * parseInt(limit);
-  const total = await User.countDocuments(query);
-  
-  const users = await User.find(query)
-    .populate('tenant_id', 'institutionName name')
-    .select('-password -token -refreshToken -sessions')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(parseInt(limit));
-  
-  // Transform for frontend
-  const transformedUsers = users.map(user => ({
+
+  let total = 0;
+  let allUsers = [];
+  const role = roleFilter.toLowerCase();
+
+  // Transform helpers
+  const transformUser = (user) => ({
     _id: user._id,
     name: `${user.firstName} ${user.lastName}`.trim(),
     email: user.email,
-    phone: user.phoneNo,
+    phone: user.phoneNo || "N/A",
     userType: user.userType,
-    institutionName: user.tenant_id?.institutionName || user.tenant_id?.name || 'N/A',
-    isActive: user.status === 'active',
-    createdAt: user.createdAt
-  }));
-  
+    institutionName:
+      user.tenant_id?.institutionName || user.tenant_id?.name || "N/A",
+    isActive: user.status === "active",
+    createdAt: user.createdAt,
+  });
+
+  const transformTenant = (t) => ({
+    _id: t._id,
+    name: t.OrgOwnerName || t.name,
+    email: t.email,
+    phone: t.phoneNo || t.OrgOwnerPhone || "N/A",
+    userType: t.userType,
+    institutionName: t.institutionName || t.name || "Platform Admin",
+    isActive: t.status === "active",
+    createdAt: t.createdAt,
+  });
+
+  if (role === "student" || role === "teacher") {
+    userQuery.userType = role;
+    total = await User.countDocuments(userQuery);
+
+    const users = await User.find(userQuery)
+      .populate("tenant_id", "institutionName name")
+      .select("-password -token -refreshToken -sessions")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitInt);
+
+    allUsers = users.map(transformUser);
+  } else if (role === "admin" || role === "superadmin") {
+    tenantQuery.userType = role;
+    total = await Tenant.countDocuments(tenantQuery);
+
+    const tenants = await Tenant.find(tenantQuery)
+      .select("-password -token -refreshToken")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitInt);
+
+    allUsers = tenants.map(transformTenant);
+  } else {
+    // Both collections
+    const totalUsers = await User.countDocuments(userQuery);
+    const totalTenants = await Tenant.countDocuments(tenantQuery);
+    total = totalUsers + totalTenants;
+
+    if (skip < totalUsers) {
+      const usersToFetch = Math.min(limitInt, totalUsers - skip);
+      const users = await User.find(userQuery)
+        .populate("tenant_id", "institutionName name")
+        .select("-password -token -refreshToken -sessions")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(usersToFetch);
+
+      allUsers = users.map(transformUser);
+
+      const remainingLimit = limitInt - usersToFetch;
+      if (remainingLimit > 0) {
+        const tenants = await Tenant.find(tenantQuery)
+          .select("-password -token -refreshToken")
+          .sort({ createdAt: -1 })
+          .skip(0)
+          .limit(remainingLimit);
+
+        allUsers = [...allUsers, ...tenants.map(transformTenant)];
+      }
+    } else {
+      const tenantSkip = skip - totalUsers;
+      const tenants = await Tenant.find(tenantQuery)
+        .select("-password -token -refreshToken")
+        .sort({ createdAt: -1 })
+        .skip(tenantSkip)
+        .limit(limitInt);
+
+      allUsers = tenants.map(transformTenant);
+    }
+  }
+
   return {
-    data: transformedUsers,
+    data: allUsers,
     pagination: {
       total,
       page: parseInt(page),
       limit: parseInt(limit),
       pages: Math.ceil(total / parseInt(limit)),
-      hasNext: skip + parseInt(limit) < total,
-      hasPrev: parseInt(page) > 1
-    }
+      hasNext: skip + limitInt < total,
+      hasPrev: parseInt(page) > 1,
+    },
   };
 };
 
@@ -279,13 +364,26 @@ const getAllUsersAcrossPlatform = async () => {
 // Get platform dashboard stats
 const getPlatformStats = async () => {
   const totalOrganizations = await Tenant.countDocuments({ userType: "admin" });
-  const activeOrganizations = await Tenant.countDocuments({ userType: "admin", status: "active" });
-  const suspendedOrganizations = await Tenant.countDocuments({ userType: "admin", status: "suspended" });
-  const inactiveOrganizations = await Tenant.countDocuments({ userType: "admin", status: "inactive" });
+  const activeOrganizations = await Tenant.countDocuments({
+    userType: "admin",
+    status: "active",
+  });
+  const suspendedOrganizations = await Tenant.countDocuments({
+    userType: "admin",
+    status: "suspended",
+  });
+  const inactiveOrganizations = await Tenant.countDocuments({
+    userType: "admin",
+    status: "inactive",
+  });
 
-  const totalUsers = await User.countDocuments();
   const studentCount = await User.countDocuments({ userType: "student" });
   const teacherCount = await User.countDocuments({ userType: "teacher" });
+  const adminCount = await Tenant.countDocuments({
+    userType: { $in: ["admin", "superadmin"] },
+  });
+
+  const totalUsers = studentCount + teacherCount + adminCount;
 
   let totalCourses = 0;
   try {
@@ -304,6 +402,7 @@ const getPlatformStats = async () => {
       total: totalUsers,
       students: studentCount,
       teachers: teacherCount,
+      admins: adminCount,
     },
     courses: {
       total: totalCourses,
@@ -439,8 +538,14 @@ const getActivityLogs = async (filters = {}) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate("actorId", "name email OrgOwnerName OrgOwnerEmail firstName lastName")
-      .populate("targetId", "name email OrgOwnerName OrgOwnerEmail firstName lastName");
+      .populate(
+        "actorId",
+        "name email OrgOwnerName OrgOwnerEmail firstName lastName",
+      )
+      .populate(
+        "targetId",
+        "name email OrgOwnerName OrgOwnerEmail firstName lastName",
+      );
 
     return {
       logs,
@@ -461,6 +566,7 @@ const getActivityLogs = async (filters = {}) => {
 };
 
 module.exports = {
+  getPlatformUsers,
   getAllTenants,
   getTenantWithUsers,
   promoteTenant,

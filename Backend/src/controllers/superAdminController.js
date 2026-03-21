@@ -15,7 +15,13 @@ const { sendTeacherInvitationEmail } = require("../utils/emailService");
 const getAllTenants = async (req, res) => {
   try {
     const { status, userType, page = 1, limit = 10, search } = req.query;
-    const result = await superAdminService.getAllTenants({ status, userType, page, limit, search });
+    const result = await superAdminService.getAllTenants({
+      status,
+      userType,
+      page,
+      limit,
+      search,
+    });
 
     return res.status(200).json({
       message: "All tenants retrieved",
@@ -125,7 +131,9 @@ const demoteTenant = async (req, res) => {
     }
 
     // ✅ SECURITY: Prevent demoting last superadmin
-    const superadminCount = await Tenant.countDocuments({ userType: "superadmin" });
+    const superadminCount = await Tenant.countDocuments({
+      userType: "superadmin",
+    });
     if (superadminCount <= 1) {
       return res.status(400).json({
         message: "Cannot demote the last superadmin in the system",
@@ -170,7 +178,11 @@ const changeTenantStatus = async (req, res) => {
       });
     }
 
-    const tenant = await superAdminService.changeTenantStatus(id, status, req.user.id);
+    const tenant = await superAdminService.changeTenantStatus(
+      id,
+      status,
+      req.user.id,
+    );
 
     return res.status(200).json({
       message: `${tenant.name} status changed to ${status}`,
@@ -182,32 +194,6 @@ const changeTenantStatus = async (req, res) => {
     return res
       .status(error.message.includes("not found") ? 404 : 400)
       .json({ message: error.message, success: false });
-  }
-};
-
-// GET /SuperAdmin/users — All users across all tenants (paginated/filtered)
-const getPlatformUsers = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search, roleFilter, statusFilter } = req.query;
-    const result = await superAdminService.getPlatformUsers({
-      page,
-      limit,
-      search,
-      roleFilter: roleFilter || 'all',
-      statusFilter: statusFilter || 'all'
-    });
-
-    return res.status(200).json({
-      message: "Platform users retrieved successfully",
-      success: true,
-      ...result
-    });
-  } catch (error) {
-    console.error("SuperAdmin - Get platform users error:", error.message);
-    return res.status(500).json({
-      message: error.message || "Internal server error",
-      success: false,
-    });
   }
 };
 
@@ -233,25 +219,35 @@ const getPlatformStats = async (req, res) => {
 // GET /SuperAdmin/Users — All users across platform (paginated/filtered) - BACKWARD COMPATIBLE
 const getAllUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, roleFilter, statusFilter } = req.query;
-    
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      roleFilter,
+      statusFilter,
+    } = req.query;
+
     logger.info("SuperAdmin getAllUsers called", {
-      page, limit, hasSearch: !!search, roleFilter, statusFilter,
-      userId: req.user?.id
+      page,
+      limit,
+      hasSearch: !!search,
+      roleFilter,
+      statusFilter,
+      userId: req.user?.id,
     });
 
     const result = await superAdminService.getPlatformUsers({
       page,
       limit,
       search,
-      roleFilter: roleFilter || 'all',
-      statusFilter: statusFilter || 'all'
+      roleFilter: roleFilter || "all",
+      statusFilter: statusFilter || "all",
     });
 
     return res.status(200).json({
       message: "Platform users retrieved successfully",
       success: true,
-      ...result
+      ...result,
     });
   } catch (error) {
     logger.error("SuperAdmin - Get all users error:", error.message);
@@ -285,7 +281,12 @@ const deleteTenant = async (req, res) => {
 const getActivityLogs = async (req, res) => {
   try {
     const { page = 1, limit = 50, action, actorType } = req.query;
-    const result = await superAdminService.getActivityLogs({ page, limit, action, actorType });
+    const result = await superAdminService.getActivityLogs({
+      page,
+      limit,
+      action,
+      actorType,
+    });
 
     return res.status(200).json({
       message: "Activity logs retrieved",
@@ -306,7 +307,12 @@ const getActivityLogs = async (req, res) => {
 const getOrganizationsOverview = async (req, res) => {
   try {
     const { status, page = 1, limit = 10, search } = req.query;
-    const result = await superAdminService.getOrganizationsOverview({ status, page, limit, search });
+    const result = await superAdminService.getOrganizationsOverview({
+      status,
+      page,
+      limit,
+      search,
+    });
 
     return res.status(200).json({
       message: "Organizations overview retrieved",
@@ -316,14 +322,23 @@ const getOrganizationsOverview = async (req, res) => {
     });
   } catch (error) {
     console.error("SuperAdmin - Organizations overview error:", error.message);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
 // GET /SuperAdmin/Teachers — All teachers across platform with org info
 const getAllTeachers = async (req, res) => {
   try {
-    const { search = "", page = 1, limit = 20, assignedOnly, available, unassignedOnly } = req.query;
+    const {
+      search = "",
+      page = 1,
+      limit = 20,
+      assignedOnly,
+      available,
+      unassignedOnly,
+    } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const filter = { userType: "teacher" };
@@ -332,9 +347,9 @@ const getAllTeachers = async (req, res) => {
     if (search) {
       andConditions.push({
         $or: [
-        { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+          { firstName: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
         ],
       });
     }
@@ -343,8 +358,8 @@ const getAllTeachers = async (req, res) => {
     if (unassignedOnly === "true") {
       andConditions.push({
         $or: [
-        { organizations: { $exists: false } },
-        { organizations: { $size: 0 } },
+          { organizations: { $exists: false } },
+          { organizations: { $size: 0 } },
         ],
       });
     }
@@ -376,7 +391,9 @@ const getAllTeachers = async (req, res) => {
     });
   } catch (error) {
     logger.error("SuperAdmin - Get all teachers error:", error.message);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
@@ -386,24 +403,33 @@ const inviteTeacherToOrg = async (req, res) => {
     const { teacherId, organizationId } = req.body;
 
     if (!teacherId || !organizationId) {
-      return res.status(400).json({ message: "teacherId and organizationId are required", success: false });
+      return res
+        .status(400)
+        .json({
+          message: "teacherId and organizationId are required",
+          success: false,
+        });
     }
 
     // Verify teacher exists
     const teacher = await User.findOne({ _id: teacherId, userType: "teacher" });
     if (!teacher) {
-      return res.status(404).json({ message: "Teacher not found", success: false });
+      return res
+        .status(404)
+        .json({ message: "Teacher not found", success: false });
     }
 
     // Verify organization exists
     const organization = await Tenant.findById(organizationId);
     if (!organization) {
-      return res.status(404).json({ message: "Organization not found", success: false });
+      return res
+        .status(404)
+        .json({ message: "Organization not found", success: false });
     }
 
     // Check if teacher is already in this organization
     const alreadyAssigned = teacher.organizations.some(
-      (orgId) => orgId.toString() === organizationId
+      (orgId) => orgId.toString() === organizationId,
     );
     if (alreadyAssigned) {
       return res.status(400).json({
@@ -417,7 +443,10 @@ const inviteTeacherToOrg = async (req, res) => {
 
     // Generate secure invitation token (48h expiry)
     const rawToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
 
     // Store invitation on teacher
@@ -430,7 +459,8 @@ const inviteTeacherToOrg = async (req, res) => {
     await teacher.save({ validateBeforeSave: false });
 
     // Build accept/reject links
-    const frontendUrl = process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
+    const frontendUrl =
+      process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
     const acceptLink = `${frontendUrl}/teacher/invitation/${rawToken}/accept`;
     const rejectLink = `${frontendUrl}/teacher/invitation/${rawToken}/reject`;
 
@@ -457,7 +487,9 @@ const inviteTeacherToOrg = async (req, res) => {
     });
   } catch (error) {
     logger.error("SuperAdmin - Invite teacher error:", error.message);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
@@ -492,17 +524,28 @@ const acceptTeacherInvitation = async (req, res) => {
     teacher.available_for_org = false;
 
     // Clear invitation
-    teacher.pendingOrgInvitation = { token: null, organizationId: null, invitedBy: null, expiresAt: null };
+    teacher.pendingOrgInvitation = {
+      token: null,
+      organizationId: null,
+      invitedBy: null,
+      expiresAt: null,
+    };
     await teacher.save({ validateBeforeSave: false });
 
-    const orgName = organization?.institutionName || organization?.name || "the organization";
+    const orgName =
+      organization?.institutionName || organization?.name || "the organization";
 
     // Redirect to frontend with success message
-    const frontendUrl = process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
-    return res.redirect(`${frontendUrl}/teacher/invitation-result?status=accepted&org=${encodeURIComponent(orgName)}`);
+    const frontendUrl =
+      process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
+    return res.redirect(
+      `${frontendUrl}/teacher/invitation-result?status=accepted&org=${encodeURIComponent(orgName)}`,
+    );
   } catch (error) {
     logger.error("Accept invitation error:", error.message);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
@@ -517,18 +560,30 @@ const rejectTeacherInvitation = async (req, res) => {
     });
 
     if (!teacher) {
-      return res.status(400).json({ message: "Invalid invitation token", success: false });
+      return res
+        .status(400)
+        .json({ message: "Invalid invitation token", success: false });
     }
 
     // Clear invitation
-    teacher.pendingOrgInvitation = { token: null, organizationId: null, invitedBy: null, expiresAt: null };
+    teacher.pendingOrgInvitation = {
+      token: null,
+      organizationId: null,
+      invitedBy: null,
+      expiresAt: null,
+    };
     await teacher.save({ validateBeforeSave: false });
 
-    const frontendUrl = process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
-    return res.redirect(`${frontendUrl}/teacher/invitation-result?status=rejected`);
+    const frontendUrl =
+      process.env.FRONTEND_INVITATION_URL || "http://localhost:3000";
+    return res.redirect(
+      `${frontendUrl}/teacher/invitation-result?status=rejected`,
+    );
   } catch (error) {
     logger.error("Reject invitation error:", error.message);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
