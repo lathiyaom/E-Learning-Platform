@@ -5,13 +5,39 @@ import { gsap } from "gsap";
 import RecommendedCourseCard from "./RecommendedCourseCard";
 import { useGetMarketplaceCoursesQuery } from "../../../../redux/Apis/courseApi";
 
+const getInstructorFromCourse = (course) => {
+  const teacher =
+    (course?.teacher_id && typeof course.teacher_id === "object" ? course.teacher_id : null) ||
+    (course?.createdBy && typeof course.createdBy === "object" ? course.createdBy : null);
+
+  const instructorName = teacher?.firstName
+    ? `${teacher.firstName} ${teacher.lastName || ""}`.trim()
+    : course?.instructorName || course?.teacherName || "Instructor";
+
+  const instructorImage =
+    teacher?.avatar ||
+    teacher?.profileImage ||
+    teacher?.profilePic ||
+    course?.instructorImage ||
+    null;
+
+  return { instructorName, instructorImage };
+};
+
 function RecommendedSection() {
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
   const cardRefs = useRef([]);
   const { data: coursesData, isLoading } = useGetMarketplaceCoursesQuery("popular");
 
-  const courses = coursesData?.data || [];
+  const courses = (coursesData?.data || [])
+    .slice()
+    .sort((a, b) => {
+      const aDate = new Date(a?.createdAt || a?.created_at || 0).getTime();
+      const bDate = new Date(b?.createdAt || b?.created_at || 0).getTime();
+      return bDate - aDate;
+    })
+    .slice(0, 10);
 
   useEffect(() => {
     if (courses.length > 0) {
@@ -63,13 +89,12 @@ function RecommendedSection() {
   return (
     <section>
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-extrabold flex items-center gap-2 text-slate-900 dark:text-white">
-            <span className="w-1.5 h-8 bg-studprimary dark:bg-premium-gold rounded-full shadow-[0_0_10px_#B08D57]"></span>
-            Recommended for You
-          </h3>
-        </div>
-        <div className="flex gap-2">
+        <h3 className="text-xl font-extrabold flex items-center gap-2 text-slate-900 dark:text-white">
+          <span className="w-1.5 h-8 bg-studprimary dark:bg-premium-gold rounded-full shadow-[0_0_10px_#B08D57]"></span>
+          Recommended for You
+        </h3>
+
+        <div className="hidden sm:flex gap-2">
           <button
             onClick={() => scroll("left")}
             className="p-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 transition-all hover:border-studprimary dark:hover:border-premium-gold dark:text-white"
@@ -89,10 +114,14 @@ function RecommendedSection() {
 
       <div
         ref={scrollContainerRef}
-        className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar scroll-smooth"
+        className="flex gap-4 sm:gap-5 lg:gap-6 overflow-x-auto pb-4 hide-scrollbar scroll-smooth snap-x snap-mandatory"
       >
         {courses.map((course, index) => (
-          <div key={course._id || course.id} ref={(el) => (cardRefs.current[index] = el)}>
+          <div
+            key={course._id || course.id}
+            ref={(el) => (cardRefs.current[index] = el)}
+            className="flex-none w-[260px] sm:w-[290px] lg:w-[320px] snap-start"
+          >
             <RecommendedCourseCard
               course={{
                 id: course._id || course.id,
@@ -102,12 +131,12 @@ function RecommendedSection() {
                 categoryIcon: "code",
                 badge: course.isFeatured ? { text: "Featured", bgColor: "bg-studprimary" } : null,
                 duration: course.duration || "N/A",
-                lessons: course.lessons || 0,
                 rating: course.rating || 0,
                 reviews: course.reviews || 0,
                 level: course.level || "Beginner",
-                instructor: course.instructorName || "Instructor",
-                instructorImage: course.instructorImage || "https://via.placeholder.com/100",
+                instructor: getInstructorFromCourse(course).instructorName,
+                instructorImage: getInstructorFromCourse(course).instructorImage,
+                createdAt: course.createdAt || course.created_at,
                 price: course.price || 0,
               }}
               showRating={false}

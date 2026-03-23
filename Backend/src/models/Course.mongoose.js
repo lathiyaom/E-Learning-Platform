@@ -24,6 +24,26 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    lessons: {
+      type: [
+        {
+          video_url: {
+            type: String,
+            required: true,
+          },
+          videoUrl: {
+            type: String,
+            required: true,
+          },
+          description: {
+            type: String,
+            default: "",
+            trim: true,
+          },
+        },
+      ],
+      default: [],
+    },
     category: {
       type: String,
       required: true,

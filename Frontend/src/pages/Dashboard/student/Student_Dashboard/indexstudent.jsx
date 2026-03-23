@@ -53,7 +53,7 @@ function IndexStud() {
       <MyProgress />
       <RecommendedSection/>
       <ChartSection/>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6 py-4">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6 py-4">
         <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Upcoming Events</h3>
           {events.length === 0 ? (
@@ -89,7 +89,7 @@ function IndexStud() {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
       <Instructures/>
     </AdminLayout>
   );

@@ -2,6 +2,45 @@ const { Course, Subject } = require("../models");
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const normalizeLessons = (lessonsInput = []) => {
+  if (!Array.isArray(lessonsInput)) return [];
+
+  return lessonsInput
+    .map((lesson) => {
+      const videoUrl = String(lesson?.videoUrl || lesson?.video_url || "").trim();
+      if (!videoUrl) return null;
+
+      const description = String(lesson?.description || "").trim();
+      return {
+        videoUrl,
+        video_url: videoUrl,
+        description,
+      };
+    })
+    .filter(Boolean);
+};
+
+const buildLessonsPayload = (courseData) => {
+  const parsedLessons = normalizeLessons(courseData?.lessons);
+  const fallbackVideoUrl = String(courseData?.video_url || courseData?.videoUrl || "").trim();
+
+  if (parsedLessons.length > 0) {
+    return parsedLessons;
+  }
+
+  if (fallbackVideoUrl) {
+    return [
+      {
+        videoUrl: fallbackVideoUrl,
+        video_url: fallbackVideoUrl,
+        description: "",
+      },
+    ];
+  }
+
+  return [];
+};
+
 const resolveSubjectForTenant = async (subjectId, tenantId) => {
   if (!subjectId) return null;
   if (!tenantId) throw new Error("Tenant ID is required to map subject");
@@ -88,9 +127,10 @@ const createCourse = async (courseData) => {
 
   // Handle multiple price field formats
   const coursePrice = price ?? pricing ?? priceUSD ?? 0;
-  const courseVideoUrl = video_url || videoUrl;
+  const lessonsPayload = buildLessonsPayload(courseData);
+  const courseVideoUrl = lessonsPayload[0]?.videoUrl || video_url || videoUrl;
 
-  if (!courseVideoUrl) {
+  if (!courseVideoUrl || lessonsPayload.length === 0) {
     throw new Error("Video URL is required");
   }
 
@@ -124,6 +164,7 @@ const createCourse = async (courseData) => {
     reviewCount: reviewCount || 0,
     video_url: courseVideoUrl,
     videoUrl: courseVideoUrl,
+    lessons: lessonsPayload,
     tags: tags || ["Popular"],
     level: courseData.level || "Easy",
     price: coursePrice,
@@ -198,7 +239,7 @@ const updateCourse = async (id, tenantId, updateData) => {
   });
   if (!course) throw new Error("Course Not Found");
 
-  const { title, image, description, category, subjectId, video_url, videoUrl, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount, level } = updateData;
+  const { title, image, description, category, subjectId, video_url, videoUrl, tags, price, pricing, priceUSD, currency, isPaid, rating, reviewCount, level, lessons } = updateData;
 
   const subject = await resolveSubjectForTenant(subjectId, tenantId);
 
@@ -222,10 +263,19 @@ const updateCourse = async (id, tenantId, updateData) => {
       course.category = subject.name;
     }
   }
-  const nextVideoUrl = video_url || videoUrl;
+  const normalizedLessons = lessons === undefined ? null : normalizeLessons(lessons);
+  if (normalizedLessons && normalizedLessons.length > 0) {
+    course.lessons = normalizedLessons;
+  }
+
+  const nextVideoUrl = video_url || videoUrl || course.lessons?.[0]?.videoUrl;
   if (nextVideoUrl) {
     course.video_url = nextVideoUrl;
     course.videoUrl = nextVideoUrl;
+  }
+
+  if (!course.video_url && (!Array.isArray(course.lessons) || course.lessons.length === 0)) {
+    throw new Error("At least one lesson video URL is required");
   }
   if (tags) course.tags = tags;
   if (level) course.level = level;

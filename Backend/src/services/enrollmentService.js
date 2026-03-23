@@ -3,6 +3,29 @@ const { Course, User } = require("../models");
 
 const resolveCourseOrganizationId = (course) => course.tenantId || course.organization_id;
 
+const COURSE_SELECT_FIELDS =
+  "title description category image lessons video_url videoUrl createdAt teacher_id createdBy";
+const INSTRUCTOR_SELECT_FIELDS = "firstName lastName avatar";
+
+const coursePopulateConfig = [
+  {
+    path: "courseId",
+    select: COURSE_SELECT_FIELDS,
+    populate: [
+      { path: "teacher_id", select: INSTRUCTOR_SELECT_FIELDS },
+      { path: "createdBy", select: INSTRUCTOR_SELECT_FIELDS },
+    ],
+  },
+  {
+    path: "course_id",
+    select: COURSE_SELECT_FIELDS,
+    populate: [
+      { path: "teacher_id", select: INSTRUCTOR_SELECT_FIELDS },
+      { path: "createdBy", select: INSTRUCTOR_SELECT_FIELDS },
+    ],
+  },
+];
+
 const enrollStudent = async (tenantId, courseId, studentId) => {
   if (!tenantId || !courseId || !studentId) {
     throw new Error("Tenant ID, Course ID, and Student ID are required");
@@ -101,8 +124,7 @@ const getStudentEnrollments = async (tenantId, studentId) => {
       { organization_id: tenantId, student_id: studentId },
     ],
   })
-    .populate("courseId")
-    .populate("course_id")
+    .populate(coursePopulateConfig)
     .sort({ enrolledAt: -1 });
 
   return enrollments;
@@ -116,8 +138,7 @@ const getStudentEnrollmentsAcrossPlatform = async (studentId) => {
   const enrollments = await Enrollment.find({
     $or: [{ studentId }, { student_id: studentId }],
   })
-    .populate("courseId")
-    .populate("course_id")
+    .populate(coursePopulateConfig)
     .sort({ enrolledAt: -1, enrolled_at: -1 });
 
   return enrollments;

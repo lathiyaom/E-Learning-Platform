@@ -57,6 +57,21 @@ const EMPTY_COURSE = {
   tags: "",
   currency: "USD",
   isPaid: true,
+  lessons: [{ videoUrl: "", description: "" }],
+};
+
+const normalizeLessonsForForm = (course) => {
+  if (Array.isArray(course?.lessons) && course.lessons.length > 0) {
+    return course.lessons.map((lesson) => ({
+      videoUrl: lesson.videoUrl || lesson.video_url || "",
+      description: lesson.description || "",
+    }));
+  }
+
+  const fallback = String(course?.videoUrl || course?.video_url || "").trim();
+  if (!fallback) return [{ videoUrl: "", description: "" }];
+
+  return [{ videoUrl: fallback, description: "" }];
 };
 
 const isValidHttpUrl = (value) => {
@@ -92,10 +107,21 @@ const validateCourseForm = (form) => {
     errors.image = "Image URL must start with http:// or https://";
   }
 
-  if (!String(form.videoUrl || "").trim()) {
-    errors.videoUrl = "Video URL is required.";
-  } else if (!isValidHttpUrl(String(form.videoUrl).trim())) {
-    errors.videoUrl = "Video URL must start with http:// or https://";
+  const parsedLessons = Array.isArray(form.lessons)
+    ? form.lessons
+        .map((lesson) => ({
+          videoUrl: String(lesson?.videoUrl || "").trim(),
+          description: String(lesson?.description || "").trim(),
+        }))
+        .filter((lesson) => lesson.videoUrl)
+    : [];
+
+  if (parsedLessons.length === 0) {
+    errors.lessons = "At least one lesson video URL is required.";
+  } else if (parsedLessons.some((lesson) => !isValidHttpUrl(lesson.videoUrl))) {
+    errors.lessons = "Each lesson video URL must start with http:// or https://";
+  } else if (parsedLessons.some((lesson) => !lesson.description)) {
+    errors.lessons = "Each lesson needs a description.";
   }
 
   return errors;
@@ -184,6 +210,7 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
           priceUSD: String(course?.priceUSD ?? course?.price ?? ""),
           image: course?.image || "",
           videoUrl: course?.videoUrl || course?.video_url || "",
+          lessons: normalizeLessonsForForm(course),
           tags: Array.isArray(course?.tags) ? course.tags.join(", ") : "",
           currency: course?.currency || "USD",
           isPaid: course?.isPaid ?? Number(course?.priceUSD || 0) > 0,
@@ -222,6 +249,38 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
     });
   };
 
+  const handleLessonChange = (index, key, value) => {
+    setForm((prev) => ({
+      ...prev,
+      lessons: prev.lessons.map((lesson, lessonIndex) =>
+        lessonIndex === index ? { ...lesson, [key]: value } : lesson
+      ),
+    }));
+    setErrors((prev) => {
+      if (!prev.lessons) return prev;
+      const next = { ...prev };
+      delete next.lessons;
+      return next;
+    });
+  };
+
+  const handleAddLesson = () => {
+    setForm((prev) => ({
+      ...prev,
+      lessons: [...prev.lessons, { videoUrl: "", description: "" }],
+    }));
+  };
+
+  const handleRemoveLesson = (index) => {
+    setForm((prev) => {
+      if (prev.lessons.length <= 1) return prev;
+      return {
+        ...prev,
+        lessons: prev.lessons.filter((_, lessonIndex) => lessonIndex !== index),
+      };
+    });
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -233,10 +292,21 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
     }
 
     try {
+      const normalizedLessons = form.lessons
+        .map((lesson) => ({
+          videoUrl: String(lesson.videoUrl || "").trim(),
+          description: String(lesson.description || "").trim(),
+        }))
+        .filter((lesson) => lesson.videoUrl);
+
+      const primaryVideoUrl = normalizedLessons[0]?.videoUrl || "";
+
       const payload = {
         ...form,
         priceUSD: Number(form.priceUSD || 0),
-        videoUrl: form.videoUrl,
+        videoUrl: primaryVideoUrl,
+        video_url: primaryVideoUrl,
+        lessons: normalizedLessons,
         tags: form.tags
           ? form.tags
               .split(",")
@@ -374,19 +444,54 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Video URL *
-              </label>
-              <input
-                name="videoUrl"
-                value={form.videoUrl}
-                onChange={handleChange}
-                placeholder="https://youtube.com/..."
-                required
-                aria-invalid={Boolean(errors.videoUrl)}
-                className={`w-full px-3 py-2.5 rounded-lg border bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 dark:focus:ring-premium-gold/30 ${errors.videoUrl ? "border-red-400 focus:ring-red-200" : "border-slate-300 dark:border-white/10 focus:ring-studprimary/30"}`}
-              />
-              {errors.videoUrl ? <p className="mt-1 text-xs text-red-500">{errors.videoUrl}</p> : null}
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Lessons (Video + Description) *
+                </label>
+                <button
+                  type="button"
+                  onClick={handleAddLesson}
+                  className="inline-flex items-center gap-1 rounded-lg bg-studprimary px-3 py-1.5 text-xs font-semibold text-white hover:bg-studprimary/90 dark:bg-premium-gold dark:text-deep-charcoal"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Lesson
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                {form.lessons.map((lesson, index) => (
+                  <div key={`lesson-${index}`} className="rounded-lg border border-slate-200 p-3 dark:border-white/10">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Lesson {index + 1}</span>
+                      {form.lessons.length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveLesson(index)}
+                          className="rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          aria-label="Remove lesson"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <input
+                      value={lesson.videoUrl}
+                      onChange={(event) => handleLessonChange(index, "videoUrl", event.target.value)}
+                      placeholder="https://youtube.com/..."
+                      className="mb-2 w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-studprimary/30 dark:focus:ring-premium-gold/30"
+                    />
+                    <textarea
+                      value={lesson.description}
+                      onChange={(event) => handleLessonChange(index, "description", event.target.value)}
+                      rows={2}
+                      placeholder="What this lesson teaches"
+                      className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-studprimary/30 dark:focus:ring-premium-gold/30 resize-none"
+                    />
+                  </div>
+                ))}
+              </div>
+              {errors.lessons ? <p className="mt-1 text-xs text-red-500">{errors.lessons}</p> : null}
             </div>
 
             <div>

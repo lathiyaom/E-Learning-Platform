@@ -433,7 +433,7 @@ const ExploreCourses = () => {
           )}
 
           <aside
-            className={`fixed lg:static top-0 left-0 z-40 h-full lg:h-auto w-[290px] sm:w-[320px] lg:w-auto bg-white dark:bg-[#1A1B23] lg:bg-transparent lg:dark:bg-transparent border-r lg:border-0 border-slate-200 dark:border-white/10 transition-transform duration-300 p-4 sm:p-5 lg:p-0 overflow-y-auto ${
+            className={`fixed lg:static top-0 left-0 z-30 h-full lg:h-auto w-[290px] sm:w-[320px] lg:w-auto bg-white dark:bg-[#1A1B23] lg:bg-transparent lg:dark:bg-transparent border-r lg:border-0 border-slate-200 dark:border-white/10 transition-transform duration-300 p-4 sm:p-5 lg:p-0 overflow-y-auto ${
               mobileFilterOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
             }`}
           >

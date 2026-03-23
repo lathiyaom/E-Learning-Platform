@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCreateCourseMutation, useUpdateCourseMutation, useGetCourseByIdQuery } from "../../../redux/Apis/courseApi";
 import { useGetSubjectsQuery } from "../../../redux";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import AdminLayout from "../../../utils/Adminlayoute";
 
 const CourseForm = () => {
@@ -28,6 +28,7 @@ const CourseForm = () => {
     price: 0,
     currency: "USD",
     isPaid: false,
+    lessons: [{ videoUrl: "", description: "" }],
   });
 
   const [tagInput, setTagInput] = useState("");
@@ -35,21 +36,55 @@ const CourseForm = () => {
   useEffect(() => {
     if (editId && courseData?.data) {
       const course = courseData.data;
+      const parsedLessons = Array.isArray(course.lessons) && course.lessons.length > 0
+        ? course.lessons.map((lesson) => ({
+            videoUrl: lesson.videoUrl || lesson.video_url || "",
+            description: lesson.description || "",
+          }))
+        : [{ videoUrl: course.video_url || course.videoUrl || "", description: "" }];
+
       setFormData({
         title: course.title || "",
         description: course.description || "",
         category: course.category || "",
         subjectId: course.subjectId?._id || course.subjectId || "",
         level: course.level || "Easy",
-        video_url: course.video_url || course.videoUrl || "",
+        video_url: parsedLessons[0]?.videoUrl || "",
         image: course.image || "",
         tags: course.tags || [],
         price: course.price || course.pricing || 0,
         currency: course.currency || "USD",
         isPaid: course.isPaid !== undefined ? course.isPaid : (course.price > 0 || course.pricing > 0),
+        lessons: parsedLessons,
       });
     }
   }, [editId, courseData]);
+
+  const handleLessonChange = (index, key, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      lessons: prev.lessons.map((lesson, lessonIndex) =>
+        lessonIndex === index ? { ...lesson, [key]: value } : lesson
+      ),
+    }));
+  };
+
+  const handleAddLesson = () => {
+    setFormData((prev) => ({
+      ...prev,
+      lessons: [...prev.lessons, { videoUrl: "", description: "" }],
+    }));
+  };
+
+  const handleRemoveLesson = (index) => {
+    setFormData((prev) => {
+      if (prev.lessons.length <= 1) return prev;
+      return {
+        ...prev,
+        lessons: prev.lessons.filter((_, lessonIndex) => lessonIndex !== index),
+      };
+    });
+  };
 
   const handleAddTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
@@ -65,7 +100,26 @@ const CourseForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.description || !formData.category || !formData.video_url || !formData.image) {
+    const normalizedLessons = formData.lessons
+      .map((lesson) => ({
+        videoUrl: String(lesson.videoUrl || "").trim(),
+        description: String(lesson.description || "").trim(),
+      }))
+      .filter((lesson) => lesson.videoUrl);
+
+    if (normalizedLessons.length === 0) {
+      alert("Please add at least one lesson video link");
+      return;
+    }
+
+    if (normalizedLessons.some((lesson) => !lesson.description)) {
+      alert("Please add a description for each lesson video");
+      return;
+    }
+
+    const primaryLessonVideo = normalizedLessons[0].videoUrl;
+
+    if (!formData.title || !formData.description || !formData.category || !primaryLessonVideo || !formData.image) {
       alert("Please fill all required fields");
       return;
     }
@@ -74,7 +128,9 @@ const CourseForm = () => {
       const coursePayload = {
         ...formData,
         pricing: formData.price,
-        videoUrl: formData.video_url,
+        video_url: primaryLessonVideo,
+        videoUrl: primaryLessonVideo,
+        lessons: normalizedLessons,
       };
 
       if (editId) {
@@ -182,16 +238,53 @@ const CourseForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Course Video URL *</label>
-            <input
-              type="url"
-              value={formData.video_url}
-              onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-              className="w-full px-3 py-2 border rounded"
-              placeholder="https://youtube.com/watch?v=..."
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">YouTube or Vimeo URL for course intro video</p>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium">Course Lessons (Video + Description) *</label>
+              <button
+                type="button"
+                onClick={handleAddLesson}
+                className="inline-flex items-center gap-1 rounded-md bg-studprimary px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+              >
+                <Plus className="h-4 w-4" />
+                Add Lesson
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.lessons.map((lesson, index) => (
+                <div key={`lesson-${index}`} className="rounded-lg border border-slate-200 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-slate-500">Lesson {index + 1}</p>
+                    {formData.lessons.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLesson(index)}
+                        className="rounded-md p-1 text-red-600 hover:bg-red-50"
+                        aria-label="Remove lesson"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </div>
+                  <input
+                    type="url"
+                    value={lesson.videoUrl}
+                    onChange={(e) => handleLessonChange(index, "videoUrl", e.target.value)}
+                    className="mb-2 w-full px-3 py-2 border rounded"
+                    placeholder="https://youtube.com/watch?v=..."
+                    required={index === 0}
+                  />
+                  <textarea
+                    value={lesson.description}
+                    onChange={(e) => handleLessonChange(index, "description", e.target.value)}
+                    className="w-full px-3 py-2 border rounded"
+                    rows="2"
+                    placeholder="Describe what this video lesson covers"
+                    required={index === 0}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-gray-500">Add multiple lessons for better course experience. First lesson is used as primary preview video.</p>
           </div>
 
           <div>

@@ -1,5 +1,7 @@
 import React from "react";
-import { Star, Play } from "lucide-react";
+import moment from "moment";
+import { Clock3, Play } from "lucide-react";
+import { Card, CardContent } from "../../../../components/Card";
 
 const CourseCard = ({
   course,
@@ -16,27 +18,26 @@ const CourseCard = ({
     category,
     badge,
     duration,
-    lessons,
     instructor,
     instructorImage,
+    createdAt,
     price,
-    rating,
-    reviews,
     progress,
     unitsCompleted,
     totalUnits,
     lastAccess,
   } = course;
 
-  const formatReviews = (count) => {
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}k`;
-    }
-    return count;
-  };
+  const relativeDate = createdAt ? moment(createdAt).fromNow() : "recently";
+  const initials = (instructor || "IN")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((chunk) => chunk[0]?.toUpperCase())
+    .join("") || "IN";
 
   return (
-    <div className="w-full bg-white dark:dark-glass rounded-3xl overflow-hidden border border-slate-100 dark:border-white/10 group hover:shadow-xl dark:hover:shadow-premium-gold/5 transition-all flex flex-col h-full">
+    <Card className="w-full bg-white dark:dark-glass rounded-3xl overflow-hidden border border-slate-100 dark:border-white/10 group hover:shadow-xl dark:hover:shadow-premium-gold/5 transition-all flex flex-col h-full py-0">
       <div className="h-44 relative overflow-hidden bg-slate-200 dark:bg-[#1A1B23]">
         {image ? (
           <img
@@ -81,33 +82,7 @@ const CourseCard = ({
       </div>
 
       {/* Content Section */}
-      <div className="p-5 flex-1 flex flex-col">
-        {/* Rating Section - Hide if ongoing */}
-        {!isOngoing && showRating && rating && (
-          <div className="flex items-center gap-1 mb-3">
-            <div className="flex items-center gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  size={14}
-                  className={`${
-                    i < Math.floor(rating)
-                      ? "fill-studprimary dark:fill-premium-gold text-studprimary dark:text-premium-gold"
-                      : "text-slate-300 dark:text-slate-700"
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">
-              {rating}
-            </span>
-            {showReviews && reviews && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">
-                ({formatReviews(reviews)} reviews)
-              </span>
-            )}
-          </div>
-        )}
+      <CardContent className="p-5 flex-1 flex flex-col">
 
         {/* Title */}
         <h3 className="font-bold text-lg mb-2 leading-snug text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors line-clamp-2">
@@ -184,10 +159,9 @@ const CourseCard = ({
           <>
             {/* Meta Info */}
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">
-                schedule
-              </span>
-              {duration} • {lessons} lessons
+              <Clock3 className="w-3.5 h-3.5" />
+              <span className="truncate">{relativeDate}</span>
+              {duration && duration !== "N/A" ? <span>• {duration}</span> : null}
             </p>
 
             {/* Instructor Info */}
@@ -201,7 +175,7 @@ const CourseCard = ({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-studprimary dark:bg-premium-gold">
-                    {instructor?.substring(0, 2).toUpperCase()}
+                    {initials}
                   </div>
                 )}
               </div>
@@ -226,8 +200,8 @@ const CourseCard = ({
             )}
           </>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

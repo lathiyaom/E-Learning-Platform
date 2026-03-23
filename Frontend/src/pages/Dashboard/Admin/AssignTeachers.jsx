@@ -34,6 +34,60 @@ const paginate = (items, page, pageSize) => {
   return items.slice(start, start + pageSize);
 };
 
+const filterTeachers = (teachers, searchTerm) => {
+  const query = safeText(searchTerm);
+  return teachers.filter((teacher) => {
+    const fullName = `${safeText(teacher?.firstName)} ${safeText(teacher?.lastName)}`;
+    return fullName.includes(query) || safeText(teacher?.email).includes(query);
+  });
+};
+
+const EmptyState = ({ message }) => (
+  <div className="rounded-xl border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
+    {message}
+  </div>
+);
+
+const TeachersSection = ({
+  title,
+  count,
+  icon,
+  iconWrapperClassName,
+  iconClassName,
+  emptyMessage,
+  items,
+  renderItem,
+  currentPage,
+  totalPages,
+  onPageChange,
+  totalItems,
+}) => (
+  <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className={`rounded-lg p-2 ${iconWrapperClassName}`}>
+          {React.cloneElement(icon, {
+            className: iconClassName,
+          })}
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">{title}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{count} match(es)</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="space-y-2.5">{items.length === 0 ? <EmptyState message={emptyMessage} /> : items.map(renderItem)}</div>
+
+    <CompactPagination
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={onPageChange}
+      totalItems={totalItems}
+    />
+  </section>
+);
+
 const CompactPagination = ({ currentPage, totalPages, onPageChange, totalItems }) => {
   if (totalItems <= PAGE_SIZE) return null;
 
@@ -110,18 +164,22 @@ const TeacherCard = ({ teacher, action, selected = false, disabled = false, onCl
           </div>
         </div>
 
-        {action ? (
-          <button
+        {action?.type === "status" ? (
+          <span className={`rounded-lg px-2.5 py-1.5 text-xs font-medium ${action.className}`}>{action.label}</span>
+        ) : action ? (
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={(event) => {
               event.stopPropagation();
               action.onClick();
             }}
             disabled={disabled}
-            className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${action.variant}`}
+            className={action.className}
           >
             {action.icon}
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>
@@ -170,32 +228,17 @@ const AssignTeachers = () => {
   );
 
   const filteredOpenTeachers = useMemo(
-    () =>
-      openTeachers.filter((teacher) => {
-        const query = safeText(searchTerm);
-        const fullName = `${safeText(teacher?.firstName)} ${safeText(teacher?.lastName)}`;
-        return fullName.includes(query) || safeText(teacher?.email).includes(query);
-      }),
+    () => filterTeachers(openTeachers, searchTerm),
     [openTeachers, searchTerm]
   );
 
   const filteredPendingTeachers = useMemo(
-    () =>
-      pendingInviteTeachers.filter((teacher) => {
-        const query = safeText(searchTerm);
-        const fullName = `${safeText(teacher?.firstName)} ${safeText(teacher?.lastName)}`;
-        return fullName.includes(query) || safeText(teacher?.email).includes(query);
-      }),
+    () => filterTeachers(pendingInviteTeachers, searchTerm),
     [pendingInviteTeachers, searchTerm]
   );
 
   const filteredAssigned = useMemo(
-    () =>
-      assignedTeachers.filter((teacher) => {
-        const query = safeText(searchTerm);
-        const fullName = `${safeText(teacher?.firstName)} ${safeText(teacher?.lastName)}`;
-        return fullName.includes(query) || safeText(teacher?.email).includes(query);
-      }),
+    () => filterTeachers(assignedTeachers, searchTerm),
     [assignedTeachers, searchTerm]
   );
 
@@ -346,141 +389,85 @@ const AssignTeachers = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr_1fr]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-amber-100 p-2 dark:bg-amber-500/10">
-                  <Users className="h-4 w-4 text-amber-600 dark:text-amber-300" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Ready to Invite
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {filteredOpenTeachers.length} match(es)
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
-              {paginatedUnassigned.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
-                  No available teachers found.
-                </div>
-              ) : (
-                paginatedUnassigned.map((teacher) => (
-                  <TeacherCard
-                    key={teacher._id}
-                    teacher={teacher}
-                    selected={selectedTeachers.includes(teacher._id)}
-                    onClick={() => handleSelectTeacher(teacher._id)}
-                  />
-                ))
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="xl:col-span-1">
+            <TeachersSection
+              title="Ready to Invite"
+              count={filteredOpenTeachers.length}
+              icon={<Users />}
+              iconWrapperClassName="bg-amber-100 dark:bg-amber-500/10"
+              iconClassName="h-4 w-4 text-amber-600 dark:text-amber-300"
+              emptyMessage="No available teachers found."
+              items={paginatedUnassigned}
+              renderItem={(teacher) => (
+                <TeacherCard
+                  key={teacher._id}
+                  teacher={teacher}
+                  selected={selectedTeachers.includes(teacher._id)}
+                  onClick={() => handleSelectTeacher(teacher._id)}
+                />
               )}
-            </div>
-
-            <CompactPagination
               currentPage={availablePage}
               totalPages={availableTotalPages}
               onPageChange={setAvailablePage}
               totalItems={filteredOpenTeachers.length}
             />
-          </section>
+          </div>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-500/10">
-                  <Mail className="h-4 w-4 text-blue-600 dark:text-blue-300" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Pending Invitations
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {filteredPendingTeachers.length} match(es)
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
-              {paginatedPending.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
-                  No pending invitations found.
-                </div>
-              ) : (
-                paginatedPending.map((teacher) => (
-                  <TeacherCard
-                    key={teacher._id}
-                    teacher={teacher}
-                    action={{
-                      onClick: () => {},
-                      icon: <span className="text-[10px] font-semibold">Pending</span>,
-                      variant:
-                        "cursor-default text-blue-700 bg-blue-100 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-500/10",
-                    }}
-                  />
-                ))
+          <div className="xl:col-span-2">
+            <TeachersSection
+              title="Pending Invitations"
+              count={filteredPendingTeachers.length}
+              icon={<Mail />}
+              iconWrapperClassName="bg-blue-100 dark:bg-blue-500/10"
+              iconClassName="h-4 w-4 text-blue-600 dark:text-blue-300"
+              emptyMessage="No pending invitations found."
+              items={paginatedPending}
+              renderItem={(teacher) => (
+                <TeacherCard
+                  key={teacher._id}
+                  teacher={teacher}
+                  action={{
+                    type: "status",
+                    label: "Pending",
+                    className: "cursor-default text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-500/10",
+                  }}
+                />
               )}
-            </div>
-
-            <CompactPagination
               currentPage={pendingPage}
               totalPages={pendingTotalPages}
               onPageChange={setPendingPage}
               totalItems={filteredPendingTeachers.length}
             />
-          </section>
+          </div>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-500/10">
-                  <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Assigned Teachers
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {filteredAssigned.length} match(es)
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
-              {paginatedAssigned.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
-                  No assigned teachers found.
-                </div>
-              ) : (
-                paginatedAssigned.map((teacher) => (
-                  <TeacherCard
-                    key={teacher._id}
-                    teacher={teacher}
-                    disabled={removing}
-                    action={{
-                      onClick: () => handleRemoveTeacher(teacher._id),
-                      icon: <UserMinus className="h-4 w-4" />,
-                      variant:
-                        "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10",
-                    }}
-                  />
-                ))
+          <div className="md:col-span-2 xl:col-span-3">
+            <TeachersSection
+              title="Assigned Teachers"
+              count={filteredAssigned.length}
+              icon={<UserCheck />}
+              iconWrapperClassName="bg-emerald-100 dark:bg-emerald-500/10"
+              iconClassName="h-4 w-4 text-emerald-600 dark:text-emerald-300"
+              emptyMessage="No assigned teachers found."
+              items={paginatedAssigned}
+              renderItem={(teacher) => (
+                <TeacherCard
+                  key={teacher._id}
+                  teacher={teacher}
+                  disabled={removing}
+                  action={{
+                    onClick: () => handleRemoveTeacher(teacher._id),
+                    icon: <UserMinus className="h-4 w-4" />,
+                    className: "rounded-lg p-0 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10",
+                  }}
+                />
               )}
-            </div>
-
-            <CompactPagination
               currentPage={assignedPage}
               totalPages={assignedTotalPages}
               onPageChange={setAssignedPage}
               totalItems={filteredAssigned.length}
             />
-          </section>
+          </div>
         </div>
       </div>
     </AdminLayout>
