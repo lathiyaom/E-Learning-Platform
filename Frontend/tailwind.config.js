@@ -25,8 +25,8 @@ const config = {
         "premium-tooltip": "#12131A",
         "gold-glow": "rgba(176, 141, 87, 0.15)",
         // HomeNew accent colors
-        primary: "#ecb613",
-        "accent-gold": "#ecb613",
+        primary: "#B48B4D", // Earthy brown from the button
+        "accent-gold": "#F5EFE6", // Creamy beige for active items
       },
       fontFamily: {
         display: ["Plus Jakarta Sans", "sans-serif"],

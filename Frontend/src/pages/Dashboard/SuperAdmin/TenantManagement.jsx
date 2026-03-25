@@ -248,7 +248,7 @@ const TenantManagement = () => {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent-gold flex items-center justify-center text-slate-900 font-bold">
+                        <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-slate-900 font-bold">
                           {tenant.institutionName?.charAt(0) || tenant.name?.charAt(0) || "I"}
                         </div>
                         <div>

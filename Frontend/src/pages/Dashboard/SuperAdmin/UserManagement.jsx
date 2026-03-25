@@ -303,7 +303,7 @@ const UserManagement = () => {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
                           {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                         </div>
                         <div>

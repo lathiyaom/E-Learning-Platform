@@ -81,7 +81,7 @@ const TenantDetail = () => {
       </button>
 
       {/* Institution Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white mb-6">
+      <div className="bg-primary rounded-2xl p-8 text-white mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -89,7 +89,7 @@ const TenantDetail = () => {
             </div>
             <div>
               <h2 className="text-2xl font-bold mb-2">
-                {tenant.institutionName || "N/A"}
+                {tenant.name || "N/A"}
               </h2>
               <p className="text-blue-100">
                 Managed by {tenant.name}

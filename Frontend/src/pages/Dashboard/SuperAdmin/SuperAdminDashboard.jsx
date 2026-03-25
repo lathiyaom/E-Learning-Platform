@@ -87,7 +87,7 @@ const SuperAdminDashboard = () => {
   return (
     <SuperAdminLayout pageTitle="Platform Overview" subheader="Control center for the full platform">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white mb-8">
+      <div className="bg-primary rounded-2xl p-8 text-white mb-8">
         <h2 className="text-2xl font-bold mb-2">Welcome back, Super Admin!</h2>
         <p className="text-blue-100">
           Here's what's happening with your platform today.

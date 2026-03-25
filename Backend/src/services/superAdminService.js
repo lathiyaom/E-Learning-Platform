@@ -88,7 +88,7 @@ const getTenantWithUsers = async (tenantId) => {
   if (!tenant) throw new Error("Tenant not found");
 
   const users = await User.find({ tenant_id: tenantId })
-    .select("-password -token -refreshToken")
+    .select("name email userType isActive createdAt") // Explicitly select fields
     .sort({ createdAt: -1 });
 
   return { tenant, users };
@@ -375,7 +375,9 @@ const getPlatformStats = async (roleFilter = "all") => {
       : 0;
   const adminCount =
     role === "all" || role === "admin"
-      ? await Tenant.countDocuments({ userType: { $in: ["admin", "superadmin"] } })
+      ? await Tenant.countDocuments({
+          userType: { $in: ["admin", "superadmin"] },
+        })
       : 0;
 
   const totalUsers = studentCount + teacherCount + adminCount;

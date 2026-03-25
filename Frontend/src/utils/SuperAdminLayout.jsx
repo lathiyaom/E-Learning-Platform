@@ -78,7 +78,7 @@ const SuperAdminLayout = ({
     >
       <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-800">
         <div className={`flex items-center ${isCollapsed && !mobile ? "justify-center" : "gap-3"}`}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent-gold flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
             <Shield className="h-5 w-5" />
           </div>
           {(!isCollapsed || mobile) && (

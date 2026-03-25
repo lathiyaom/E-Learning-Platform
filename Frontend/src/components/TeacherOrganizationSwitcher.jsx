@@ -44,7 +44,7 @@ const TeacherOrganizationSwitcher = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-md transition-all"
       >
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
           <Building className="h-5 w-5 text-white" />
         </div>
         <div className="text-left">
