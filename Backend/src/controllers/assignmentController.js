@@ -350,6 +350,7 @@ exports.updateAssignment = async (req, res) => {
         "maxPoints",
         "title",
         "description",
+        "attachments",
       ];
       const updates = {};
       allowedUpdates.forEach((field) => {

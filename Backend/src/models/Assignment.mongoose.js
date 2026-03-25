@@ -19,6 +19,21 @@ const assignmentSchema = new mongoose.Schema(
       maxlength: 5000,
     },
 
+    // Teacher-attached resources (Cloudinary files + external links)
+    attachments: [
+      {
+        url: { type: String, required: true },
+        publicId: { type: String },          // Cloudinary publicId (for deletion)
+        name: { type: String, required: true },
+        size: { type: Number },              // bytes (null for links)
+        attachmentType: {
+          type: String,
+          enum: ["file", "link"],
+          default: "file",
+        },
+      },
+    ],
+
     // Course and teacher relationship
     courseId: {
       type: mongoose.Schema.Types.ObjectId,
