@@ -84,6 +84,11 @@ export const breadcrumbPaths = {
   ],
 
   SETTINGS: [{ label: "Dashboard", to: "/dashboard" }, { label: "Settings" }],
+
+  ATTENDANCE: [
+    { label: "Dashboard", to: "/dashboard" },
+    { label: "My Attendance" },
+  ],
 };
 
 export const getBreadcrumbs = (key, ...params) => {

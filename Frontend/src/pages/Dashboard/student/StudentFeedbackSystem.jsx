@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { Star, Send, MessageSquare, Loader2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Star, Send, MessageSquare, Loader2, Sparkles } from "lucide-react";
 import { useSelector } from "react-redux";
 import {
   useCreateFeedbackMutation,
@@ -11,12 +11,89 @@ import {
 import { SuccessToster, ErrorToster } from "../../../components/toster";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { getApiErrorMessage } from "../../../utils/apiError";
+import { Card } from "../../../components/Card";
+import { Button } from "../../../components/Button";
+
+function FeedbackStars({ rating, interactive, onSelect, disabled }) {
+  const stars = [1, 2, 3, 4, 5];
+
+  if (!interactive) {
+    return (
+      <div className="flex gap-1">
+        {stars.map((s) => (
+          <Star
+            key={s}
+            size={16}
+            className={
+              s <= rating
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-slate-300 dark:text-slate-600"
+            }
+          />
+        ))}
+        <span className="ml-2 text-sm text-slate-700 dark:text-slate-200">
+          {rating}/5
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-2">
+      {stars.map((s) => (
+        <button
+          key={s}
+          type="button"
+          className="p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-studprimary/30 dark:focus-visible:ring-premium-gold/30 disabled:cursor-not-allowed"
+          onClick={() => !disabled && onSelect?.(s)}
+          aria-label={`${s} star`}
+          aria-pressed={s === rating}
+          disabled={disabled}
+        >
+          <Star
+            size={26}
+            className={
+              s <= rating
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-slate-300 dark:text-slate-600"
+            }
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function FeedbackCard({ feedback }) {
+  return (
+    <Card className="p-6 mb-3 last:mb-0 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border-slate-200 dark:border-white/10 hover:border-studprimary/30 dark:hover:border-premium-gold/30 transition-all">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <b className="text-lg text-slate-900 dark:text-white">
+            {feedback.course}
+          </b>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {feedback.date
+              ? new Date(feedback.date).toLocaleDateString()
+              : "—"}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <FeedbackStars rating={feedback.rating} />
+        </div>
+      </div>
+
+      <p className="mt-4 text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+        {feedback.message}
+      </p>
+    </Card>
+  );
+}
 
 export default function StudentFeedbackSystem() {
   const { user } = useSelector((state) => state.auth);
   const studentId = user?._id || user?.id;
 
-  const [activeTab, setActiveTab] = useState("courses");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
@@ -128,8 +205,10 @@ export default function StudentFeedbackSystem() {
   if (loadingEnrollments || loadingFeedback) {
     return (
       <AdminLayout>
-        <div className="p-10 min-h-screen bg-slate-100 flex items-center justify-center">
-          <Loader2 className="animate-spin" size={48} />
+        <div className="min-h-[70vh] flex items-center justify-center">
+          <div className="relative w-24 h-24 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-sm">
+            <Loader2 className="animate-spin text-studprimary dark:text-premium-gold" size={42} />
+          </div>
         </div>
       </AdminLayout>
     );
@@ -137,144 +216,205 @@ export default function StudentFeedbackSystem() {
 
   return (
     <AdminLayout>
-    <div className="p-10 min-h-screen bg-slate-100">
-      <h1 className="text-3xl font-bold mb-6">Student Feedback</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* FORM */}
-        <div className="bg-white p-6 rounded shadow">
-          <select
-            className="border w-full mb-3 p-2 rounded"
-            value={activeTab}
-            onChange={(e) => {
-              setActiveTab(e.target.value);
-              setSelectedCourse("");
-            }}
-            disabled
-          >
-            <option value="courses">Course Feedback</option>
-          </select>
-
-          <select
-            className="border w-full mb-3 p-2 rounded"
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-          >
-            <option value="">Select Course</option>
-            {enrolledCourses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Stars */}
-          <div className="flex gap-2 mb-3">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <Star
-                key={s}
-                onClick={() => setRating(s)}
-                className={`cursor-pointer ${
-                  s <= rating
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-gray-300"
-                }`}
-                size={24}
-              />
-            ))}
+      <div className="space-y-8">
+        {/* HERO */}
+        <section className="relative bg-lavender-light dark:bg-navy-charcoal rounded-2xl md:rounded-[2.5rem] px-4 py-8 sm:px-6 sm:py-10 border border-white/50 dark:border-white/10 shadow-sm dark:shadow-2xl overflow-hidden text-center">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-studprimary/10 dark:bg-premium-gold/10 rounded-full blur-[100px]" />
+            <div className="absolute bottom-0 right-0 w-[30%] h-[30%] bg-purple-500/10 dark:bg-premium-gold/5 rounded-full blur-[80px] translate-y-1/2 translate-x-1/2" />
+            <div
+              className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] text-studprimary dark:text-premium-gold"
+              style={{
+                backgroundImage: `radial-gradient(currentColor 1px, transparent 1px)`,
+                backgroundSize: "1.5rem 1.5rem",
+              }}
+            />
           </div>
 
-          <textarea
-            maxLength={500}
-            className="border w-full p-2 mb-2 rounded"
-            rows={4}
-            placeholder="Write your feedback..."
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-          />
-
-          <small className="text-gray-500">
-            {feedback.length}/500 characters
-          </small>
-
-          <button
-            onClick={submitFeedback}
-            disabled={submitting}
-            className="mt-4 bg-blue-500 hover:bg-blue-600 text-white w-full p-2 flex justify-center items-center gap-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="animate-spin" size={18} />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Send size={18} /> Submit Feedback
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* LIST */}
-        <div className="md:col-span-2">
-          {feedbacks.length === 0 && (
-            <div className="bg-white p-12 text-center rounded shadow">
-              <MessageSquare className="mx-auto mb-3 text-gray-400" size={48} />
-              <p className="text-gray-500">No feedback submitted yet</p>
+          <div className="relative z-10 max-w-4xl mx-auto space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-studprimary/10 dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold text-xs font-bold tracking-wider uppercase border border-studprimary/20 dark:border-premium-gold/20 backdrop-blur-sm">
+              <Sparkles className="w-4 h-4" />
+              <span>Student Feedback</span>
             </div>
-          )}
 
-          {feedbacks.map((f) => (
-            <div key={f.id} className="bg-white p-4 mb-4 rounded shadow">
-              <div className="flex justify-between items-start">
-                <b className="text-lg">{f.course}</b>
-                <span className="text-sm text-gray-500">
-                  {new Date(f.date).toLocaleDateString()}
-                </span>
-              </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+              Share your experience
+              <span className="text-studprimary dark:text-premium-gold">.</span>
+            </h1>
 
-              <div className="flex gap-1 my-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    size={16}
-                    className={
-                      s <= f.rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }
+            <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+              Rate your courses and send thoughtful feedback. It helps improve
+              content quality for everyone.
+            </p>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* FORM */}
+          <div className="lg:col-span-4">
+            <div className="lg:sticky lg:top-6">
+              <Card className="p-6 rounded-2xl bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 shadow-sm h-fit">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                      Submit Feedback
+                    </h2>
+                    <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
+                      Your rating helps improve course quality.
+                    </p>
+                  </div>
+                  <div className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-studprimary/10 dark:bg-premium-gold/10 px-3 py-1.5 border border-studprimary/20 dark:border-premium-gold/20">
+                    <Sparkles className="w-4 h-4 text-studprimary dark:text-premium-gold" />
+                    <span className="text-xs font-bold text-studprimary dark:text-premium-gold">
+                      Quick Rate
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    Select course
+                  </label>
+                  <select
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-studprimary/30 dark:focus:ring-premium-gold/30"
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                  >
+                    <option value="">Select Course</option>
+                    {enrolledCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    Rating
+                  </label>
+                  <FeedbackStars
+                    rating={rating}
+                    interactive
+                    onSelect={setRating}
+                    disabled={submitting}
                   />
-                ))}
-                <span className="ml-2 text-sm text-gray-600">
-                  {f.rating}/5
-                </span>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    Feedback (optional but recommended)
+                  </label>
+                  <textarea
+                    maxLength={500}
+                    className="w-full px-3 py-3 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-studprimary/30 dark:focus:ring-premium-gold/30 resize-none min-h-[120px]"
+                    placeholder="Write your feedback..."
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                  />
+                  <div className="flex items-center justify-between">
+                    <small className="text-xs text-slate-500 dark:text-slate-400">
+                      {feedback.length}/500 characters
+                    </small>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={submitFeedback}
+                  disabled={submitting}
+                  className="w-full h-12 bg-studprimary dark:bg-premium-gold hover:bg-studprimary/90 dark:hover:brightness-110 text-white dark:text-deep-charcoal font-bold shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20 hover:shadow-studprimary/40 flex items-center justify-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed rounded-xl"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} /> Submit Feedback
+                    </>
+                  )}
+                </Button>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* LIST */}
+          <div className="lg:col-span-8">
+            <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Your Feedback
+                  </h2>
+                  <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
+                    {feedbacks.length} rating{feedbacks.length === 1 ? "" : "s"} submitted
+                  </p>
+                </div>
+                <div className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-white/5 px-3 py-1.5 border border-slate-200 dark:border-white/10">
+                  <MessageSquare className="w-4 h-4 text-slate-500 dark:text-slate-300" />
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Latest
+                  </span>
+                </div>
               </div>
 
-              <p className="text-gray-700">{f.message}</p>
+              {feedbacks.length === 0 ? (
+                <div className="py-10 text-center">
+                  <MessageSquare className="mx-auto mb-3 text-slate-400 dark:text-slate-500" size={54} />
+                  <p className="text-slate-600 dark:text-slate-300">
+                    No feedback submitted yet
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-y-auto modal-scrollbar modal-scroll-smooth max-h-[52vh] lg:max-h-[62vh] pr-2">
+                  {feedbacks.map((f) => (
+                    <FeedbackCard key={f.id} feedback={f} />
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
+              Average Rating
+            </p>
+            <div className="flex items-end gap-3">
+              <b className="text-3xl text-studprimary dark:text-premium-gold font-extrabold leading-none">
+                {stats.average}
+              </b>
+              <span className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                /5.0
+              </span>
             </div>
-          ))}
+          </Card>
+
+          <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
+              Total Feedback
+            </p>
+            <b className="text-3xl text-emerald-600 dark:text-emerald-400 font-extrabold">
+              {stats.total}
+            </b>
+          </Card>
+
+          <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
+              Courses Rated
+            </p>
+            <b className="text-3xl text-violet-600 dark:text-violet-400 font-extrabold">
+              {stats.coursesRated}
+            </b>
+          </Card>
         </div>
       </div>
-
-      {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-        <div className="bg-white p-6 rounded shadow">
-          <p className="text-gray-600 mb-2">Average Rating</p>
-          <b className="text-3xl text-blue-600">{stats.average}</b>
-          <span className="text-gray-500 ml-2">/5.0</span>
-        </div>
-
-        <div className="bg-white p-6 rounded shadow">
-          <p className="text-gray-600 mb-2">Total Feedback</p>
-          <b className="text-3xl text-green-600">{stats.total}</b>
-        </div>
-
-        <div className="bg-white p-6 rounded shadow">
-          <p className="text-gray-600 mb-2">Courses Rated</p>
-          <b className="text-3xl text-purple-600">{stats.coursesRated}</b>
-        </div>
-      </div>
-    </div>
     </AdminLayout>
   );
 }
