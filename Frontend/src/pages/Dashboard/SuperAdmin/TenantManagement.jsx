@@ -120,15 +120,15 @@ const TenantManagement = () => {
 
   const getRoleBadge = (role) => {
     return normalizeRole(role) === "superadmin"
-      ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-      : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+      ? "bg-primary/20 text-primary dark:bg-premium-gold/30 dark:text-premium-gold"
+      : "bg-primary/10 text-primary dark:bg-premium-gold/20 dark:text-premium-gold";
   };
 
   if (isLoading) {
     return (
       <SuperAdminLayout pageTitle="Institution Management">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-premium-gold"></div>
         </div>
       </SuperAdminLayout>
     );
@@ -163,7 +163,7 @@ const TenantManagement = () => {
               placeholder="Search institutions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary dark:focus:ring-premium-gold focus:border-primary dark:focus:border-premium-gold"
             />
           </div>
 
@@ -248,7 +248,7 @@ const TenantManagement = () => {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent-gold flex items-center justify-center text-slate-900 font-bold">
                           {tenant.institutionName?.charAt(0) || tenant.name?.charAt(0) || "I"}
                         </div>
                         <div>
@@ -451,11 +451,10 @@ const TenantManagement = () => {
                   else if (type === "suspend")
                     handleStatusChange(tenant._id, "suspended", tenant.name);
                 }}
-                className={`flex-1 px-4 py-2 rounded-xl text-white transition-colors ${
-                  showConfirmModal.type === "suspend"
+                className={`flex-1 px-4 py-2 rounded-xl text-white transition-colors ${showConfirmModal.type === "suspend"
                     ? "bg-red-500 hover:bg-red-600"
                     : "bg-blue-500 hover:bg-blue-600"
-                }`}
+                  }`}
               >
                 Confirm
               </button>

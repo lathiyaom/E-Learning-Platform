@@ -55,6 +55,14 @@ export const superAdminApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    getPlatformStats: builder.query({
+      query: (role) => ({
+        url: `/SuperAdmin/stats${role ? `?role=${role}` : ''}`,
+        method: "GET",
+      }),
+      providesTags: [{ type: "Stats", id: "LIST" }],
+    }),
+
     getPlatformUsers: builder.query({
       query: ({ page = 1, limit = 20, search = '', roleFilter = 'all', statusFilter = 'all' } = {}) => {
         const params = new URLSearchParams({ 
@@ -82,11 +90,6 @@ export const superAdminApi = apiSlice.injectEndpoints({
     getAllPlatformUsers: builder.query({
       query: () => "/SuperAdmin/Users?limit=999",
       transformResponse: (response) => response.data || [],
-    }),
-
-    getPlatformStats: builder.query({
-      query: () => "/SuperAdmin/Stats",
-      providesTags: ["Stats"],
     }),
 
     getAllTeachers: builder.query({

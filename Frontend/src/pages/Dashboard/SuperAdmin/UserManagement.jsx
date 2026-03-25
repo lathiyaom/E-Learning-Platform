@@ -17,13 +17,13 @@ import {
 const UserManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const pageParam = parseInt(searchParams.get("page")) || 1;
-  
+
   const [localFilters, setLocalFilters] = useState({
     searchTerm: searchParams.get("search") || '',
     roleFilter: searchParams.get("role") || 'all',
     statusFilter: searchParams.get("status") || 'all'
   });
-  
+
   const { data, isLoading, isError, error, refetch } = useGetPlatformUsersQuery({
     page: pageParam,
     limit: 20,
@@ -32,7 +32,7 @@ const UserManagement = () => {
     statusFilter: localFilters.statusFilter
   });
 
-  const { data: statsData } = useGetPlatformStatsQuery();
+  const { data: statsData } = useGetPlatformStatsQuery(localFilters.roleFilter);
   const stats = statsData?.data || { users: { total: 0, students: 0, teachers: 0, admins: 0 } };
 
   const users = data?.data || [];
@@ -48,7 +48,7 @@ const UserManagement = () => {
     if (localFilters.statusFilter !== 'all') params.set('status', localFilters.statusFilter);
     else params.delete('status');
     params.set('page', String(pageParam));
-    
+
     setSearchParams(params, { replace: true });
   }, [localFilters, pageParam, setSearchParams]);
 
@@ -122,83 +122,85 @@ const UserManagement = () => {
     );
   }
 
-  const pageTitle = localFilters.roleFilter === "teacher" 
-    ? "Teachers Management" 
-    : localFilters.roleFilter === "student" 
-      ? "Students Management" 
+  const pageTitle = localFilters.roleFilter === "teacher"
+    ? "Teachers Management"
+    : localFilters.roleFilter === "student"
+      ? "Students Management"
       : "User Management";
 
   return (
     <SuperAdminLayout pageTitle={pageTitle} showSearch={false}>
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                Total Users
-              </p>
-  <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {stats.users.total}
-              </p>
+      {localFilters.roleFilter === "all" && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                  Total Users
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.users.total}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-500" />
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-              <Users className="h-6 w-6 text-blue-500" />
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                  Students
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.users.students}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-orange-500" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                  Teachers
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.users.teachers}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-green-500" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                  Admins
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.users.admins ?? (stats.users.total - stats.users.students - stats.users.teachers)}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-purple-500" />
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                Students
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {stats.users.students}
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-              <Users className="h-6 w-6 text-orange-500" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                Teachers
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {stats.users.teachers}
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-              <Users className="h-6 w-6 text-green-500" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                Admins
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {stats.users.admins ?? (stats.users.total - stats.users.students - stats.users.teachers)}
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
-              <Users className="h-6 w-6 text-purple-500" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters Section */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 mb-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-700">
+        {/* Header and Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="md:col-span-2 relative">
@@ -218,7 +220,7 @@ const UserManagement = () => {
             <select
               value={localFilters.roleFilter}
               onChange={(e) => updateFilters({ roleFilter: e.target.value })}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              className="w-full sm:w-40 pl-8 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Roles</option>
               <option value="student">Student</option>
@@ -244,7 +246,7 @@ const UserManagement = () => {
         </div>
 
         <div className="mt-4 flex items-center justify-between text-sm">
-  <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-slate-600 dark:text-slate-400">
             Showing {users.length} of {pagination.total || 0} users
           </p>
           <button
@@ -345,11 +347,10 @@ const UserManagement = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                          user.isActive
+                        className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${user.isActive
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                             : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
+                          }`}
                       >
                         {user.isActive ? "Active" : "Inactive"}
                       </span>

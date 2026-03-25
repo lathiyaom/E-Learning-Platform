@@ -52,7 +52,7 @@ const SuperAdminLayout = ({
         id: "students",
         label: "Students",
         icon: Users,
-        link: "/superadmin/users?role=student",
+        link: "/superadmin/students",
       },
     ],
     []
@@ -73,13 +73,12 @@ const SuperAdminLayout = ({
 
   const Sidebar = ({ mobile = false }) => (
     <aside
-      className={`${
-        mobile ? "w-72" : isCollapsed ? "w-20" : "w-64"
-      } h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col`}
+      className={`${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64"
+        } h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col`}
     >
       <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-800">
         <div className={`flex items-center ${isCollapsed && !mobile ? "justify-center" : "gap-3"}`}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent-gold flex items-center justify-center text-white">
             <Shield className="h-5 w-5" />
           </div>
           {(!isCollapsed || mobile) && (
@@ -101,13 +100,11 @@ const SuperAdminLayout = ({
               to={item.link}
               onClick={() => setIsMobileOpen(false)}
               title={item.label}
-              className={`flex items-center ${
-                isCollapsed && !mobile ? "justify-center px-2" : "gap-3 px-3"
-              } py-2.5 rounded-xl text-sm font-medium transition ${
-                active
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+              className={`flex items-center ${isCollapsed && !mobile ? "justify-center px-2" : "gap-3 px-3"
+                } py-2.5 rounded-xl text-sm font-medium transition ${active
+                  ? "bg-primary/10 text-primary dark:bg-premium-gold/20 dark:text-premium-gold"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
+                }`}
             >
               <ActiveIcon className="h-5 w-5" />
               {(!isCollapsed || mobile) && <span>{item.label}</span>}
@@ -120,9 +117,8 @@ const SuperAdminLayout = ({
         <button
           onClick={handleSignOut}
           disabled={isPending}
-          className={`w-full flex items-center ${
-            isCollapsed && !mobile ? "justify-center px-2" : "gap-3 px-3"
-          } py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20`}
+          className={`w-full flex items-center ${isCollapsed && !mobile ? "justify-center px-2" : "gap-3 px-3"
+            } py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20`}
         >
           <LogOut className="h-5 w-5" />
           {(!isCollapsed || mobile) && <span>{isPending ? "Signing out..." : "Logout"}</span>}
@@ -177,7 +173,7 @@ const SuperAdminLayout = ({
               <AvatarDropdown
                 placeholder={user?.email?.charAt(0)?.toUpperCase() || "S"}
                 size="md"
-                bgColor="bg-blue-600"
+                bgColor="bg-primary dark:bg-premium-gold"
                 textColor="text-white"
                 showdropdown={false}
               />

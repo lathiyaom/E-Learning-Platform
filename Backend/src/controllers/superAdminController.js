@@ -200,17 +200,17 @@ const changeTenantStatus = async (req, res) => {
 // GET /SuperAdmin/Stats — Platform dashboard stats
 const getPlatformStats = async (req, res) => {
   try {
-    const stats = await superAdminService.getPlatformStats();
-
+    const { role } = req.query;
+    const stats = await superAdminService.getPlatformStats(role);
     return res.status(200).json({
-      message: "Platform statistics retrieved",
+      message: "Platform stats retrieved successfully",
       success: true,
       data: stats,
     });
   } catch (error) {
-    console.error("SuperAdmin - Stats error:", error.message);
+    logger.error("SuperAdmin - Get platform stats error:", error.message);
     return res.status(500).json({
-      message: "Internal server error",
+      message: error.message || "Internal server error",
       success: false,
     });
   }

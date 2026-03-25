@@ -362,7 +362,24 @@ const getAllUsersAcrossPlatform = async () => {
 };
 
 // Get platform dashboard stats
-const getPlatformStats = async () => {
+const getPlatformStats = async (roleFilter = "all") => {
+  const role = roleFilter.toLowerCase();
+
+  const studentCount =
+    role === "all" || role === "student"
+      ? await User.countDocuments({ userType: "student" })
+      : 0;
+  const teacherCount =
+    role === "all" || role === "teacher"
+      ? await User.countDocuments({ userType: "teacher" })
+      : 0;
+  const adminCount =
+    role === "all" || role === "admin"
+      ? await Tenant.countDocuments({ userType: { $in: ["admin", "superadmin"] } })
+      : 0;
+
+  const totalUsers = studentCount + teacherCount + adminCount;
+
   const totalOrganizations = await Tenant.countDocuments({ userType: "admin" });
   const activeOrganizations = await Tenant.countDocuments({
     userType: "admin",
@@ -376,14 +393,6 @@ const getPlatformStats = async () => {
     userType: "admin",
     status: "inactive",
   });
-
-  const studentCount = await User.countDocuments({ userType: "student" });
-  const teacherCount = await User.countDocuments({ userType: "teacher" });
-  const adminCount = await Tenant.countDocuments({
-    userType: { $in: ["admin", "superadmin"] },
-  });
-
-  const totalUsers = studentCount + teacherCount + adminCount;
 
   let totalCourses = 0;
   try {

@@ -41,6 +41,7 @@ import TenantManagement from "./pages/Dashboard/SuperAdmin/TenantManagement.jsx"
 import UserManagement from "./pages/Dashboard/SuperAdmin/UserManagement.jsx";
 import TenantDetail from "./pages/Dashboard/SuperAdmin/TenantDetail.jsx";
 import TeacherManagement from "./pages/Dashboard/SuperAdmin/TeacherManagement.jsx";
+import StudentManagement from "./pages/Dashboard/SuperAdmin/StudentManagement.jsx";
 import AdminDashboard from "./pages/Dashboard/Admin/AdminDashboard.jsx";
 import TeacherDashboard from "./pages/Dashboard/Teacher/TeacherDashboard.jsx";
 import MyCourses from "./pages/Dashboard/Teacher/MyCourses.jsx";
@@ -125,7 +126,7 @@ function App() {
             <Route path="/help" element={<Help />} />
             <Route path="/teacher/invitation-result" element={<InvitationResult />} />
             <Route path="/teacher/invitation/:token/:action" element={<InvitationAction />} />
-            
+
             {/* SuperAdmin Routes - Protected */}
             <Route path="/superadmin" element={<Navigate to="/superadmin/tenants" replace />} />
             <Route path="/superadmin/dashboard" element={<Navigate to="/superadmin/tenants" replace />} />
@@ -133,7 +134,8 @@ function App() {
             <Route path="/superadmin/tenants/:id" element={<ProtectedRoute requiredRole="superadmin"><TenantDetail /></ProtectedRoute>} />
             <Route path="/superadmin/users" element={<ProtectedRoute requiredRole="superadmin"><UserManagement /></ProtectedRoute>} />
             <Route path="/superadmin/teachers" element={<ProtectedRoute requiredRole="superadmin"><TeacherManagement /></ProtectedRoute>} />
-            
+            <Route path="/superadmin/students" element={<ProtectedRoute requiredRole="superadmin"><StudentManagement /></ProtectedRoute>} />
+
             {/* Admin Routes - Protected */}
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -152,7 +154,7 @@ function App() {
             <Route path="/settings" element={<ProtectedRoute requiredRole="admin"><AdminSetting /></ProtectedRoute>} />
             <Route path="/updateForm" element={<ProtectedRoute requiredRole="admin"><UserUpdateForm /></ProtectedRoute>} />
             {/* <Route path="/Comments" element={<ProtectedRoute requiredRole="admin"><UserComments /></ProtectedRoute>} /> */}
-            
+
             {/* Teacher Routes - Protected */}
             <Route path="/teacher" element={<ProtectedRoute requiredRole="teacher"><TeacherDashboard /></ProtectedRoute>} />
             <Route path="/teacher/dashboard" element={<ProtectedRoute requiredRole="teacher"><TeacherDashboard /></ProtectedRoute>} />
@@ -161,12 +163,12 @@ function App() {
             <Route path="/teacher/assignments" element={<ProtectedRoute requiredRole="teacher"><TeacherAssignments /></ProtectedRoute>} />
             <Route path="/teacher/materials" element={<ProtectedRoute requiredRole="teacher"><TeacherMaterials /></ProtectedRoute>} />
 
-                        <Route path="/teacher/students" element={<ProtectedRoute requiredRole="teacher"><TeacherStudents /></ProtectedRoute>} />
+            <Route path="/teacher/students" element={<ProtectedRoute requiredRole="teacher"><TeacherStudents /></ProtectedRoute>} />
             <Route path="/teacher/lectures" element={<ProtectedRoute requiredRole="teacher"><TeacherLectureManagement /></ProtectedRoute>} />
-                        <Route path="/teacher/course-form" element={<ProtectedRoute requiredRole="teacher"><CourseForm /></ProtectedRoute>} />
+            <Route path="/teacher/course-form" element={<ProtectedRoute requiredRole="teacher"><CourseForm /></ProtectedRoute>} />
             <Route path="/teacher/analytics" element={<ProtectedRoute requiredRole="teacher"><TeacherAnalyticsDashboard /></ProtectedRoute>} />
             <Route path="/teacher/add-course" element={<ProtectedRoute requiredRole="teacher"><AddCourse /></ProtectedRoute>} />
-            
+
             {/* Student Routes - Protected */}
             <Route path="/Dashboard" element={<ProtectedRoute requiredRole="student"><Dashboard /></ProtectedRoute>} />
             <Route path="/student/dashboard" element={<ProtectedRoute requiredRole="student"><Dashboard /></ProtectedRoute>} />
@@ -181,19 +183,19 @@ function App() {
 
             <Route path="/student/rate-course" element={<ProtectedRoute requiredRole="student"><RateCourse /></ProtectedRoute>} />
             <Route path="/student/feedback" element={<ProtectedRoute requiredRole="student"><StudentFeedbackSystem /></ProtectedRoute>} />
-                        <Route path="/Chat" element={<ProtectedRoute><ChatInterface /></ProtectedRoute>} />
+            <Route path="/Chat" element={<ProtectedRoute><ChatInterface /></ProtectedRoute>} />
             <Route path="/teacher/chat" element={<ProtectedRoute requiredRole="teacher"><ChatInterface /></ProtectedRoute>} />
-            
+
             {/* NEW Unified Dashboard Router - All roles */}
-            <Route 
-              path="/dashboard/*" 
+            <Route
+              path="/dashboard/*"
               element={
                 <ProtectedRoute>
                   <DashboardRouter />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
             {/* Error Routes */}
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<NotFound />} />
