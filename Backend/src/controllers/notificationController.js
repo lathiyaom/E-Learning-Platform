@@ -90,7 +90,7 @@ const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const notification = await notificationService.markAsRead(id, req.tenantId);
+    const notification = await notificationService.markAsRead(id, req.tenantId, req.user.id);
 
     return res.status(200).json({
       message: "Notification marked as read",
@@ -126,7 +126,7 @@ const deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const notification = await notificationService.deleteNotification(id, req.tenantId);
+    const notification = await notificationService.deleteNotification(id, req.tenantId, req.user.id);
 
     return res.status(200).json({
       message: "Notification deleted successfully",

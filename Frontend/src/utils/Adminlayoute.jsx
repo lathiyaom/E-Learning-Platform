@@ -27,6 +27,7 @@ import DarkModeToggle from "../components/DarkModeToggle";
 import { useLogoutMutation } from "../redux";
 import { ErrorToster, SuccessToster } from "../components/toster";
 import SmartBreadcrumb from "../components/Breadcrumb";
+import NotificationCenter from "../components/NotificationCenter";
 import { logout } from "../redux/slice/authSlice";
 import { useAuth } from "./users";
 import logo from "../assets/imgs/logo.png";
@@ -559,16 +560,7 @@ const AdminLayout = ({
 
               <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" aria-hidden="true" />
 
-              <button
-                aria-label="View notifications"
-                className="relative p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:shadow-sm transition-all"
-              >
-                <Bell className="h-5 w-5" />
-                <span
-                  className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"
-                  aria-label="You have unread notifications"
-                />
-              </button>
+              <NotificationCenter />
 
               <div className="flex items-center gap-3">
                 <div className="hidden md:block text-right">

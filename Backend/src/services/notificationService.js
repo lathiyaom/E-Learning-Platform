@@ -170,11 +170,25 @@ const sendBulkNotifications = async (tenantId, recipientIds, notificationData) =
 };
 
 const getUserNotifications = async (tenantId, userId, filters = {}) => {
-  if (!tenantId || !userId) {
-    throw new Error("Tenant ID and User ID are required");
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
-  const query = { tenantId, recipientId: userId };
+  // Fetch all notifications for this recipient - global by default
+  const query = { recipientId: userId };
+  
+  // If a specific tenant filter is requested via filters, respect it
+  if (filters.tenantId) {
+    query.tenantId = filters.tenantId;
+  }
+  // Otherwise, if we strictly want to keep it context-aware but include global, use $or
+  else if (tenantId && filters.contextAware) {
+    query.$or = [{ tenantId: tenantId }, { tenantId: null }];
+  }
+  // Default: Return all notifications for this user across all contexts
+  else {
+    // No tenant restriction
+  }
 
   if (filters.isRead !== undefined) {
     query.isRead = filters.isRead;
@@ -192,12 +206,14 @@ const getUserNotifications = async (tenantId, userId, filters = {}) => {
   return notifications;
 };
 
-const markAsRead = async (notificationId, tenantId) => {
-  if (!notificationId || !tenantId) {
-    throw new Error("Notification ID and Tenant ID are required");
+const markAsRead = async (notificationId, tenantId, userId) => {
+  if (!notificationId || !userId) {
+    throw new Error("Notification ID and User ID are required");
   }
 
-  const notification = await Notification.findOne({ _id: notificationId, tenantId });
+  // Security: Ensure the notification belongs to this user. 
+  // We ignore tenantId here to allow cross-tenant reading.
+  const notification = await Notification.findOne({ _id: notificationId, recipientId: userId });
   if (!notification) {
     throw new Error("Notification not found");
   }
@@ -210,24 +226,25 @@ const markAsRead = async (notificationId, tenantId) => {
 };
 
 const markAllAsRead = async (tenantId, userId) => {
-  if (!tenantId || !userId) {
-    throw new Error("Tenant ID and User ID are required");
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
+  // Mark all unread notifications for this user as read across all tenants
   const result = await Notification.updateMany(
-    { tenantId, recipientId: userId, isRead: false },
+    { recipientId: userId, isRead: false },
     { isRead: true, readAt: new Date() }
   );
 
   return result;
 };
 
-const deleteNotification = async (notificationId, tenantId) => {
-  if (!notificationId || !tenantId) {
-    throw new Error("Notification ID and Tenant ID are required");
+const deleteNotification = async (notificationId, tenantId, userId) => {
+  if (!notificationId || !userId) {
+    throw new Error("Notification ID and User ID are required");
   }
 
-  const notification = await Notification.findOne({ _id: notificationId, tenantId });
+  const notification = await Notification.findOne({ _id: notificationId, recipientId: userId });
   if (!notification) {
     throw new Error("Notification not found");
   }
@@ -237,12 +254,12 @@ const deleteNotification = async (notificationId, tenantId) => {
 };
 
 const getUnreadCount = async (tenantId, userId) => {
-  if (!tenantId || !userId) {
-    throw new Error("Tenant ID and User ID are required");
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
+  // Global unread count for the user
   const count = await Notification.countDocuments({
-    tenantId,
     recipientId: userId,
     isRead: false,
   });

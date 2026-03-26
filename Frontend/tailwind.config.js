@@ -24,9 +24,11 @@ const config = {
         "premium-border": "rgba(176, 141, 87, 0.2)",
         "premium-tooltip": "#12131A",
         "gold-glow": "rgba(176, 141, 87, 0.15)",
-        // HomeNew accent colors
-        primary: "#B48B4D", // Earthy brown from the button
-        "accent-gold": "#F5EFE6", // Creamy beige for active items
+        "primary": "#ecb613",
+        "accent-gold": "#ecb613",
+        // Dedicated Super Admin Colors 
+        "sa-sidebar": "#111827",
+        "sa-sidebar-dark": "#0A0A0B",
       },
       fontFamily: {
         display: ["Plus Jakarta Sans", "sans-serif"],

@@ -38,6 +38,24 @@ import {
   TableRow,
 } from "../../../components/table";
 import { DataTablePagination } from "../../../components/data-table-pagination";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const getUserInitials = (user) => {
   const first = user?.firstName?.trim()?.[0] || "";
@@ -675,8 +693,16 @@ const ManageUsers = () => {
 
   return (
     <AdminLayout showSearch={false}>
-      <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
-        <section className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] border border-white/60 dark:border-white/10 bg-lavender-light dark:bg-navy-charcoal p-5 md:p-6 shadow-sm dark:shadow-2xl transition-all duration-300">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="p-4 sm:p-6 space-y-5 sm:space-y-6"
+      >
+        <motion.section 
+          variants={itemVariants}
+          className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] border border-white/60 dark:border-white/10 bg-lavender-light dark:bg-navy-charcoal p-5 md:p-6 shadow-sm dark:shadow-2xl transition-all duration-300"
+        >
           <div className="pointer-events-none absolute -top-16 -right-14 h-40 w-40 rounded-full bg-studprimary/10 dark:bg-premium-gold/10 blur-3xl" />
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] text-studprimary dark:text-premium-gold pointer-events-none" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "1.5rem 1.5rem" }} />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -697,7 +723,7 @@ const ManageUsers = () => {
               <Plus className="h-4 w-4" /> Add User
             </button>
           </div>
-        </section>
+        </motion.section>
 
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -706,14 +732,22 @@ const ManageUsers = () => {
             { label: "Teachers (Page)", value: stats.pageTeachers },
             { label: "Active (Page)", value: stats.pageActive },
           ].map(({ label, value }) => (
-            <article key={label} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm">
+            <motion.article 
+              key={label} 
+              variants={itemVariants}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm"
+            >
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{label}</p>
               <p className="text-xl font-bold mt-1 text-slate-900 dark:text-slate-100">{value}</p>
-            </article>
+            </motion.article>
           ))}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 md:p-5 shadow-sm">
+        <motion.section 
+          variants={itemVariants}
+          className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 md:p-5 shadow-sm"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
             <div className="lg:col-span-6 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -779,23 +813,23 @@ const ManageUsers = () => {
               </button>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-44 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-charcoal">
+          <motion.div variants={itemVariants} className="flex items-center justify-center h-44 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-charcoal">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-studprimary dark:border-premium-gold" />
-          </div>
+          </motion.div>
         ) : error ? (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-center">
+          <motion.div variants={itemVariants} className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-center">
             <p className="text-red-700 dark:text-red-300">{error?.data?.message || "Failed to load users"}</p>
-          </div>
+          </motion.div>
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-44 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-charcoal text-slate-500 dark:text-slate-400">
+          <motion.div variants={itemVariants} className="flex flex-col items-center justify-center h-44 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-charcoal text-slate-500 dark:text-slate-400">
             <Users className="h-12 w-12 mb-3 opacity-30" />
             <p className="font-medium">No users found</p>
-          </div>
+          </motion.div>
         ) : (
-          <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-charcoal overflow-hidden shadow-sm">
+          <motion.section variants={itemVariants} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-charcoal overflow-hidden shadow-sm">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -822,13 +856,13 @@ const ManageUsers = () => {
             <div className="px-1 pb-1 ">
               <DataTablePagination table={table} pageSizeOptions={[5, 10, 15, 20, 30] } className="rounded-b-xl" />
             </div>
-          </section>
+          </motion.section>
         )}
 
         {modal?.type === "add" && <UserModal mode="create" onClose={closeModal} onSaved={onSaved} />}
         {modal?.type === "edit" && <UserModal mode="edit" user={modal.user} onClose={closeModal} onSaved={onSaved} />}
         {modal?.type === "view" && <ViewModal user={modal.user} onClose={closeModal} />}
-      </div>
+      </motion.div>
     </AdminLayout>
   );
 };

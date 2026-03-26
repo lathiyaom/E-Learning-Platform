@@ -4,7 +4,24 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { Users, BookOpen, TrendingUp, DollarSign, Loader2 } from "lucide-react";
 import { getAdminDashboard } from "../../../redux/Apis/analyticsApi";
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const AdminAnalyticsDashboard = () => {
   const dispatch = useDispatch();
@@ -31,8 +48,13 @@ const AdminAnalyticsDashboard = () => {
   const userDistribution = stats.userDistribution || [];
 
   return (
-    <div className="p-8 bg-slate-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Admin Analytics Dashboard</h1>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="p-8 bg-slate-100 min-h-screen"
+    >
+      <motion.h1 variants={itemVariants} className="text-3xl font-bold mb-6">Admin Analytics Dashboard</motion.h1>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -65,8 +87,8 @@ const AdminAnalyticsDashboard = () => {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Enrollment Trend */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-bold mb-4">Enrollment Trend</h2>
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4 text-slate-800">Enrollment Trend</h2>
           {enrollmentTrend.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={enrollmentTrend}>
@@ -81,11 +103,11 @@ const AdminAnalyticsDashboard = () => {
           ) : (
             <p className="text-gray-500 text-center py-8">No enrollment data available</p>
           )}
-        </div>
+        </motion.div>
 
         {/* Course Performance */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-bold mb-4">Course Performance</h2>
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4 text-slate-800">Course Performance</h2>
           {coursePerformance.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={coursePerformance}>
@@ -100,12 +122,12 @@ const AdminAnalyticsDashboard = () => {
           ) : (
             <p className="text-gray-500 text-center py-8">No course data available</p>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* User Distribution */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-bold mb-4">User Distribution</h2>
+      <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-xl font-bold mb-4 text-slate-800">User Distribution</h2>
         {userDistribution.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -129,20 +151,27 @@ const AdminAnalyticsDashboard = () => {
         ) : (
           <p className="text-gray-500 text-center py-8">No user distribution data available</p>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
    
   );
 };
 
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
+
 const StatCard = ({ title, value, icon, color }) => (
-  <div className="bg-white p-6 rounded-lg shadow flex items-center justify-between">
+  <motion.div 
+    variants={itemVariants}
+    whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
+    className="bg-white p-6 rounded-lg shadow flex items-center justify-between cursor-default"
+  >
     <div>
       <p className="text-gray-600 text-sm">{title}</p>
-      <p className="text-2xl font-bold mt-1">{value}</p>
+      <p className="text-2xl font-bold mt-1 text-slate-900">{value}</p>
     </div>
-    <div className={`${color} p-3 rounded-lg text-white`}>{icon}</div>
-  </div>
+    <div className={`${color} p-3 rounded-lg text-white shadow-lg`}>{icon}</div>
+  </motion.div>
 );
 
 export default AdminAnalyticsDashboard;
+

@@ -22,6 +22,7 @@ import { courseApi } from "../../../api/courseApi";
 import { eventApi } from "../../../api/eventApi";
 import { holidayApi } from "../../../api/holidayApi";
 import signupCommunityImg from "../../../assets/imgs/signup-community.jpg";
+import { motion } from "framer-motion";
 
 const extractCollection = (response) => {
   const payload = response?.data;
@@ -192,14 +193,39 @@ function AdminDashboard() {
     [courses.length, events.length, holidays.length, nextEventDate, nextHolidayDate, quickActions.length, supportActions.length],
   );
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.08 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.4, ease: "easeOut" }
+    }
+  };
+
   return (
     <AdminLayout
       showSearch={false}
       className="p-0"
       breadcrumbItems={breadcrumbItems}
     >
-      <div className="space-y-6 px-4 py-4 sm:px-6 lg:px-6">
-        <section className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 md:p-7 shadow-sm">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-6 px-4 py-4 sm:px-6 lg:px-6"
+      >
+        <motion.section 
+          variants={itemVariants}
+          className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 md:p-7 shadow-sm"
+        >
           <div className="pointer-events-none absolute -top-24 -right-16 h-52 w-52 rounded-full bg-lavender-light dark:bg-premium-gold/10 blur-3xl" />
 
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -233,14 +259,16 @@ function AdminDashboard() {
               </Link>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {kpis.map((item) => {
             const IconComponent = item.icon;
             return (
-              <article
+              <motion.article
                 key={item.id}
+                variants={itemVariants}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm"
               >
                 <div className="mb-3 flex items-center justify-between">
@@ -260,13 +288,16 @@ function AdminDashboard() {
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   {loading ? "Syncing data..." : item.hint}
                 </p>
-              </article>
+              </motion.article>
             );
           })}
         </section>
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-          <div className="xl:col-span-8 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm">
+          <motion.div 
+            variants={itemVariants}
+            className="xl:col-span-8 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm"
+          >
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -308,9 +339,12 @@ function AdminDashboard() {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
-          <aside className="xl:col-span-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm">
+          <motion.aside 
+            variants={itemVariants}
+            className="xl:col-span-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm"
+          >
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               Operations Pulse
             </h2>
@@ -353,11 +387,14 @@ function AdminDashboard() {
                 </div>
               </div>
             </div>
-          </aside>
+          </motion.aside>
         </section>
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-          <div className="xl:col-span-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm">
+          <motion.div 
+            variants={itemVariants}
+            className="xl:col-span-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm"
+          >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 Upcoming Events
@@ -391,9 +428,12 @@ function AdminDashboard() {
                 ))
               )}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="xl:col-span-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm">
+          <motion.div 
+            variants={itemVariants}
+            className="xl:col-span-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm"
+          >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 Upcoming Holidays
@@ -427,10 +467,13 @@ function AdminDashboard() {
                 ))
               )}
             </div>
-          </div>
+          </motion.div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm">
+        <motion.section 
+          variants={itemVariants}
+          className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm"
+        >
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -507,9 +550,12 @@ function AdminDashboard() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm">
+        <motion.section 
+          variants={itemVariants}
+          className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 shadow-sm"
+        >
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-lavender-light text-studprimary dark:bg-premium-gold/10 dark:text-premium-gold">
               <Building className="h-5 w-5" />
@@ -523,8 +569,8 @@ function AdminDashboard() {
               </p>
             </div>
           </div>
-        </section>
-      </div>
+        </motion.section>
+      </motion.div>
     </AdminLayout>
   );
 }

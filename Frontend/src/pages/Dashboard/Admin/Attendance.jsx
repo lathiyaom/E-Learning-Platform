@@ -14,6 +14,24 @@ import AdminLayout from "../../../utils/Adminlayoute";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import { useGetAttendanceReportQuery } from "../../../redux/Apis/attendanceApi";
 import { ErrorToster, SuccessToster } from "../../../components/toster";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const PAGE_SIZE = 8;
 
@@ -57,12 +75,16 @@ const buildStudentCode = (student) => {
 };
 
 const MetricCard = ({ title, value, accentClass }) => (
-  <article className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4">
+  <motion.article 
+    variants={itemVariants}
+    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm"
+  >
     <p className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 dark:text-slate-400">
       {title}
     </p>
     <p className={`mt-1 text-3xl font-bold ${accentClass}`}>{value}</p>
-  </article>
+  </motion.article>
 );
 
 const Attendance = () => {
@@ -215,8 +237,16 @@ const Attendance = () => {
 
   return (
     <AdminLayout showSearch={false}>
-      <div className="p-4 sm:p-6 space-y-6">
-        <section className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] border border-white/60 dark:border-white/10 bg-lavender-light dark:bg-navy-charcoal p-5 md:p-6 shadow-sm dark:shadow-none">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="p-4 sm:p-6 space-y-6"
+      >
+        <motion.section 
+          variants={itemVariants}
+          className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] border border-white/60 dark:border-white/10 bg-lavender-light dark:bg-navy-charcoal p-5 md:p-6 shadow-sm dark:shadow-none transition-all duration-300"
+        >
           <div className="pointer-events-none absolute -top-16 -right-14 h-40 w-40 rounded-full bg-studprimary/10 dark:bg-premium-gold/10 blur-3xl" />
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] text-studprimary dark:text-premium-gold pointer-events-none" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "1.5rem 1.5rem" }} />
 
@@ -245,7 +275,7 @@ const Attendance = () => {
               </button>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 md:p-5 shadow-sm dark:shadow-none">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -475,7 +505,7 @@ const Attendance = () => {
             </button>
           </article>
         </section>
-      </div>
+      </motion.div>
     </AdminLayout>
   );
 };

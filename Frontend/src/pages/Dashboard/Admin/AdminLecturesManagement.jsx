@@ -4,6 +4,24 @@ import { Plus, Edit, Trash2, Search, ChevronDown } from "lucide-react";
 import { getLecturesByCourse, createLecture, updateLecture, deleteLecture } from "../../../redux/Apis/lectureApi";
 import { Link, useParams } from "react-router-dom";
 import AdminLayout from './../../../utils/Adminlayoute';
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const AdminLecturesManagement = () => {
   const dispatch = useDispatch();
@@ -121,9 +139,14 @@ const AdminLecturesManagement = () => {
 
   return (
     <AdminLayout>
-    <div className="p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-navy-charcoal dark:to-deep-charcoal min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-navy-charcoal dark:to-deep-charcoal min-h-screen"
+      >
+        {/* Header */}
+        <motion.div variants={itemVariants} className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
           Lectures Management
         </h1>
@@ -135,10 +158,10 @@ const AdminLecturesManagement = () => {
             Select a course first to manage lectures. Go to <Link className="font-semibold underline" to="/managecourses">Manage Courses</Link> and open a specific course lecture route.
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Controls */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6">
+      <motion.div variants={itemVariants} className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           {/* Search */}
           <div className="flex-1 relative">
@@ -174,10 +197,10 @@ const AdminLecturesManagement = () => {
             Add Lecture
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Lectures Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+      <motion.div variants={itemVariants} className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">Loading lectures...</div>
         ) : filteredLectures.length === 0 ? (
@@ -209,8 +232,10 @@ const AdminLecturesManagement = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {filteredLectures.map((lecture) => (
-                    <tr
+                    <motion.tr
                       key={lecture._id}
+                      variants={itemVariants}
+                      whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
                       className="hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                     >
                       <td className="px-6 py-4 text-slate-900 dark:text-white">
@@ -259,7 +284,7 @@ const AdminLecturesManagement = () => {
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
@@ -293,7 +318,7 @@ const AdminLecturesManagement = () => {
             </div>
           </>
         )}
-      </div>
+      </motion.div>
 
       {/* Modal */}
       {showModal && (
@@ -454,7 +479,7 @@ const AdminLecturesManagement = () => {
           {error}
         </div>
       )}
-    </div>
+      </motion.div>
     </AdminLayout>
   );
 };

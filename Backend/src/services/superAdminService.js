@@ -88,7 +88,7 @@ const getTenantWithUsers = async (tenantId) => {
   if (!tenant) throw new Error("Tenant not found");
 
   const users = await User.find({ tenant_id: tenantId })
-    .select("name email userType isActive createdAt") // Explicitly select fields
+    .select("firstName lastName email userType status createdAt")
     .sort({ createdAt: -1 });
 
   return { tenant, users };
@@ -402,18 +402,36 @@ const getPlatformStats = async (roleFilter = "all") => {
     totalCourses = await Course.countDocuments();
   } catch (_) {}
 
+  // Active counts
+  const activeStudents = await User.countDocuments({ userType: "student", status: "active" });
+  const activeTeachers = await User.countDocuments({ userType: "teacher", status: "active" });
+  const activeAdmins = await Tenant.countDocuments({ userType: { $in: ["admin", "superadmin"] }, status: "active" });
+  const superadminCount = await Tenant.countDocuments({ userType: "superadmin" });
+
   return {
     organizations: {
       total: totalOrganizations,
       active: activeOrganizations,
       suspended: suspendedOrganizations,
       inactive: inactiveOrganizations,
+      superadmins: superadminCount,
+    },
+    tenants: { // Alias for frontend
+      total: totalOrganizations,
+      active: activeOrganizations,
+      suspended: suspendedOrganizations,
+      inactive: inactiveOrganizations,
+      superadmins: superadminCount,
     },
     users: {
       total: totalUsers,
+      active: activeStudents + activeTeachers + (activeAdmins), // Total active signal
       students: studentCount,
       teachers: teacherCount,
       admins: adminCount,
+      activeStudents,
+      activeTeachers,
+      activeAdmins,
     },
     courses: {
       total: totalCourses,

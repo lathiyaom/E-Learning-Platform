@@ -1,6 +1,6 @@
 const superAdminService = require("../services/superAdminService");
 const logger = require("../utils/logger");
-const { Tenant } = require("../models");
+const { Tenant, Notification } = require("../models");
 const User = require("../models/User.mongoose");
 const crypto = require("crypto");
 const { sendTeacherInvitationEmail } = require("../utils/emailService");
@@ -587,6 +587,126 @@ const rejectTeacherInvitation = async (req, res) => {
   }
 };
 
+// POST /SuperAdmin/Announcements — Create platform-wide announcement
+const createAnnouncement = async (req, res) => {
+  try {
+    const { title, message, targetAudience, tenantId, priority = "medium" } = req.body;
+
+    if (!title || !message || !targetAudience) {
+      return res.status(400).json({
+        message: "Title, message, and target audience are required",
+        success: false,
+      });
+    }
+
+    let recipients = [];
+
+    // Target Users collection (Teachers, Students, and Sub-Admins in User table)
+    let userQuery = {};
+    if (targetAudience === "teachers") {
+      userQuery = { userType: "teacher" };
+    } else if (targetAudience === "students") {
+      userQuery = { userType: "student" };
+    } else if (targetAudience === "admins") {
+      userQuery = { userType: "admin" };
+    } else if (targetAudience === "all") {
+      userQuery = { userType: { $in: ["student", "teacher", "admin"] } };
+    } else if (targetAudience === "tenant") {
+      if (!tenantId) {
+        return res.status(400).json({
+          message: "Tenant ID is required for tenant-specific announcements",
+          success: false,
+        });
+      }
+      userQuery = { tenant_id: tenantId };
+    }
+
+    const targetUsers = await User.find(userQuery).select("_id tenant_id");
+    targetUsers.forEach(u => {
+      recipients.push({
+        // For global audiences, use null tenantId. For specific tenant audience, use their tenant_id.
+        tenantId: (targetAudience === "tenant") ? u.tenant_id : null,
+        recipientId: u._id
+      });
+    });
+
+    // Target Tenants collection (Org Admins and SuperAdmins live here)
+    if (["all", "admins", "tenant"].includes(targetAudience)) {
+      let tenantQuery = {};
+      if (targetAudience === "admins") {
+        tenantQuery = { userType: "admin" };
+      } else if (targetAudience === "all") {
+        tenantQuery = { userType: { $in: ["admin", "superadmin"] } };
+      } else if (targetAudience === "tenant") {
+        tenantQuery = { _id: tenantId, userType: "admin" };
+      }
+      
+      const targetTenants = await Tenant.find(tenantQuery).select("_id");
+      targetTenants.forEach(t => {
+        recipients.push({
+          // Use null for global, otherwise the tenant's own ID
+          tenantId: (targetAudience === "tenant") ? t._id : null,
+          recipientId: t._id
+        });
+      });
+    }
+
+    // De-duplicate recipients based on recipientId
+    const uniqueRecipientsMap = new Map();
+    recipients.forEach(r => uniqueRecipientsMap.set(r.recipientId.toString(), r));
+    recipients = Array.from(uniqueRecipientsMap.values());
+
+    if (recipients.length === 0) {
+      return res.status(404).json({
+        message: "No users found for the selected audience",
+        success: false,
+      });
+    }
+
+    const notifications = recipients.map((r) => ({
+      tenantId: r.tenantId,
+      recipientId: r.recipientId,
+      senderId: req.user.id,
+      title,
+      message,
+      type: "announcement",
+      priority,
+      targetAudience,
+    }));
+
+    const createdNotifications = await Notification.insertMany(notifications);
+
+    // Emit socket events for real-time updates
+    const io = req.app.get("io");
+    if (io) {
+      createdNotifications.forEach(n => {
+        // Emit to the specific user's room
+        io.to(`participant_User_${n.recipientId}`).emit("new_notification", n);
+        io.to(`participant_Tenant_${n.recipientId}`).emit("new_notification", n);
+      });
+    }
+
+    logger.info("Platform announcement created", {
+      title,
+      targetAudience,
+      recipientCount: recipients.length,
+      senderId: req.user.id,
+    });
+
+    return res.status(201).json({
+      message: `Announcement successfully sent to ${recipients.length} users`,
+      success: true,
+      data: { recipientCount: recipients.length },
+    });
+  } catch (error) {
+    logger.error("SuperAdmin - Create announcement error:", error.message);
+    return res.status(500).json({
+      message: "Internal server error while sending announcement",
+      success: false,
+    });
+  }
+};
+
 module.exports = {
   getAllTenants,
   getTenantWithUsers,
@@ -602,4 +722,5 @@ module.exports = {
   inviteTeacherToOrg,
   acceptTeacherInvitation,
   rejectTeacherInvitation,
+  createAnnouncement,
 };

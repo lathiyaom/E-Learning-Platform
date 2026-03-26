@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import {
   Shield,
@@ -12,57 +12,101 @@ import {
   ChevronLeft,
   LogOut,
   Bell,
+  Search,
+  Settings,
+  Lock,
+  Wallet,
+  BookOpen,
+  ChevronRight,
+  Monitor,
+  Moon,
+  Sun,
+  Globe
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLogoutMutation } from "../redux";
 import { logout } from "../redux/slice/authSlice";
 import { ErrorToster, SuccessToster } from "../components/toster";
 import DarkModeToggle from "../components/DarkModeToggle";
 import AvatarDropdown from "../components/Avatar";
 import { getAuth } from "./users";
+import SmartBreadcrumb from "../components/Breadcrumb";
+import NotificationCenter from "../components/NotificationCenter";
+import logo from "../assets/imgs/logo.png";
+
+const SidebarItem = ({ item, isCollapsed, isActive, onClick }) => {
+  const Icon = item.icon;
+  
+  return (
+    <Link
+      to={item.link}
+      onClick={onClick}
+      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group
+        ${isActive 
+          ? "bg-superadminprimary text-white shadow-lg shadow-superadminprimary/25" 
+          : "text-slate-400 hover:bg-white/10 hover:text-white"
+        }
+      `}
+    >
+      <div className={`shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      
+      <AnimatePresence mode="wait">
+        {!isCollapsed && (
+          <motion.span
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="text-sm font-medium whitespace-nowrap overflow-hidden"
+          >
+            {item.label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+
+      {isCollapsed && (
+        <div className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+          {item.label}
+        </div>
+      )}
+    </Link>
+  );
+};
 
 const SuperAdminLayout = ({
   children,
-  pageTitle = "Super Admin",
-  subheader = "",
-  showSearch = false,
+  pageTitle = "Admin Dashboard",
   className = "",
+  breadcrumbItems = null,
 }) => {
   const location = useLocation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = getAuth();
   const [logoutMutation, { isLoading: isPending }] = useLogoutMutation();
 
-  const navItems = useMemo(
-    () => [
-      {
-        id: "tenants",
-        label: "Organizations",
-        icon: Building,
-        link: "/superadmin/tenants",
-      },
-      {
-        id: "teachers",
-        label: "Teachers",
-        icon: Users,
-        link: "/superadmin/teachers",
-      },
-      {
-        id: "students",
-        label: "Students",
-        icon: Users,
-        link: "/superadmin/students",
-      },
-    ],
-    []
-  );
+  const navItems = useMemo(() => [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, link: "/superadmin/dashboard" },
+    { id: "tenants", label: "Organizations", icon: Building, link: "/superadmin/tenants" },
+    { id: "users", label: "Manage Users", icon: Users, link: "/superadmin/users" },
+    { id: "teachers", label: "Teachers", icon: Users, link: "/superadmin/teachers" },
+    { id: "students", label: "Students", icon: Users, link: "/superadmin/students" },
+    { id: "analytics", label: "Analytics", icon: BarChart3, link: "/superadmin/analytics" },
+  ], []);
+
+  const systemItems = useMemo(() => [
+    { id: "settings", label: "Site Settings", icon: Settings, link: "/settings" },
+    { id: "security", label: "Logs & Security", icon: Lock, link: "/superadmin/security" },
+  ], []);
 
   const handleSignOut = async () => {
     try {
       await logoutMutation({ email: user?.email }).unwrap();
       dispatch(logout());
-      SuccessToster("Signed out", 2000);
+      SuccessToster("Successfully Signed out", 2000);
       setTimeout(() => {
         window.location.href = "/Login";
       }, 300);
@@ -71,109 +115,169 @@ const SuperAdminLayout = ({
     }
   };
 
-  const Sidebar = ({ mobile = false }) => (
-    <aside
-      className={`${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64"
-        } h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col`}
-    >
-      <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-800">
-        <div className={`flex items-center ${isCollapsed && !mobile ? "justify-center" : "gap-3"}`}>
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
-            <Shield className="h-5 w-5" />
+  return (
+    <div className="min-h-screen bg-background-light dark:bg-deep-charcoal text-slate-900 dark:text-slate-100 font-sans">
+      {/* Mobile Sidebar Backdrop */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileOpen(false)}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 bg-sa-sidebar dark:bg-sa-sidebar-dark border-r border-white/5 flex flex-col transition-all duration-300 ease-in-out
+          ${isCollapsed ? "w-20" : "w-[260px]"}
+          ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
+      >
+        {/* Sidebar Header / Logo */}
+        <div className="h-20 flex items-center px-6 gap-3 shrink-0">
+          <Link 
+            to="/" 
+            className="w-12 h-12 flex items-center justify-center shrink-0"
+          >
+            <img
+              src={logo}
+              alt="EduVerse Logo"
+              className="w-full h-full object-contain"
+            />
+          </Link>
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="overflow-hidden"
+              >
+                <h1 className="text-white font-bold text-xl leading-tight truncate">EduVerse</h1>
+                <p className="text-slate-400 text-[10px] tracking-wider uppercase font-extrabold mt-1 text-nowrap">Super Admin</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide space-y-6">
+          <nav className="space-y-1.5">
+            {navItems.map((item) => (
+              <SidebarItem
+                key={item.id}
+                item={item}
+                isCollapsed={isCollapsed}
+                isActive={location.pathname === item.link}
+                onClick={() => setIsMobileOpen(false)}
+              />
+            ))}
+          </nav>
+
+          <div className="space-y-4 pt-4 border-t border-white/5">
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-[11px] font-bold text-slate-500 uppercase tracking-widest pl-2"
+                >
+                  System
+                </motion.p>
+              )}
+            </AnimatePresence>
+            <nav className="space-y-1.5">
+              {systemItems.map((item) => (
+                <SidebarItem
+                  key={item.id}
+                  item={item}
+                  isCollapsed={isCollapsed}
+                  isActive={location.pathname === item.link}
+                  onClick={() => setIsMobileOpen(false)}
+                />
+              ))}
+            </nav>
           </div>
-          {(!isCollapsed || mobile) && (
-            <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-white">EduVerse</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Platform Owner</p>
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-white/5 space-y-4">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all group"
+          >
+            <LogOut className="h-5 w-5 shrink-0 transition-transform group-hover:-translate-x-1" />
+            {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
+          </button>
+          
+          {!isCollapsed && (
+            <div className="text-[10px] text-slate-500 text-center uppercase tracking-tight opacity-50">
+              © 2026 EduVerse Platform
             </div>
           )}
         </div>
-      </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
-          const ActiveIcon = item.icon;
-          const active = (location.pathname + location.search) === item.link || location.pathname === item.link;
-          return (
-            <Link
-              key={item.id}
-              to={item.link}
-              onClick={() => setIsMobileOpen(false)}
-              title={item.label}
-              className={`flex items-center ${isCollapsed && !mobile ? "justify-center px-2" : "gap-3 px-3"
-                } py-2.5 rounded-xl text-sm font-medium transition ${active
-                  ? "bg-primary/10 text-primary dark:bg-premium-gold/20 dark:text-premium-gold"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+        {/* Vertical Center Toggle Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-center shadow-md hover:scale-110 transition-all z-10"
+        >
+          <ChevronLeft className={`h-4 w-4 text-slate-600 dark:text-slate-300 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`} />
+        </button>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className={`flex-1 transition-all duration-300 ease-in-out ${isCollapsed ? "lg:ml-20" : "lg:ml-[260px]"}`}>
+        {/* Header */}
+        <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-6 bg-white/80 dark:bg-deep-charcoal/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+          <div className="flex items-center gap-4 flex-1 max-w-xl">
+            <button 
+              onClick={() => setIsMobileOpen(true)}
+              className="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <ActiveIcon className="h-5 w-5" />
-              {(!isCollapsed || mobile) && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-        <button
-          onClick={handleSignOut}
-          disabled={isPending}
-          className={`w-full flex items-center ${isCollapsed && !mobile ? "justify-center px-2" : "gap-3 px-3"
-            } py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20`}
-        >
-          <LogOut className="h-5 w-5" />
-          {(!isCollapsed || mobile) && <span>{isPending ? "Signing out..." : "Logout"}</span>}
-        </button>
-      </div>
-    </aside>
-  );
-
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setIsMobileOpen(false)} />
-      )}
-
-      <div className="fixed inset-y-0 left-0 z-50 lg:hidden transform transition-transform duration-300">
-        <div className={`${isMobileOpen ? "translate-x-0" : "-translate-x-full"} h-full`}>
-          <div className="absolute right-3 top-3">
-            <button onClick={() => setIsMobileOpen(false)} className="p-2 rounded-lg bg-white/90">
-              <X className="h-4 w-4" />
+              <Menu className="h-6 w-6" />
             </button>
+
+            {breadcrumbItems ? (
+              <SmartBreadcrumb items={breadcrumbItems} showHome={false} className="text-superadminprimary" />
+            ) : (
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-none whitespace-nowrap">{pageTitle}</h2>
+            )}
           </div>
-          <Sidebar mobile />
-        </div>
-      </div>
 
-      <div className={`hidden lg:flex fixed inset-y-0 left-0 z-30`}>
-        <Sidebar />
-        <button
-          onClick={() => setIsCollapsed((v) => !v)}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center"
-        >
-          <ChevronLeft className={`h-4 w-4 transition-transform ${isCollapsed ? "rotate-180" : ""}`} />
-        </button>
-      </div>
-
-      <div className={`${isCollapsed ? "lg:ml-20" : "lg:ml-64"} transition-all duration-300`}>
-        <header className="sticky top-0 z-20 px-4 md:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-white/85 dark:bg-slate-950/85 backdrop-blur">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button onClick={() => setIsMobileOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                <Menu className="h-5 w-5" />
-              </button>
-              <div>
-                <h1 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white">{pageTitle}</h1>
-                {subheader ? <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">{subheader}</p> : null}
-              </div>
+          <div className="flex-1 max-w-md mx-8 hidden md:block">
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-superadminprimary transition-colors" />
+              <input
+                type="text"
+                placeholder="Global search..."
+                className="w-full bg-slate-100 dark:bg-white/5 border-transparent focus:border-superadminprimary/30 focus:bg-white dark:focus:bg-transparent rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-0 transition-all outline-none"
+              />
             </div>
-            <div className="flex items-center gap-3">
-              <DarkModeToggle />
-              {/* Bell icon removed as per requirements */}
+          </div>
 
+          <div className="flex items-center gap-2 sm:gap-4">
+            <DarkModeToggle />
+            
+            <div className="hidden sm:block h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1" aria-hidden="true" />
+
+            <NotificationCenter />
+            
+            <div className="hidden sm:block h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1" aria-hidden="true" />
+            
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex flex-col items-end">
+                <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">Super Admin</p>
+                <p className="text-[11px] text-slate-500 font-extrabold uppercase tracking-tight mt-1">Owner</p>
+              </div>
               <AvatarDropdown
-                placeholder={user?.email?.charAt(0)?.toUpperCase() || "S"}
+                placeholder={user?.email || "SA"}
                 size="md"
-                bgColor="bg-primary dark:bg-premium-gold"
+                bgColor="bg-superadminprimary"
                 textColor="text-white"
                 showdropdown={false}
               />
@@ -181,10 +285,14 @@ const SuperAdminLayout = ({
           </div>
         </header>
 
-        <main className={`p-4 md:p-6 ${className}`}>{children}</main>
+        {/* Page Content */}
+        <main className={`p-6 min-h-[calc(100vh-80px)] ${className}`}>
+          {children}
+        </main>
       </div>
     </div>
   );
 };
 
 export default SuperAdminLayout;
+

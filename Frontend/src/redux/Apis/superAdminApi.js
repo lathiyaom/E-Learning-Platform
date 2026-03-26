@@ -107,6 +107,33 @@ export const superAdminApi = apiSlice.injectEndpoints({
             ]
           : [{ type: "Teacher", id: "LIST" }],
     }),
+
+    createAnnouncement: builder.mutation({
+      query: (data) => ({
+        url: "/SuperAdmin/Announcements",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: [{ type: "Notification", id: "LIST" }],
+    }),
+
+    getOrganizationsOverview: builder.query({
+      query: (params) => ({
+        url: "/SuperAdmin/Organizations",
+        method: "GET",
+        params,
+      }),
+      providesTags: [{ type: "Tenant", id: "OVERVIEW" }],
+    }),
+
+    getActivityLogs: builder.query({
+      query: (params) => ({
+        url: "/SuperAdmin/Logs",
+        method: "GET",
+        params,
+      }),
+      providesTags: [{ type: "Activity", id: "LIST" }],
+    }),
   }),
   overrideExisting: false,
 });
@@ -127,4 +154,9 @@ export const {
   useLazyGetPlatformStatsQuery,
   useGetAllTeachersQuery,
   useLazyGetAllTeachersQuery,
+  useCreateAnnouncementMutation,
+  useGetOrganizationsOverviewQuery,
+  useLazyGetOrganizationsOverviewQuery,
+  useGetActivityLogsQuery,
+  useLazyGetActivityLogsQuery,
 } = superAdminApi;

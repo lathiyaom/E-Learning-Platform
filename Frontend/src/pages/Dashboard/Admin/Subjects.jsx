@@ -9,6 +9,24 @@ import {
   useUpdateSubjectMutation,
 } from "../../../redux";
 import { ErrorToster, SuccessToster } from "../../../components/toster";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const emptyForm = {
   name: "",
@@ -104,8 +122,13 @@ function Subjects() {
 
   return (
     <AdminLayout pageTitle="Subjects">
-      <div className="space-y-6">
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-6"
+      >
+        <motion.div variants={itemVariants} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
             {editingId ? "Edit Subject" : "Create Subject"}
           </h2>
@@ -148,9 +171,9 @@ function Subjects() {
               ) : null}
             </div>
           </form>
-        </div>
+        </motion.div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Organization Subjects</h3>
             <select
@@ -158,6 +181,7 @@ function Subjects() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
             >
+              <option value="all">Total</option>
               <option value="active">Active</option>
               <option value="archived">Archived</option>
             </select>
@@ -172,9 +196,11 @@ function Subjects() {
               {subjects.map((subject) => {
                 const subjectId = subject._id || subject.id;
                 return (
-                  <div
+                  <motion.div
                     key={subjectId}
-                    className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 flex items-center justify-between"
+                    variants={itemVariants}
+                    whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                    className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                   >
                     <div>
                       <p className="font-semibold text-slate-900 dark:text-white">{subject.name}</p>
@@ -203,13 +229,13 @@ function Subjects() {
                         Delete
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </AdminLayout>
   );
 }

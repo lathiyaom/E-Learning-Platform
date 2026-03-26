@@ -22,6 +22,24 @@ import {
 } from "lucide-react";
 import { SuccessToster, ErrorToster } from "../../../components/toster";
 import { Button } from "../../../components/Button";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const PAGE_SIZE = 6;
 
@@ -62,7 +80,10 @@ const TeachersSection = ({
   onPageChange,
   totalItems,
 }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
+  <motion.section 
+    variants={itemVariants}
+    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-charcoal"
+  >
     <div className="mb-4 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <div className={`rounded-lg p-2 ${iconWrapperClassName}`}>
@@ -77,7 +98,9 @@ const TeachersSection = ({
       </div>
     </div>
 
-    <div className="space-y-2.5">{items.length === 0 ? <EmptyState message={emptyMessage} /> : items.map(renderItem)}</div>
+    <div className="space-y-2.5">
+      {items.length === 0 ? <EmptyState message={emptyMessage} /> : items.map(renderItem)}
+    </div>
 
     <CompactPagination
       currentPage={currentPage}
@@ -85,7 +108,7 @@ const TeachersSection = ({
       onPageChange={onPageChange}
       totalItems={totalItems}
     />
-  </section>
+  </motion.section>
 );
 
 const CompactPagination = ({ currentPage, totalPages, onPageChange, totalItems }) => {
@@ -128,7 +151,9 @@ const TeacherCard = ({ teacher, action, selected = false, disabled = false, onCl
   const cardInteractive = typeof onClick === "function";
 
   return (
-    <div
+    <motion.div
+      variants={itemVariants}
+      whileHover={{ y: -2, transition: { duration: 0.2 } }}
       className={`rounded-xl border p-3 transition-all ${
         selected
           ? "border-amber-400 bg-amber-50/70 dark:border-amber-400/60 dark:bg-amber-500/10"
@@ -182,7 +207,7 @@ const TeacherCard = ({ teacher, action, selected = false, disabled = false, onCl
           </Button>
         ) : null}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -340,8 +365,13 @@ const AssignTeachers = () => {
 
   return (
     <AdminLayout pageTitle="Assign Teachers">
-      <div className="space-y-5">
-        <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-r from-amber-50 via-yellow-50 to-white p-4 shadow-sm dark:border-amber-400/20 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-5"
+      >
+        <motion.div variants={itemVariants} className="rounded-2xl border border-amber-200/60 bg-gradient-to-r from-amber-50 via-yellow-50 to-white p-4 shadow-sm dark:border-amber-400/20 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Assign Teachers</h2>
@@ -374,9 +404,9 @@ const AssignTeachers = () => {
               {sendingInvites ? "Sending..." : selectedTeachers.length > 0 ? `Send Invites (${selectedTeachers.length})` : "Send Invites"}
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
+        <motion.div variants={itemVariants} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-navy-charcoal">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -387,7 +417,7 @@ const AssignTeachers = () => {
               className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-100 dark:border-white/10 dark:bg-deep-charcoal dark:text-white dark:focus:border-amber-500/30 dark:focus:ring-amber-500/10"
             />
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="xl:col-span-1">
@@ -469,7 +499,7 @@ const AssignTeachers = () => {
             />
           </div>
         </div>
-      </div>
+      </motion.div>
     </AdminLayout>
   );
 };

@@ -5,12 +5,11 @@ const notificationSchema = new mongoose.Schema(
     tenantId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Tenant",
-      required: true,
+      required: false,
       index: true,
     },
     recipientId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
       required: true,
       index: true,
     },
@@ -28,9 +27,14 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["assignment", "grade", "announcement", "event", "system", "course"],
+      enum: ["assignment", "grade", "announcement", "event", "system", "course", "platform_update"],
       default: "system",
       index: true,
+    },
+    targetAudience: {
+      type: String,
+      enum: ["all", "admins", "teachers", "students", "tenant", "specific_users"],
+      default: "specific_users",
     },
     link: String,
     isRead: {
@@ -49,8 +53,8 @@ const notificationSchema = new mongoose.Schema(
 );
 
 // Compound indexes
-notificationSchema.index({ tenantId: 1, recipientId: 1, isRead: 1 });
-notificationSchema.index({ tenantId: 1, recipientId: 1, createdAt: -1 });
+notificationSchema.index({ recipientId: 1, isRead: 1 });
+notificationSchema.index({ recipientId: 1, createdAt: -1 });
 
 const Notification = mongoose.model("Notification", notificationSchema);
 

@@ -35,6 +35,9 @@ router.get("/Organizations", superAdminController.getOrganizationsOverview);
 // Activity logs
 router.get("/Logs", superAdminController.getActivityLogs);
 
+// Announcements (Broadcasting)
+router.post("/Announcements", superAdminController.createAnnouncement);
+
 module.exports = router;
 // Teacher invitation callback routes (public - accessible without auth via redirect)
 module.exports.invitationRouter = (() => {

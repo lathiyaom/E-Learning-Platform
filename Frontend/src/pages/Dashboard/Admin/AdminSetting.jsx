@@ -5,6 +5,24 @@ import AdminLayout from "../../../utils/Adminlayoute";
 import { getBreadcrumbs } from "../../../utils/breadcrumbs";
 import { ErrorToster, SuccessToster } from "../../../components/toster";
 import { getSettings, updateSettings } from "../../../redux/Apis/profileApi";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const initialForm = {
   organizationName: "",
@@ -123,9 +141,14 @@ function AdminSetting() {
 
   return (
     <AdminLayout showSearch={false} className="p-0" breadcrumbItems={breadcrumbItems}>
-      <div className="min-h-[calc(100vh-96px)] bg-gradient-to-br from-lavender-light via-background-light to-white dark:from-navy-charcoal dark:to-deep-charcoal p-4 md:p-8">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="min-h-[calc(100vh-96px)] bg-gradient-to-br from-lavender-light via-background-light to-white dark:from-navy-charcoal dark:to-deep-charcoal p-4 md:p-8"
+      >
         <div className="mx-auto max-w-6xl">
-          <div className="mb-6 rounded-3xl border border-card-border bg-white/80 p-6 shadow-gold backdrop-blur-xl dark:border-premium-border dark:bg-premium-surface/80">
+          <motion.div variants={itemVariants} className="mb-6 rounded-3xl border border-card-border bg-white/80 p-6 shadow-gold backdrop-blur-xl dark:border-premium-border dark:bg-premium-surface/80">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="inline-flex items-center gap-2 rounded-full bg-lavender px-3 py-1 text-xs font-semibold uppercase tracking-wide text-studprimary dark:bg-premium-gold/20 dark:text-premium-gold">
@@ -146,10 +169,10 @@ function AdminSetting() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <section className="lg:col-span-2 rounded-3xl border border-card-border bg-white/90 p-6 shadow-gold backdrop-blur dark:border-premium-border dark:bg-premium-surface/85">
+            <motion.section variants={itemVariants} className="lg:col-span-2 rounded-3xl border border-card-border bg-white/90 p-6 shadow-gold backdrop-blur dark:border-premium-border dark:bg-premium-surface/85">
               <h2 className="mb-5 text-lg font-bold text-slate-900 dark:text-white">Organization Profile</h2>
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <InputField
@@ -198,9 +221,9 @@ function AdminSetting() {
                   disabled={isLoading || isSaving}
                 />
               </div>
-            </section>
+            </motion.section>
 
-            <section className="rounded-3xl border border-card-border bg-white/90 p-6 shadow-gold backdrop-blur dark:border-premium-border dark:bg-premium-surface/85">
+            <motion.section variants={itemVariants} className="rounded-3xl border border-card-border bg-white/90 p-6 shadow-gold backdrop-blur dark:border-premium-border dark:bg-premium-surface/85">
               <h2 className="mb-5 text-lg font-bold text-slate-900 dark:text-white">Owner Profile</h2>
               <div className="space-y-5">
                 <InputField
@@ -249,10 +272,10 @@ function AdminSetting() {
               ) : (
                 <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Changes are applied only to your current organization account.</p>
               )}
-            </section>
+            </motion.section>
           </form>
         </div>
-      </div>
+      </motion.div>
     </AdminLayout>
   );
 }

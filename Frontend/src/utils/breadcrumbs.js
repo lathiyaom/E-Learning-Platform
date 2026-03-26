@@ -89,6 +89,41 @@ export const breadcrumbPaths = {
     { label: "Dashboard", to: "/dashboard" },
     { label: "My Attendance" },
   ],
+
+  // Super Admin Paths
+  SUPERADMIN_DASHBOARD: [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Dashboard" },
+  ],
+  SUPERADMIN_TENANTS: [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Organizations" },
+  ],
+  SUPERADMIN_TENANT_DETAIL: (name = "Organization Detail") => [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Organizations", to: "/superadmin/tenants" },
+    { label: name },
+  ],
+  SUPERADMIN_USERS: [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Manage Users" },
+  ],
+  SUPERADMIN_TEACHERS: [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Teachers" },
+  ],
+  SUPERADMIN_STUDENTS: [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Students" },
+  ],
+  SUPERADMIN_ANNOUNCEMENTS: [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Broadcasting" },
+  ],
+  SUPERADMIN_ANALYTICS: [
+    { label: "Super Admin", to: "/superadmin/dashboard" },
+    { label: "Analytics" },
+  ],
 };
 
 export const getBreadcrumbs = (key, ...params) => {

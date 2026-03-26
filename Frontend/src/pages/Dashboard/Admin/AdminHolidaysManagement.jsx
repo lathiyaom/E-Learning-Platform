@@ -13,6 +13,24 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import holidayVisual from "../../../assets/imgs/hero-students.jpg";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 const HOLIDAY_TYPE_OPTIONS = [
   { value: "public", label: "Public" },
@@ -438,8 +456,13 @@ const AdminHolidaysManagement = () => {
 
   return (
     <AdminLayout showSearch={false} className="p-0">
-      <div className="space-y-6 px-4 py-4 sm:px-6">
-        <section className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 md:p-6 shadow-sm">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-6 px-4 py-4 sm:px-6"
+      >
+        <motion.section variants={itemVariants} className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-5 md:p-6 shadow-sm">
           <div className="pointer-events-none absolute -top-20 -right-14 h-44 w-44 rounded-full bg-lavender-light dark:bg-premium-gold/10 blur-3xl" />
 
           <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-center">
@@ -468,9 +491,9 @@ const AdminHolidaysManagement = () => {
               </article>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <motion.section variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "Total", value: stats.total, icon: CalendarDays },
             { label: "Upcoming", value: stats.upcoming, icon: Sparkles },
@@ -479,18 +502,22 @@ const AdminHolidaysManagement = () => {
           ].map((item) => {
             const IconComponent = item.icon;
             return (
-              <div key={item.label} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm">
+              <motion.div 
+                key={item.label}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm"
+              >
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-500 dark:text-slate-400">{item.label}</p>
                   <IconComponent className="h-4 w-4 text-studprimary dark:text-premium-gold" />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{item.value}</p>
-              </div>
+              </motion.div>
             );
           })}
-        </section>
+        </motion.section>
 
-        <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 md:p-5 shadow-sm">
+        <motion.section variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 md:p-5 shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
             <div className="lg:col-span-6 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -526,9 +553,9 @@ const AdminHolidaysManagement = () => {
               </select>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="bg-white dark:bg-navy-charcoal rounded-[24px] border border-slate-200 dark:border-white/10 overflow-hidden">
+        <motion.section variants={itemVariants} className="bg-white dark:bg-navy-charcoal rounded-[24px] border border-slate-200 dark:border-white/10 overflow-hidden">
           {loading ? (
             <div className="p-10 text-center text-slate-500 dark:text-slate-400">Loading holidays...</div>
           ) : filteredHolidays.length === 0 ? (
@@ -536,7 +563,11 @@ const AdminHolidaysManagement = () => {
           ) : (
             <div className="divide-y divide-slate-200 dark:divide-white/10">
               {filteredHolidays.map((holiday) => (
-                <div key={holiday._id} className="p-5 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                <motion.div 
+                  key={holiday._id}
+                  variants={itemVariants}
+                  className="p-5 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300">
@@ -578,12 +609,12 @@ const AdminHolidaysManagement = () => {
                       <Trash2 className="h-4 w-4" /> Delete
                     </button>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
-        </section>
-      </div>
+        </motion.section>
+      </motion.div>
 
       {showForm ? (
         <HolidayModal

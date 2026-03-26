@@ -6,20 +6,25 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  Download,
-  Edit,
-  FilePlus2,
-  Filter,
-  Layers3,
-  Plus,
-  Search,
-  Trash2,
-  TrendingUp,
-  Users,
-  X,
-} from "lucide-react";
+import { ArrowUpDown, Download, Edit, FilePlus2, Filter, Layers3, Plus, Search, Trash2, TrendingUp, Users, X } from "lucide-react";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
 
 import AdminLayout from "../../../utils/Adminlayoute";
 import {
@@ -184,7 +189,11 @@ const CourseThumb = ({ course }) => {
 };
 
 const MetricCard = ({ title, value, hint, icon: Icon }) => (
-  <article className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm dark:shadow-none">
+  <motion.article 
+    variants={itemVariants}
+    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 shadow-sm dark:shadow-none"
+  >
     <div className="flex items-center justify-between">
       <div className="h-10 w-10 rounded-xl bg-lavender-light dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold flex items-center justify-center">
         <Icon className="h-5 w-5" />
@@ -196,7 +205,7 @@ const MetricCard = ({ title, value, hint, icon: Icon }) => (
     <p className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">{title}</p>
     <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>
-  </article>
+  </motion.article>
 );
 
 const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
@@ -913,8 +922,16 @@ const Courses = () => {
 
   return (
     <AdminLayout showSearch={false}>
-      <div className="space-y-6 p-4 sm:p-6">
-        <section className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] px-5 py-8 md:px-6 md:py-10 bg-lavender-light dark:bg-navy-charcoal border border-white/60 dark:border-white/10 shadow-sm dark:shadow-none">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-6 p-4 sm:p-6"
+      >
+        <motion.section 
+          variants={itemVariants}
+          className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] px-5 py-8 md:px-6 md:py-10 bg-lavender-light dark:bg-navy-charcoal border border-white/60 dark:border-white/10 shadow-sm dark:shadow-none"
+        >
           <div className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-studprimary/10 dark:bg-premium-gold/10 blur-3xl" />
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] text-studprimary dark:text-premium-gold pointer-events-none" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "1.5rem 1.5rem" }} />
 
@@ -938,16 +955,19 @@ const Courses = () => {
               Create New Course
             </button>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <motion.section variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard title="Total Courses" value={stats.total} hint="Catalog size" icon={FilePlus2} />
           <MetricCard title="Active Learners" value={stats.totalEnrolled.toLocaleString()} hint="Across all courses" icon={Users} />
           <MetricCard title="Published" value={stats.published} hint="Visible to learners" icon={TrendingUp} />
           <MetricCard title="Avg. Completion" value={`${stats.avgCompletion}%`} hint="Progress indicator" icon={TrendingUp} />
-        </section>
+        </motion.section>
 
-        <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 md:p-5 shadow-sm dark:shadow-none">
+        <motion.section 
+          variants={itemVariants}
+          className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-4 md:p-5 shadow-sm dark:shadow-none"
+        >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               {statusTabs.map((tab) => (
@@ -1050,9 +1070,12 @@ const Courses = () => {
               </button>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="rounded-2xl border border-slate-200 dark:border-premium-gold/15 bg-white dark:bg-transparent dark:dark-glass shadow-sm dark:shadow-none overflow-hidden">
+        <motion.section 
+          variants={itemVariants} 
+          className="rounded-2xl border border-slate-200 dark:border-premium-gold/15 bg-white dark:bg-transparent dark:dark-glass shadow-sm dark:shadow-none overflow-hidden"
+        >
           {isLoading ? (
             <div className="h-56 flex items-center justify-center">
               <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-studprimary dark:border-premium-gold" />
@@ -1096,9 +1119,9 @@ const Courses = () => {
               </div>
             </>
           )}
-        </section>
+        </motion.section>
 
-        <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <motion.section variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           <article className="xl:col-span-6 rounded-2xl border border-slate-200 dark:border-premium-gold/15 bg-white dark:bg-transparent p-4 md:p-5 shadow-sm dark:shadow-none">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">Courses by Category</h3>
             {categoryChartData.length ? (
@@ -1132,7 +1155,7 @@ const Courses = () => {
               <p className="text-sm text-slate-500 dark:text-slate-400">No enrollment data available.</p>
             )}
           </article>
-        </section>
+        </motion.section>
 
         {modal?.type === "add" && (
           <CourseFormModal mode="create" onClose={() => setModal(null)} onSaved={onSaved} />
@@ -1145,7 +1168,7 @@ const Courses = () => {
             onSaved={onSaved}
           />
         )}
-      </div>
+      </motion.div>
     </AdminLayout>
   );
 };
