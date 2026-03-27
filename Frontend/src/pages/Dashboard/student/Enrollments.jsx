@@ -36,12 +36,15 @@ const Enrollments = () => {
   const enrollments = data?.data || [];
 
   /* ── Stats ── */
-  const counts = useMemo(() => ({
-    active:       enrollments.filter((e) => e.status === "active").length,
-    completed:    enrollments.filter((e) => e.status === "completed").length,
-    dropped:      enrollments.filter((e) => e.status === "dropped").length,
-    certificates: enrollments.filter((e) => e.certificate_issued).length,
-  }), [enrollments]);
+  const counts = useMemo(
+    () => ({
+      active: enrollments.filter((e) => e.status === "active").length,
+      completed: enrollments.filter((e) => e.status === "completed").length,
+      dropped: enrollments.filter((e) => e.status === "dropped").length,
+      certificates: enrollments.filter((e) => e.certificate_issued).length,
+    }),
+    [enrollments],
+  );
 
   /* ── Filter ── */
   const filtered = useMemo(() => {
@@ -53,7 +56,10 @@ const Enrollments = () => {
       const q = filters.search.toLowerCase();
       result = result.filter((e) => {
         const course = e.courseId || e.course_id || {};
-        return course.title?.toLowerCase().includes(q) || course.category?.toLowerCase().includes(q);
+        return (
+          course.title?.toLowerCase().includes(q) ||
+          course.category?.toLowerCase().includes(q)
+        );
       });
     }
     return result;
@@ -62,14 +68,22 @@ const Enrollments = () => {
   /* ── Pagination ── */
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const paginated = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
-  const handleFilterChange = (f) => { setFilters(f); setPage(1); };
+  const handleFilterChange = (f) => {
+    setFilters(f);
+    setPage(1);
+  };
 
   return (
-    <AdminLayout showSearch={false} breadcrumbItems={getBreadcrumbs("DASHBOARD")}>
+    <AdminLayout
+      showSearch={false}
+      breadcrumbItems={getBreadcrumbs("DASHBOARD")}
+    >
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-charcoal dark:via-deep-charcoal dark:to-navy-charcoal px-4 sm:px-6 lg:px-8 py-6">
-
         {/* Hero */}
         <EnrollmentsPoster total={isLoading ? 0 : enrollments.length} />
 
@@ -80,28 +94,36 @@ const Enrollments = () => {
         <EnrollmentsFilters
           filters={filters}
           onChange={handleFilterChange}
-          onClear={() => { setFilters(DEFAULT_FILTERS); setPage(1); }}
+          onClear={() => {
+            setFilters(DEFAULT_FILTERS);
+            setPage(1);
+          }}
         />
 
         {/* Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => <CardSkeleton key={i} />)}
+            {[...Array(6)].map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
           </div>
         ) : paginated.length === 0 ? (
           <Card className="bg-white dark:bg-transparent dark:dark-glass border-slate-200 dark:border-white/10 rounded-2xl shadow-sm p-0 gap-0">
             <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
               <div className="relative mb-6">
                 <div className="w-24 h-24 rounded-3xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center">
-                  {filters.search || filters.status !== "all"
-                    ? <BookOpen className="w-12 h-12 text-studprimary dark:text-premium-gold" />
-                    : <CalendarX className="w-12 h-12 text-studprimary dark:text-premium-gold" />
-                  }
+                  {filters.search || filters.status !== "all" ? (
+                    <BookOpen className="w-12 h-12 text-studprimary dark:text-premium-gold" />
+                  ) : (
+                    <CalendarX className="w-12 h-12 text-studprimary dark:text-premium-gold" />
+                  )}
                 </div>
                 <div className="absolute inset-0 rounded-3xl border-2 border-studprimary/20 dark:border-premium-gold/20 scale-110 animate-pulse" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                {filters.search || filters.status !== "all" ? "No matching courses" : "No enrollments yet"}
+                {filters.search || filters.status !== "all"
+                  ? "No matching courses"
+                  : "No enrollments yet"}
               </h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs leading-relaxed">
                 {filters.search || filters.status !== "all"
@@ -122,7 +144,9 @@ const Enrollments = () => {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-8 px-1">
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}
+                  Showing {(safePage - 1) * PAGE_SIZE + 1}–
+                  {Math.min(safePage * PAGE_SIZE, filtered.length)} of{" "}
+                  {filtered.length}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -135,19 +159,21 @@ const Enrollments = () => {
 
                   {/* Page numbers */}
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setPage(p)}
-                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                          p === safePage
-                            ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal"
-                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (p) => (
+                        <button
+                          key={p}
+                          onClick={() => setPage(p)}
+                          className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                            p === safePage
+                              ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal"
+                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ),
+                    )}
                   </div>
 
                   <button

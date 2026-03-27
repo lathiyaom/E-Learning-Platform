@@ -15,9 +15,9 @@ const PAGE_SHELL_CLASS = "min-h-screen bg-background-light dark:bg-transparent";
 const PANEL_CLASS =
   "rounded-2xl border border-studprimary/15 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm";
 const SELECT_CLASS =
-  "h-10 rounded-lg border border-studprimary/15 bg-white px-3 text-xs font-semibold text-slate-700 outline-none transition-all focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/15 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20";
+  "h-10 rounded-lg border border-studprimary/15 bg-white px-3 text-xs font-semibold text-slate-700 outline-none transition-all focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/15 dark:border-white/10 dark:bg-navy-charcoal dark:text-slate-400 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20";
 const TAB_TRIGGER_CLASS =
-  "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200 data-[state=active]:bg-studprimary data-[state=active]:text-white dark:data-[state=active]:bg-premium-gold dark:data-[state=active]:text-deep-charcoal";
+  "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200 data-[state=active]:bg-superadminprimary data-[state=active]:text-white dark:data-[state=active]:bg-premium-gold dark:data-[state=active]:text-deep-charcoal   ";
 
 const getCourseId = (course) => String(course?._id || course?.id || "");
 
@@ -426,7 +426,7 @@ const MyCourses = () => {
 
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_240px_280px] lg:items-center">
             <Tabs value={statusTab} onValueChange={setStatusTab}>
-              <TabsList className="h-auto flex-wrap gap-1 rounded-xl bg-lavender-light p-1 dark:bg-premium-gold/10">
+              <TabsList className="h-auto flex-wrap gap-1 rounded-xl bg-lavender-light p-1 dark:bg-premium-gold/10 dark:text-white">
                 <TabsTrigger value="all" className={TAB_TRIGGER_CLASS}>
                   All Courses ({metrics.totalCourses})
                 </TabsTrigger>

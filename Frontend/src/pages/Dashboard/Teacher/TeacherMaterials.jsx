@@ -18,7 +18,8 @@ import {
   ExternalLink,
   Film,
 } from "lucide-react";
-import AdminLayout from "../../../utils/AdminlayouteNew";
+// import AdminLayout from "../../../utils/AdminlayouteNew";
+import AdminLayout from "../../../utils/Adminlayoute";
 import { ErrorToster, SuccessToster } from "../../../components/toster";
 import { useGetAllCoursesQuery } from "../../../redux";
 import {

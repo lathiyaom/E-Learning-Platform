@@ -143,12 +143,12 @@ const NotificationCenter = () => {
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2.5 rounded-xl transition-all duration-300 group
-          ${isOpen ? "bg-superadminprimary text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}
+          ${isOpen ? "bg-superadminprimary text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-lavender-dark"}
         `}
       >
         <Bell className={`h-5 w-5 ${isOpen ? "animate-none" : "group-hover:rotate-12"}`} />
         {unreadCount > 0 && (
-          <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white dark:border-slate-900 ring-2 ring-red-500/20">
+          <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white dark:border-premium-border ring-2 ring-red-500/20">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -162,10 +162,10 @@ const NotificationCenter = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="absolute right-0 mt-3 w-80 md:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 origin-top-right"
+            className="absolute right-0 mt-3 w-80 md:w-96 bg-white dark:bg-deep-charcoal rounded-2xl shadow-2xl border border-slate-200 dark:border-premium-border overflow-hidden z-50 origin-top-right"
           >
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-navy-charcoal">
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-slate-900 dark:text-white">Notifications</h3>
                 {unreadCount > 0 && (
@@ -202,8 +202,8 @@ const NotificationCenter = () => {
                 ))
               ) : (
                 <div className="p-12 text-center text-slate-400 dark:text-slate-600">
-                  <div className="h-16 w-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Bell className="h-8 w-8 opacity-20" />
+                  <div className="h-16 w-16 bg-slate-50 dark:bg-navy-charcoal rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Bell className="h-8 w-8 opacity-80 dark:text-superadminprimary" />
                   </div>
                   <h4 className="text-sm font-bold text-slate-900 dark:text-slate-300">No Notifications</h4>
                   <p className="text-xs mt-1">You're all caught up!</p>

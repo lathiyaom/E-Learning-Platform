@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   PerformanceLineChart,
   AnalyticsBarChart,
@@ -18,8 +19,30 @@ import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 import { useGetUpcomingHolidaysQuery } from "../../../../redux/Apis/holidayApi";
 import { useDispatch, useSelector } from "react-redux";
 import { getUpcomingEvents } from "../../../../redux/Apis/eventApi";
-import { useEffect } from "react";
 import moment from "moment";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: 15 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
 
 const ChartSection = () => {
   const [filterRange, setFilterRange] = useState("6months"); // last-day, last-week, last-month, 6months, all-time
@@ -367,9 +390,19 @@ const ChartSection = () => {
       </div>
 
       {/* KPI Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Enrolled */}
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        {/* Total Enrolled Card */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -5, scale: 1.02 }}
+          className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm hover:shadow-xl hover:shadow-studprimary/5 dark:hover:shadow-premium-gold/5 transition-all duration-300"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg bg-lavender-light dark:bg-premium-gold/10 flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-studprimary dark:text-premium-gold" />
@@ -383,10 +416,14 @@ const ChartSection = () => {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Average Progress */}
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm">
+        {/* Average Progress Card */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -5, scale: 1.02 }}
+          className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm hover:shadow-xl hover:shadow-studprimary/5 dark:hover:shadow-premium-gold/5 transition-all duration-300"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg bg-lavender-light dark:bg-premium-gold/10 flex items-center justify-center">
               <Zap className="w-6 h-6 text-studprimary dark:text-premium-gold" />
@@ -400,10 +437,14 @@ const ChartSection = () => {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Completed */}
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm">
+        {/* Completed Card */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -5, scale: 1.02 }}
+          className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm hover:shadow-xl hover:shadow-studprimary/5 dark:hover:shadow-premium-gold/5 transition-all duration-300"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg bg-lavender-light dark:bg-premium-gold/10 flex items-center justify-center">
               <CheckCircle2 className="w-6 h-6 text-studprimary dark:text-premium-gold" />
@@ -417,10 +458,14 @@ const ChartSection = () => {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* In Progress */}
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm">
+        {/* In Progress Card */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -5, scale: 1.02 }}
+          className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass p-6 shadow-sm hover:shadow-xl hover:shadow-studprimary/5 dark:hover:shadow-premium-gold/5 transition-all duration-300"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg bg-lavender-light dark:bg-premium-gold/10 flex items-center justify-center">
               <Calendar className="w-6 h-6 text-studprimary dark:text-premium-gold" />
@@ -434,8 +479,8 @@ const ChartSection = () => {
               </p>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Charts Grid - Responsive */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -583,32 +628,47 @@ const ChartSection = () => {
 
       {/* Community Activity Feed */}
       <section>
-        <div className="flex items-center justify-between mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex items-center justify-between mb-6"
+        >
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-7 bg-studprimary dark:bg-premium-gold rounded-full shadow-[0_0_10px_#B08D57]"></div>
             <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
               Community Activity
             </h3>
           </div>
-        </div>
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass flex flex-col shadow-sm">
+        </motion.div>
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent dark:dark-glass flex flex-col shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
             <h4 className="text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
               Latest Activity
             </h4>
-            <button className="text-studprimary dark:text-premium-gold p-1.5 hover:bg-lavender-light dark:hover:bg-premium-gold/10 rounded-lg transition-colors">
+            <motion.button
+              whileHover={{ rotate: 180 }}
+              className="text-studprimary dark:text-premium-gold p-1.5 hover:bg-lavender-light dark:hover:bg-premium-gold/10 rounded-lg transition-colors"
+            >
               <RefreshCcw className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
-          <div className="p-6 space-y-5 max-h-[500px] overflow-y-auto hide-scrollbar">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="p-6 space-y-5 max-h-[500px] overflow-y-auto hide-scrollbar"
+          >
             {communityFeed.length === 0 ? (
               <div className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
                 No recent activity
               </div>
             ) : (
               communityFeed.map((item) => (
-                <div
+                <motion.div
                   key={item.id}
+                  variants={cardVariants}
                   className="flex gap-4 items-start p-4 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-lavender-light dark:hover:bg-premium-gold/10 transition-colors group border border-slate-200 dark:border-white/10"
                 >
                   <div className="relative flex-shrink-0">
@@ -634,14 +694,17 @@ const ChartSection = () => {
                       </span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
-          </div>
+          </motion.div>
           <div className="p-4 border-t border-slate-200 dark:border-white/10 mt-auto">
-            <button className="w-full py-3 text-xs font-extrabold text-studprimary dark:text-premium-gold hover:bg-lavender-light dark:hover:bg-premium-gold/10 rounded-lg transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+            <motion.button 
+              whileHover={{ x: 5 }}
+              className="w-full py-3 text-xs font-extrabold text-studprimary dark:text-premium-gold hover:bg-lavender-light dark:hover:bg-premium-gold/10 rounded-lg transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+            >
               View All Activity <ArrowRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
         </div>
       </section>

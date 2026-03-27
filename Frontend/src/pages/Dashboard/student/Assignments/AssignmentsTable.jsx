@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from "../../../../components/table";
@@ -35,6 +36,25 @@ const STATUS_CFG = {
   },
 };
 
+const tableContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const tableRowVariants = {
+  hidden: { opacity: 0, x: -10 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
+  },
+};
+
 function getStatusKey(a) {
   if (a.submissionStatus === "graded") return "graded";
   if (a.submissionStatus === "submitted") return "submitted";
@@ -68,21 +88,33 @@ function TimeRemaining({ dueDate }) {
 function AssignmentsTable({ assignments, pagination, currentPage, onPageChange, onView, onSubmit }) {
   if (assignments.length === 0) {
     return (
-      <div className="bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 rounded-2xl p-16 text-center shadow-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 rounded-2xl p-16 text-center shadow-sm"
+      >
         <div className="relative inline-block mb-6">
-          <div className="w-20 h-20 rounded-3xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-studprimary/10 dark:bg-premium-gold/10 flex items-center justify-center relative z-10">
             <FileText className="w-10 h-10 text-studprimary dark:text-premium-gold" />
           </div>
-          <div className="absolute inset-0 rounded-3xl border-2 border-studprimary/20 dark:border-premium-gold/20 scale-110 animate-pulse" />
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-3xl border-2 border-studprimary/20 dark:border-premium-gold/20 scale-110" 
+          />
         </div>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No assignments found</h3>
         <p className="text-slate-500 dark:text-slate-400 text-sm">Try adjusting your filters.</p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-4"
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -95,7 +127,7 @@ function AssignmentsTable({ assignments, pagination, currentPage, onPageChange, 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {assignments.map((a) => (
+          {assignments.map((a, idx) => (
             <TableRow key={a._id}>
               {/* Assignment info */}
               <TableCell>
@@ -158,21 +190,25 @@ function AssignmentsTable({ assignments, pagination, currentPage, onPageChange, 
               {/* Actions */}
               <TableCell className="text-right">
                 <div className="inline-flex items-center gap-1">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => onView(a)}
                     title="View details"
                     className="p-2 rounded-lg text-slate-500 hover:text-studprimary dark:hover:text-premium-gold hover:bg-studprimary/10 dark:hover:bg-premium-gold/10 transition-colors"
                   >
                     <Eye className="w-4 h-4" />
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => onSubmit(a)}
                     disabled={a.submissionStatus === "submitted" || a.submissionStatus === "graded"}
                     title={a.submissionStatus === "submitted" || a.submissionStatus === "graded" ? "Already submitted" : "Submit"}
                     className="p-2 rounded-lg text-slate-500 hover:text-studprimary dark:hover:text-premium-gold hover:bg-studprimary/10 dark:hover:bg-premium-gold/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Upload className="w-4 h-4" />
-                  </button>
+                  </motion.button>
                 </div>
               </TableCell>
             </TableRow>
@@ -182,33 +218,42 @@ function AssignmentsTable({ assignments, pagination, currentPage, onPageChange, 
 
       {/* Pagination */}
       {pagination?.pages > 1 && (
-        <div className="flex items-center justify-between px-1 py-2">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="flex items-center justify-between px-1 py-2"
+        >
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Showing {((currentPage - 1) * (pagination.limit || 10)) + 1}–
             {Math.min(currentPage * (pagination.limit || 10), pagination.total)} of {pagination.total}
           </p>
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
+              whileHover={{ x: -2 }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-studprimary dark:hover:border-premium-gold hover:text-studprimary dark:hover:text-premium-gold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+            </motion.button>
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-2">
               {currentPage} / {pagination.pages}
             </span>
-            <button
+            <motion.button
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === pagination.pages}
               className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-studprimary dark:hover:border-premium-gold hover:text-studprimary dark:hover:text-premium-gold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

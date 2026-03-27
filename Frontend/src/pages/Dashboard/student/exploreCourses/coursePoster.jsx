@@ -1,40 +1,70 @@
 import React from "react";
+import { motion } from "framer-motion";
+import { Sparkles, ChevronRight } from "lucide-react";
 import posterImg from "../../../../assets/imgs/course-poster.jpg";
 
 function CoursePoster() {
   return (
-    <section className="relative bg-sidebar-dark dark:bg-background-dark rounded-2.5xl p-6 md:p-10 lg:p-12 mb-8 overflow-hidden min-h-[350px] md:min-h-[400px] flex items-center">
+    <motion.section 
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      className="relative bg-navy-charcoal rounded-[32px] p-8 md:p-12 lg:p-16 mb-10 overflow-hidden min-h-[400px] flex items-center shadow-2xl border border-white/5"
+    >
       <div className="absolute inset-0 z-0">
-        <img
+        <motion.img
+          initial={{ scale: 1.1, opacity: 0.4 }}
+          animate={{ scale: 1, opacity: 0.6 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
           alt="Students collaborating"
-          className="w-full h-full object-cover opacity-50 blur-sm"
+          className="w-full h-full object-cover blur-[2px]"
           src={posterImg}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-sidebar-dark/95 via-sidebar-dark/70 to-transparent dark:from-background-dark/95 dark:via-background-dark/70"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0F172A] via-[#0F172A]/80 to-transparent"></div>
       </div>
 
-      <div className="relative z-10 max-w-2xl w-full px-2 ">
-        <div>
-          <span className="inline-block px-4 py-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-xl text-studprimary text-xs font-bold rounded-full mb-4 md:mb-6 border border-white/30 shadow-2xl shadow-studprimary/40 ">
+      <div className="relative z-10 max-w-2xl w-full">
+        <motion.div
+           initial={{ opacity: 0, x: -20 }}
+           animate={{ opacity: 1, x: 0 }}
+           transition={{ delay: 0.3, duration: 0.6 }}
+        >
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-studprimary/90 backdrop-blur-xl text-white text-[10px] font-black tracking-widest uppercase rounded-full mb-6 border border-white/20 shadow-xl shadow-studprimary/20">
+            <Sparkles size={12} />
             TRENDING NOW
           </span>
-        </div>
+        </motion.div>
 
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-3 md:mb-4 leading-tight ">
+        <motion.h2 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.7 }}
+          className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-[1.1]"
+        >
           Master AI & Machine Learning with Experts
-        </h2>
+        </motion.h2>
 
-        <p className="text-slate-200 dark:text-slate-300 text-base md:text-lg lg:text-xl mb-6 md:mb-8 leading-relaxed">
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.7 }}
+          className="text-slate-300 text-base md:text-lg lg:text-xl mb-10 leading-relaxed max-w-xl opacity-90"
+        >
           Unlock the power of artificial intelligence. Join over 50,000+
           students in our most popular career path this month.
-        </p>
+        </motion.p>
 
-        <button className="bg-studprimary hover:bg-studprimary/90 text-white font-bold py-3 md:py-4 px-6 md:px-10 rounded-xl transition-all duration-300 shadow-xl shadow-studprimary/30 text-base md:text-lg hover:shadow-2xl hover:shadow-studprimary/40 transform hover:scale-105 active:scale-95 ">
+        <motion.button 
+          whileHover={{ scale: 1.05, x: 5 }}
+          whileTap={{ scale: 0.95 }}
+          className="group bg-studprimary hover:bg-[#c79743] text-white font-bold py-4 px-10 rounded-2xl transition-all duration-300 shadow-xl shadow-studprimary/30 text-lg flex items-center gap-3"
+        >
           Explore Path
-        </button>
+          <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+        </motion.button>
       </div>
-    </section>
-  )
+    </motion.section>
+  );
 }
 
 export default CoursePoster;

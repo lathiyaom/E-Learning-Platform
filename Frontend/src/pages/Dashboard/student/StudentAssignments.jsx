@@ -9,6 +9,7 @@ import AdminLayout from "../../../utils/Adminlayoute";
 import { getBreadcrumbs } from "../../../utils/breadcrumbs";
 import { SuccessToster, ErrorToster } from "../../../components/toster";
 import { Card } from "../../../components/Card";
+import { motion, AnimatePresence } from "framer-motion";
 
 import AssignmentsPoster from "./Assignments/AssignmentsPoster";
 import AssignmentsFilters from "./Assignments/AssignmentsFilters";
@@ -45,6 +46,29 @@ function TableSkeleton() {
 }
 
 const DEFAULT_FILTERS = { search: "", course: "", status: "all" };
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
 
 const StudentAssignments = () => {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -121,56 +145,86 @@ const StudentAssignments = () => {
 
   return (
     <AdminLayout showSearch={false} breadcrumbItems={getBreadcrumbs("DASHBOARD")}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-charcoal dark:via-deep-charcoal dark:to-navy-charcoal px-4 sm:px-6 lg:px-8 py-6">
-
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-charcoal dark:via-deep-charcoal dark:to-navy-charcoal px-4 sm:px-6 lg:px-8 py-6"
+      >
         {/* Hero poster */}
-        <AssignmentsPoster
-          total={stats.total}
-          pending={stats.pending}
-          submitted={stats.submitted}
-          overdue={stats.overdue}
-        />
+        <motion.div variants={itemVariants}>
+          <AssignmentsPoster
+            total={stats.total}
+            pending={stats.pending}
+            submitted={stats.submitted}
+            overdue={stats.overdue}
+          />
+        </motion.div>
 
         {/* Filters */}
-        <AssignmentsFilters
-          courses={courses}
-          filters={filters}
-          onChange={handleFilterChange}
-          onClear={() => { setFilters(DEFAULT_FILTERS); setCurrentPage(1); }}
-        />
-
-        {/* Table */}
-        {isLoading ? (
-          <TableSkeleton />
-        ) : (
-          <AssignmentsTable
-            assignments={filtered}
-            pagination={pagination}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-            onView={(a) => setViewAssignment(a)}
-            onSubmit={(a) => setSubmitAssignment(a)}
+        <motion.div variants={itemVariants}>
+          <AssignmentsFilters
+            courses={courses}
+            filters={filters}
+            onChange={handleFilterChange}
+            onClear={() => { setFilters(DEFAULT_FILTERS); setCurrentPage(1); }}
           />
-        )}
-      </div>
+        </motion.div>
+
+        {/* Table/Content container */}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              variants={itemVariants}
+            >
+              <TableSkeleton />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <AssignmentsTable
+                assignments={filtered}
+                pagination={pagination}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                onView={(a) => setViewAssignment(a)}
+                onSubmit={(a) => setSubmitAssignment(a)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Detail modal */}
-      {viewAssignment && !submitAssignment && (
-        <AssignmentDetailModal
-          assignment={assignmentDetails?.data || viewAssignment}
-          onClose={() => setViewAssignment(null)}
-          onSubmit={() => setSubmitAssignment(viewAssignment)}
-        />
-      )}
+      <AnimatePresence>
+        {viewAssignment && !submitAssignment && (
+          <AssignmentDetailModal
+            assignment={assignmentDetails?.data || viewAssignment}
+            onClose={() => setViewAssignment(null)}
+            onSubmit={() => setSubmitAssignment(viewAssignment)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Submit modal */}
-      {submitAssignment && (
-        <SubmitModal
-          assignment={submitAssignment}
-          onClose={() => setSubmitAssignment(null)}
-          onSubmit={handleSubmit}
-        />
-      )}
+      <AnimatePresence>
+        {submitAssignment && (
+          <SubmitModal
+            assignment={submitAssignment}
+            onClose={() => setSubmitAssignment(null)}
+            onSubmit={handleSubmit}
+          />
+        )}
+      </AnimatePresence>
     </AdminLayout>
   );
 };

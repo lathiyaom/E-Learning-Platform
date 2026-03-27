@@ -1,6 +1,21 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGetMarketplaceCoursesQuery } from "../../../redux/Apis/courseApi";
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.95,
+    transition: { duration: 0.2 }
+  }
+};
 
 // ── Course Card ────────────────────────────────────────────────────────────────
 const CourseCard = ({ course, viewMode }) => {
@@ -11,7 +26,14 @@ const CourseCard = ({ course, viewMode }) => {
 
   if (viewMode === "list") {
     return (
-      <div className="group bg-white dark:bg-transparent dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl dark:hover:border-premium-gold/20 hover:-translate-y-0.5 transition-all duration-300 flex gap-0 overflow-hidden">
+      <motion.div 
+        layout
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="group bg-white dark:bg-transparent dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl dark:hover:border-premium-gold/20 hover:-translate-y-0.5 transition-all duration-300 flex gap-0 overflow-hidden"
+      >
         {/* Image */}
         <div className="relative w-48 sm:w-60 shrink-0 overflow-hidden">
           <img
@@ -65,13 +87,20 @@ const CourseCard = ({ course, viewMode }) => {
             </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   // GRID mode
   return (
-    <div className="group bg-white dark:bg-transparent dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-primary/5 dark:hover:shadow-premium-gold/5 dark:hover:border-premium-gold/20 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
+    <motion.div 
+      layout
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className="group bg-white dark:bg-white/5 dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-primary/5 dark:hover:shadow-premium-gold/5 dark:hover:border-premium-gold/20 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
+    >
       {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden">
         <img
@@ -153,7 +182,7 @@ const CourseCard = ({ course, viewMode }) => {
         </div>
         <div className="h-0.5 w-0 group-hover:w-full bg-primary dark:bg-premium-gold mt-4 transition-all duration-500 rounded-full" />
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -172,8 +201,12 @@ const CoursesGrid = ({
   if (isLoading) {
     return (
       <div className="text-center py-24">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-premium-gold"></div>
-        <p className="mt-4 text-slate-600 dark:text-slate-400">Loading courses...</p>
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="inline-block h-12 w-12 border-b-2 border-primary dark:border-premium-gold rounded-full"
+        />
+        <p className="mt-4 text-slate-600 dark:text-slate-400 animate-pulse">Loading courses...</p>
       </div>
     );
   }
@@ -181,7 +214,11 @@ const CoursesGrid = ({
   // Error state
   if (isError) {
     return (
-      <div className="text-center py-24">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-24"
+      >
         <span className="material-symbols-outlined text-6xl text-red-300 dark:text-red-600 mb-4 block">
           error
         </span>
@@ -191,7 +228,7 @@ const CoursesGrid = ({
         <p className="text-slate-400 dark:text-slate-500 text-sm">
           {error?.data?.message || 'Something went wrong. Please try again later.'}
         </p>
-      </div>
+      </motion.div>
     );
   }
 
@@ -211,7 +248,11 @@ const CoursesGrid = ({
   // Empty state
   if (filtered.length === 0) {
     return (
-      <div className="text-center py-24">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center py-24"
+      >
         <span className="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 mb-4 block">
           search_off
         </span>
@@ -221,23 +262,27 @@ const CoursesGrid = ({
         <p className="text-slate-400 dark:text-slate-500 text-sm">
           Try adjusting your filters or search term.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div
+    <motion.div
+      layout
       className={
         viewMode === "grid"
           ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           : "flex flex-col gap-4"
       }
     >
-      {filtered.map((course) => (
-        <CourseCard key={course._id || course.id} course={course} viewMode={viewMode} />
-      ))}
-    </div>
+      <AnimatePresence mode="popLayout">
+        {filtered.map((course) => (
+          <CourseCard key={course._id || course.id} course={course} viewMode={viewMode} />
+        ))}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
 export default CoursesGrid;
+

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   X, Upload, FileText, Link2, Plus, Trash2, Loader2, CheckCircle2, AlertCircle,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import axios from "axios";
 import { getAuthState } from "../../../../redux/slice/authSlice";
 import { useSelector } from "react-redux";
@@ -101,14 +102,26 @@ function SubmitModal({ assignment, onClose, onSubmit }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+        onClick={onClose} 
+      />
 
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-navy-charcoal border border-slate-200 dark:border-white/10 shadow-2xl dark:shadow-black/50">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white dark:bg-navy-charcoal border border-slate-200 dark:border-white/10 shadow-2xl dark:shadow-black/50"
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-charcoal rounded-t-2xl">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Submit Assignment</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{assignment.title}</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Submit Assignment</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{assignment.title}</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors shrink-0">
             <X className="w-5 h-5" />
@@ -118,24 +131,26 @@ function SubmitModal({ assignment, onClose, onSubmit }) {
         <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
           {/* Submission type selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
               Submission Type
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {SUBMISSION_TYPES.map(({ value, label, icon: Icon }) => (
-                <button
+                <motion.button
                   key={value}
                   type="button"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => setSubmissionType(value)}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-semibold transition-all ${
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border text-[11px] font-bold transition-all ${
                     submissionType === value
-                      ? "bg-studprimary/10 dark:bg-premium-gold/10 border-studprimary dark:border-premium-gold text-studprimary dark:text-premium-gold"
+                      ? "bg-studprimary/10 dark:bg-premium-gold/10 border-studprimary dark:border-premium-gold text-studprimary dark:text-premium-gold shadow-sm"
                       : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-studprimary/50 dark:hover:border-premium-gold/50"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
                   {label}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -274,25 +289,29 @@ function SubmitModal({ assignment, onClose, onSubmit }) {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200 dark:border-white/10">
-            <button
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200 dark:border-white/10">
+            <motion.button
               type="button"
+              whileHover={{ x: -2 }}
+              whileTap={{ scale: 0.95 }}
               onClick={onClose}
-              className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+              className="px-6 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="submit"
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.95 }}
               disabled={isSubmitting || uploading}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-studprimary dark:bg-premium-gold dark:text-deep-charcoal rounded-xl hover:bg-studprimary/90 dark:hover:brightness-110 shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white bg-studprimary dark:bg-premium-gold dark:text-deep-charcoal rounded-2xl hover:bg-studprimary/90 dark:hover:brightness-110 shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               {isSubmitting ? "Submitting..." : "Submit Assignment"}
-            </button>
+            </motion.button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 const features = [
   {
@@ -63,6 +64,29 @@ const features = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1], // Custom smooth ease-out (quint)
+    },
+  },
+};
+
 const FeaturesSection = () => {
   return (
     <section className="relative py-20 bg-slate-50 dark:bg-navy-charcoal transition-colors duration-300 overflow-hidden">
@@ -75,12 +99,22 @@ const FeaturesSection = () => {
             backgroundSize: "1.75rem 1.75rem",
           }}
         />
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[300px] dark:bg-premium-gold/5 rounded-full blur-[120px]" />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.5 }}
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[300px] dark:bg-premium-gold/5 rounded-full blur-[120px]" 
+        />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center max-w-2xl mx-auto mb-14"
+        >
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 dark:bg-premium-gold/10 text-primary dark:text-premium-gold text-xs font-bold tracking-wider uppercase mb-4 border border-primary/20 dark:border-premium-gold/20 backdrop-blur-sm">
             <span className="material-symbols-outlined text-sm">star</span>
             Why Us
@@ -95,14 +129,25 @@ const FeaturesSection = () => {
             We provide a flexible and engaging learning experience designed to
             help you succeed in your career with resources backed by science.
           </p>
-        </div>
+        </motion.div>
 
         {/* Feature Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {features.map((feat, idx) => (
-            <div
+            <motion.div
               key={idx}
-              className={`group relative bg-white dark:bg-transparent dark:dark-glass p-7 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl ${feat.glow} dark:hover:border-premium-gold/30 hover:-translate-y-1 transition-all duration-300 overflow-hidden`}
+              variants={itemVariants}
+              whileHover={{ 
+                y: -8, 
+                transition: { type: "spring", stiffness: 300, damping: 15 } 
+              }}
+              className={`group relative bg-white dark:bg-transparent dark:dark-glass p-7 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl ${feat.glow} dark:hover:border-premium-gold/30 transition-all duration-300 overflow-hidden cursor-default`}
             >
               {/* Corner accent */}
               <div className="absolute right-0 top-0 w-24 h-24 bg-primary/5 dark:bg-premium-gold/5 rounded-bl-[4rem] transition-transform group-hover:scale-150 duration-500" />
@@ -130,12 +175,13 @@ const FeaturesSection = () => {
 
               {/* Bottom border accent on hover */}
               <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary dark:bg-premium-gold group-hover:w-full transition-all duration-500 rounded-b-2xl" />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 };
 
 export default FeaturesSection;
+

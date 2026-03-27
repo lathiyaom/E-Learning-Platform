@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Menu, Search, Star, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu, Search, Star, X, Sparkles, Filter, SlidersHorizontal } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../../utils/Adminlayoute";
 import { useGetMarketplaceCoursesQuery } from "../../../../redux/Apis/courseApi";
 import {
@@ -93,6 +94,29 @@ const getVisiblePages = (currentPage, totalPages) => {
   return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
 };
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: 20 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
 const CourseCard = ({ course, enrolled, enrolling, onEnroll, getCurrencySymbol }) => {
   const teacherInitials =
     course.teacherName && course.teacherName !== "Instructor"
@@ -105,22 +129,28 @@ const CourseCard = ({ course, enrolled, enrolling, onEnroll, getCurrencySymbol }
       : "IN";
 
   return (
-    <article className="group rounded-3xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-premium-gold/10 transition-all duration-300 h-full flex flex-col">
+    <motion.article 
+      variants={itemVariants}
+      whileHover={{ y: -6, scale: 1.01 }}
+      className="group rounded-3xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-premium-gold/10 transition-all duration-300 h-full flex flex-col"
+    >
       <div className="relative h-44 bg-slate-200 dark:bg-slate-900 overflow-hidden">
-        <img
+        <motion.img
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           src={course.image}
           alt={course.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
-        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] tracking-wider uppercase font-extrabold bg-white/20 backdrop-blur border border-white/30 text-white">
+        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] tracking-wider uppercase font-extrabold bg-white/20 backdrop-blur border border-white/30 text-white">
           {course.category}
-        </span>
+        </div>
 
-        <span className="absolute right-3 bottom-3 rounded-xl bg-white/95 text-slate-900 text-xs font-bold px-3 py-1.5 shadow-sm">
+        <div className="absolute right-3 bottom-3 rounded-xl bg-white/95 text-slate-900 text-xs font-bold px-3 py-1.5 shadow-sm">
           {course.isPaid ? `${getCurrencySymbol(course.currency)}${course.price}` : "Free"}
-        </span>
+        </div>
       </div>
 
       <div className="p-4 sm:p-5 flex flex-col flex-1">
@@ -130,7 +160,7 @@ const CourseCard = ({ course, enrolled, enrolling, onEnroll, getCurrencySymbol }
           <span>({course.reviewCount.toLocaleString()} reviews)</span>
         </div>
 
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-2 line-clamp-2 min-h-[3.5rem]">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-2 line-clamp-2 min-h-[3.5rem] group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors">
           {course.title}
         </h3>
 
@@ -139,33 +169,35 @@ const CourseCard = ({ course, enrolled, enrolling, onEnroll, getCurrencySymbol }
         </p>
 
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/10 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
+          <div className="relative w-9 h-9 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
             {course.teacherAvatar ? (
               <img src={course.teacherAvatar} alt={course.teacherName} className="w-full h-full object-cover" />
             ) : (
               teacherInitials
             )}
+            <div className="absolute inset-0 border border-slate-200/20 dark:border-white/5 rounded-full pointer-events-none" />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">{course.teacherName}</p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{course.organizationName}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate uppercase tracking-widest font-bold opacity-70">{course.organizationName}</p>
           </div>
         </div>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.96 }}
           type="button"
           onClick={() => onEnroll(course.id)}
           disabled={enrolled || enrolling || !course.id}
-          className={`mt-4 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+          className={`mt-4 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors duration-300 ${
             enrolled
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/35 dark:text-emerald-300"
-              : "bg-lavender-light dark:bg-white/5 text-studprimary dark:text-premium-gold hover:bg-studprimary hover:text-white dark:hover:bg-premium-gold dark:hover:text-deep-charcoal"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/35 dark:text-emerald-300 shadow-sm"
+              : "bg-lavender-light dark:bg-white/5 text-studprimary dark:text-premium-gold hover:bg-studprimary hover:text-white dark:hover:bg-premium-gold dark:hover:text-deep-charcoal shadow-sm hover:shadow-lg hover:shadow-studprimary/20 dark:hover:shadow-premium-gold/10"
           } disabled:opacity-70`}
         >
           {enrolled ? "Enrolled" : "Enroll Now"}
-        </button>
+        </motion.button>
       </div>
-    </article>
+    </motion.article>
   );
 };
 
@@ -350,67 +382,109 @@ const ExploreCourses = () => {
 
   return (
     <AdminLayout showSearch={false} breadcrumbItems={getBreadcrumbs("EXPLORE_COURSES")}>
-      <div className="space-y-6 xl:space-y-7">
-        <section className="relative rounded-3xl overflow-hidden border border-slate-200/70 dark:border-white/10 bg-navy-charcoal">
-          <img src={posterImg} alt="Explore Courses" className="absolute inset-0 w-full h-full object-cover" />
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="space-y-6 xl:space-y-7"
+      >
+        <motion.section 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="relative rounded-3xl overflow-hidden border border-slate-200/70 dark:border-white/10 bg-navy-charcoal shadow-xl"
+        >
+          <motion.img 
+            initial={{ scale: 1.1, opacity: 0.8 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 10, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+            src={posterImg} 
+            alt="Explore Courses" 
+            className="absolute inset-0 w-full h-full object-cover" 
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-[#101a35]/95 via-[#101a35]/80 to-[#111827]/45" />
 
-          <div className="relative z-10 p-6 sm:p-8 lg:p-10 max-w-2xl">
-            <span className="inline-flex items-center rounded-full bg-[#c79743] text-white text-[11px] font-bold px-3 py-1 uppercase tracking-wider">
+          <div className="relative z-10 p-8 sm:p-10 lg:p-14 max-w-2xl">
+            <motion.span 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="inline-flex items-center rounded-full bg-studprimary/90 text-white text-[10px] font-extrabold px-3 py-1.5 uppercase tracking-widest gap-2"
+            >
+              <Sparkles size={12} />
               Trending Now
-            </span>
-            <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+            </motion.span>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.7 }}
+              className="mt-4 text-3xl sm:text-4xl lg:text-6xl font-extrabold text-white leading-tight"
+            >
               Master AI & Machine Learning with Experts
-            </h1>
-            <p className="mt-3 text-slate-200 text-base sm:text-lg max-w-xl">
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.8 }}
+              className="mt-4 text-slate-200 text-base sm:text-lg max-w-xl opacity-90"
+            >
               Unlock the power of artificial intelligence. Join thousands of students in our most popular
               career path this month.
-            </p>
-            <button
+            </motion.p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type="button"
-              className="mt-6 rounded-xl bg-[#c79743] hover:bg-[#b48436] text-white font-bold px-6 py-3 transition-colors"
+              className="mt-8 rounded-xl bg-studprimary hover:bg-[#c79743] hover:shadow-2xl hover:shadow-studprimary/20 text-white font-bold px-8 py-4 transition-all duration-300 flex items-center gap-2"
             >
               Explore Path
-            </button>
+              <ChevronRight size={18} />
+            </motion.button>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-4 sm:p-5">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <motion.section 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-5 sm:p-6 shadow-sm"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             <div className="relative flex-1">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search courses, mentors, or topics..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111318] text-slate-900 dark:text-white"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#111318] text-slate-900 dark:text-white focus:ring-2 focus:ring-studprimary/20 focus:border-studprimary transition-all outline-none"
               />
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileTap={{ scale: 0.96 }}
                 type="button"
                 onClick={() => setMobileFilterOpen(true)}
-                className="lg:hidden inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200"
+                className="lg:hidden inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 font-bold text-xs uppercase tracking-widest"
               >
-                <Menu size={16} />
+                <SlidersHorizontal size={14} />
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className="bg-studprimary text-white text-xs px-1.5 py-0.5 rounded-full">
+                  <span className="bg-studprimary text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px]">
                     {activeFilterCount}
                   </span>
                 )}
-              </button>
+              </motion.button>
 
-              <label className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:block">
-                Sort by:
+              <label className="text-xs font-bold uppercase tracking-widest text-slate-400 hidden sm:block">
+                Sort:
               </label>
 
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value)}
-                className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111318] text-slate-900 dark:text-white"
+                className="px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111318] text-slate-900 dark:text-white font-semibold text-sm focus:ring-2 focus:ring-studprimary/20 outline-none cursor-pointer"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -420,173 +494,171 @@ const ExploreCourses = () => {
               </select>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 xl:gap-7">
-          {mobileFilterOpen && (
-            <button
-              type="button"
-              onClick={() => setMobileFilterOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-[1px] lg:hidden z-30"
-              aria-label="Close filters"
-            />
-          )}
+        <section className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 xl:gap-8 min-h-[600px]">
+          <AnimatePresence>
+            {mobileFilterOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileFilterOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden z-40"
+                aria-label="Close filters"
+              />
+            )}
+          </AnimatePresence>
 
           <aside
-            className={`fixed lg:static top-0 left-0 z-30 h-full lg:h-auto w-[290px] sm:w-[320px] lg:w-auto bg-white dark:bg-[#1A1B23] lg:bg-transparent lg:dark:bg-transparent border-r lg:border-0 border-slate-200 dark:border-white/10 transition-transform duration-300 p-4 sm:p-5 lg:p-0 overflow-y-auto ${
+            className={`fixed lg:static top-0 left-0 z-40 h-full lg:h-auto w-[300px] lg:w-auto bg-white dark:bg-[#0F1115] lg:bg-transparent lg:dark:bg-transparent border-r lg:border-0 border-slate-200 dark:border-white/10 transition-transform duration-500 p-6 lg:p-0 overflow-y-auto ${
               mobileFilterOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
             }`}
           >
-            <div className="lg:hidden flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Filters</h2>
-              <button
+            <div className="lg:hidden flex items-center justify-between mb-8">
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <Filter className="w-5 h-5 text-studprimary" />
+                Filters
+              </h2>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
                 type="button"
                 onClick={() => setMobileFilterOpen(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
-                aria-label="Close"
+                className="p-2 rounded-xl bg-slate-100 dark:bg-white/5"
               >
-                <X size={18} className="text-slate-500 dark:text-slate-300" />
-              </button>
+                <X size={20} className="text-slate-500" />
+              </motion.button>
             </div>
 
-            <div className="space-y-5 lg:space-y-6">
-              <div className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-4">
-                <h3 className="text-xs font-extrabold tracking-wide text-slate-400 uppercase mb-3">Categories</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+            <div className="space-y-6 lg:space-y-8">
+              {/* Category Filter */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-5 shadow-sm"
+              >
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-studprimary" />
+                  Categories
+                </h3>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer group">
                     <input
                       type="radio"
                       name="category-filter"
                       checked={categoryFilter === "all"}
                       onChange={() => setCategoryFilter("all")}
-                      className="text-studprimary focus:ring-studprimary"
+                      className="w-4 h-4 text-studprimary focus:ring-studprimary/20 border-slate-300 dark:border-white/10"
                     />
-                    <span>All Categories</span>
+                    <span className="group-hover:text-studprimary transition-colors">All Categories</span>
                   </label>
 
                   {categories.map((category) => (
                     <label
                       key={category.name}
-                      className="flex items-center justify-between gap-2 text-sm text-slate-700 dark:text-slate-200"
+                      className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer group"
                     >
-                      <div className="inline-flex items-center gap-2">
+                      <div className="inline-flex items-center gap-3">
                         <input
                           type="radio"
                           name="category-filter"
                           checked={categoryFilter === category.name}
                           onChange={() => setCategoryFilter(category.name)}
-                          className="text-studprimary focus:ring-studprimary"
+                          className="w-4 h-4 text-studprimary focus:ring-studprimary/20 border-slate-300 dark:border-white/10"
                         />
-                        <span>{category.name}</span>
+                        <span className="group-hover:text-studprimary transition-colors">{category.name}</span>
                       </div>
-                      <span className="text-xs text-slate-400">{category.count}</span>
+                      <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full group-hover:bg-studprimary group-hover:text-white transition-all">
+                        {category.count}
+                      </span>
                     </label>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-4">
-                <h3 className="text-xs font-extrabold tracking-wide text-slate-400 uppercase mb-3">Rating</h3>
-                <div className="space-y-2">
+              {/* Rating Filter */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-5 shadow-sm"
+              >
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-studprimary" />
+                  Minimum Rating
+                </h3>
+                <div className="space-y-3">
                   {RATING_OPTIONS.map((option) => (
-                    <label key={option.value} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <label key={option.value} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer group">
                       <input
                         type="radio"
                         name="rating-filter"
                         checked={minRating === option.value}
                         onChange={() => setMinRating(option.value)}
-                        className="text-studprimary focus:ring-studprimary"
+                        className="w-4 h-4 text-studprimary focus:ring-studprimary/20 border-slate-300 dark:border-white/10"
                       />
-                      <span>{option.label}</span>
+                      <span className="group-hover:text-studprimary transition-colors">{option.label}</span>
                     </label>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-4">
-                <h3 className="text-xs font-extrabold tracking-wide text-slate-400 uppercase mb-3">Teacher</h3>
-                <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                    <input
-                      type="radio"
-                      name="teacher-filter"
-                      checked={teacherFilter === "all"}
-                      onChange={() => setTeacherFilter("all")}
-                      className="text-studprimary focus:ring-studprimary"
-                    />
-                    <span>All Teachers</span>
-                  </label>
-
-                  {teachers.map((teacher) => (
-                    <label
-                      key={teacher.name}
-                      className="flex items-center justify-between gap-2 text-sm text-slate-700 dark:text-slate-200"
-                    >
-                      <div className="inline-flex items-center gap-2 min-w-0">
-                        <input
-                          type="radio"
-                          name="teacher-filter"
-                          checked={teacherFilter === teacher.name}
-                          onChange={() => setTeacherFilter(teacher.name)}
-                          className="text-studprimary focus:ring-studprimary"
-                        />
-                        <span className="truncate">{teacher.name}</span>
-                      </div>
-                      <span className="text-xs text-slate-400">{teacher.count}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 p-4">
-                <h3 className="text-xs font-extrabold tracking-wide text-slate-400 uppercase mb-3">Price</h3>
-                <div className="space-y-2">
-                  {PRICE_OPTIONS.map((option) => (
-                    <label key={option.value} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                      <input
-                        type="radio"
-                        name="price-filter"
-                        checked={priceFilter === option.value}
-                        onChange={() => setPriceFilter(option.value)}
-                        className="text-studprimary focus:ring-studprimary"
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <button
+              {/* Reset Filters */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={resetFilters}
                 disabled={activeFilterCount === 0}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-50"
+                className="w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 px-4 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 hover:border-studprimary hover:text-studprimary dark:hover:text-premium-gold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-widest"
               >
                 Reset All Filters
-              </button>
+              </motion.button>
             </div>
           </aside>
 
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
-                Showing <span className="font-bold text-slate-900 dark:text-white">{startResult}</span>-
-                <span className="font-bold text-slate-900 dark:text-white">{endResult}</span> of{" "}
-                <span className="font-bold text-slate-900 dark:text-white">{filteredCourses.length}</span> results
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                Found <span className="text-studprimary dark:text-premium-gold mx-1">{filteredCourses.length}</span> Amazing Courses
               </p>
             </div>
 
-            {isLoading ? (
-              <div className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 text-center py-12 text-slate-500 dark:text-slate-400">
-                Loading courses...
-              </div>
-            ) : filteredCourses.length === 0 ? (
-              <div className="rounded-2xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 text-center py-12 text-slate-500 dark:text-slate-400">
-                No courses found for your current filters.
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div 
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="rounded-3xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 text-center py-20"
+                >
+                  <div className="inline-block w-8 h-8 border-4 border-studprimary/20 border-t-studprimary rounded-full animate-spin mb-4" />
+                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Analyzing Marketplace...</p>
+                </motion.div>
+              ) : filteredCourses.length === 0 ? (
+                <motion.div 
+                  key="empty"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="rounded-3xl bg-white dark:bg-[#1A1B23] border border-slate-200 dark:border-white/10 text-center py-20 px-6"
+                >
+                  <Search size={48} className="mx-auto text-slate-200 dark:text-white/5 mb-4" />
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Courses Found</h3>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-xs mx-auto text-sm">We couldn't find any courses matching your current filters. Try adjusting your search criteria.</p>
+                  <button onClick={resetFilters} className="mt-6 text-studprimary font-bold text-sm underline">Clear all search criteria</button>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="results"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                >
                   {paginatedCourses.map((course) => {
                     const enrolled = enrolledCourseIds.has(String(course.id));
 
@@ -601,18 +673,26 @@ const ExploreCourses = () => {
                       />
                     );
                   })}
-                </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
+            {!isLoading && totalPages > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.6 }}
+              >
                 <ExplorePagination
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={(page) => setCurrentPage(Math.min(Math.max(page, 1), totalPages))}
                 />
-              </>
+              </motion.div>
             )}
           </div>
         </section>
-      </div>
+      </motion.div>
     </AdminLayout>
   );
 };

@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 const CATEGORIES = [
   "All Subjects",
@@ -20,6 +21,28 @@ const SORT_OPTIONS = [
   "Price: High to Low",
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0, y: -10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      staggerChildren: 0.05,
+      duration: 0.4,
+      ease: "easeOut",
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.3 },
+  },
+};
+
 const CoursesFilter = ({
   activeCategory,
   onCategoryChange,
@@ -38,9 +61,16 @@ const CoursesFilter = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Category Pill Scroller */}
           <div className="flex-1 overflow-x-auto hide-scrollbar pb-1">
-            <div className="flex items-center gap-2 min-w-max">
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="flex items-center gap-2 min-w-max"
+            >
               {CATEGORIES.map((cat) => (
-                <button
+                <motion.button
+                  variants={itemVariants}
+                  whileTap={{ scale: 0.95 }}
                   key={cat}
                   onClick={() => onCategoryChange(cat)}
                   className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 ${
@@ -50,13 +80,18 @@ const CoursesFilter = ({
                   }`}
                 >
                   {cat}
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-3 shrink-0">
+          <motion.div 
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             transition={{ duration: 0.5, delay: 0.3 }}
+             className="flex items-center gap-3 shrink-0"
+          >
             {/* Filter Button */}
             <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-primary/40 dark:hover:border-premium-gold/40 hover:text-primary dark:hover:text-premium-gold transition-all duration-200">
               <span className="material-symbols-outlined text-lg leading-none">
@@ -94,11 +129,16 @@ const CoursesFilter = ({
                 </span>
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Row 2: Advanced filters */}
-        <div className="flex flex-wrap items-center gap-4 py-3 px-5 bg-slate-50 dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/5">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          className="flex flex-wrap items-center gap-4 py-3 px-5 bg-slate-50 dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/5"
+        >
           {/* Level */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">
@@ -147,10 +187,11 @@ const CoursesFilter = ({
               results
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
 };
 
 export default CoursesFilter;
+

@@ -20,7 +20,9 @@ import {
 // Reusable Line Chart Component
 export const PerformanceLineChart = ({ data, title, className }) => {
   return (
-    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-sidebar-dark rounded-2xl ${className}`}>
+    <div
+      className={`soft-card p-8 md:p-10 bg-white dark:bg-sidebar-dark rounded-2xl ${className}`}
+    >
       <div className="mb-6">
         <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
           {title}
@@ -79,7 +81,9 @@ export const PerformanceLineChart = ({ data, title, className }) => {
 
 export const LearningProgressBarChart = ({ data, title, className }) => {
   return (
-    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-sidebar-dark rounded-2xl w-full ${className}`}>
+    <div
+      className={`soft-card p-8 md:p-10 bg-white dark:bg-sidebar-dark rounded-2xl w-full ${className}`}
+    >
       <div className="mb-6">
         <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
           {title}
@@ -165,7 +169,9 @@ export const SkillsRadarChart = ({ data, title, className }) => {
 // Reusable Horizontal Bar Chart for Time Distribution
 export const TimeDistributionChart = ({ data, title, className }) => {
   return (
-    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-sidebar-dark rounded-2xl ${className}`}>
+    <div
+      className={`soft-card p-8 md:p-10 bg-white dark:bg-sidebar-dark rounded-2xl ${className}`}
+    >
       <div className="mb-6">
         <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
           {title}
@@ -213,7 +219,9 @@ export const AnalyticsBarChart = ({
   className,
 }) => {
   return (
-    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}>
+    <div
+      className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}
+    >
       <div className="mb-6">
         <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
           {title}
@@ -253,7 +261,9 @@ export const AnalyticsLineChart = ({
   className,
 }) => {
   return (
-    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}>
+    <div
+      className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}
+    >
       <div className="mb-6">
         <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
           {title}
@@ -300,7 +310,9 @@ export const AnalyticsRadarChart = ({
   className,
 }) => {
   return (
-    <div className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}>
+    <div
+      className={`soft-card p-8 md:p-10 bg-white dark:bg-transparent dark:dark-glass dark:border dark:border-premium-gold/15 rounded-2xl w-full dark:shadow-none ${className || ""}`}
+    >
       <div className="mb-6">
         <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
           {title}
@@ -309,7 +321,11 @@ export const AnalyticsRadarChart = ({
       <ResponsiveContainer width="100%" height={300}>
         <RadarChart data={data}>
           <PolarGrid stroke="#e2e8f0" className="dark:stroke-slate-700" />
-          <PolarAngleAxis dataKey={angleKey} stroke="#94a3b8" className="text-xs" />
+          <PolarAngleAxis
+            dataKey={angleKey}
+            stroke="#94a3b8"
+            className="text-xs"
+          />
           <PolarRadiusAxis stroke="#94a3b8" className="text-xs" />
           <Radar
             name={title}

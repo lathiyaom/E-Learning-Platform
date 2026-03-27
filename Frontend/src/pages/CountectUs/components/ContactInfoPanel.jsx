@@ -1,6 +1,6 @@
 import React from "react";
+import { motion } from "framer-motion";
 import Contect from "../../../assets/imgs/contectusimage.png";
-
 
 const contactItems = [
   {
@@ -32,19 +32,55 @@ const socialLinks = [
   { icon: "thumb_up", label: "Follow" },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -15 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
 const ContactInfoPanel = () => {
   return (
     <div className="lg:sticky lg:top-28">
-      <div className="relative bg-white dark:bg-transparent dark:dark-glass rounded-3xl p-8 lg:p-10 overflow-hidden border border-slate-100 dark:border-white/10 shadow-sm dark:shadow-xl transition-all duration-300">
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className="relative bg-white dark:bg-transparent dark:dark-glass rounded-3xl p-8 lg:p-10 overflow-hidden border border-slate-100 dark:border-white/10 shadow-sm dark:shadow-xl transition-all duration-300"
+      >
         {/* ── Decorative Watermark Icon ── */}
-        <div className="absolute -right-6 -top-6 opacity-[0.095] dark:opacity-[0.4] pointer-events-none select-none">
+        <motion.div 
+          animate={{ 
+            rotate: [0, 5, 0],
+            scale: [1, 1.05, 1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -right-6 -top-6 opacity-[0.095] dark:opacity-[0.4] pointer-events-none select-none"
+        >
           <span
             className="material-symbols-outlined text-primary dark:text-premium-gold"
             style={{ fontSize: "220px", lineHeight: 1 }}
           >
             school
           </span>
-        </div>
+        </motion.div>
 
         {/* ── Decorative glow blob ── */}
         <div className="absolute -bottom-20 -left-20 w-[280px] h-[280px] dark:bg-premium-gold/5 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
@@ -52,15 +88,30 @@ const ContactInfoPanel = () => {
         {/* ── Content ── */}
         <div className="relative z-10">
           {/* Brand name heading */}
-          <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white font-lexend mb-8 tracking-tight">
+          <motion.h3 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-2xl font-extrabold text-slate-900 dark:text-white font-lexend mb-8 tracking-tight"
+          >
             Edu
             <span className="text-primary dark:text-premium-gold">Verse</span>
-          </h3>
+          </motion.h3>
 
           {/* Contact items list */}
-          <div className="space-y-7">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="space-y-7"
+          >
             {contactItems.map((item, i) => (
-              <div key={i} className="flex items-start gap-4 group">
+              <motion.div 
+                key={i} 
+                variants={itemVariants}
+                className="flex items-start gap-4 group"
+              >
                 {/* Icon box */}
                 <div className="flex-shrink-0 w-12 h-12 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl flex items-center justify-center text-primary dark:text-premium-gold shadow-sm group-hover:scale-110 group-hover:border-primary/30 dark:group-hover:border-premium-gold/30 transition-all duration-300">
                   <span className="material-symbols-outlined text-xl">
@@ -89,41 +140,56 @@ const ContactInfoPanel = () => {
                     {item.sub}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* ── Divider + Social links ── */}
-          <div className="mt-10 pt-8 border-t border-slate-100 dark:border-white/5">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5 }}
+            className="mt-10 pt-8 border-t border-slate-100 dark:border-white/5"
+          >
             <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
               Follow Our Journey
             </h4>
             <div className="flex gap-3">
               {socialLinks.map((s, i) => (
-                <button
+                <motion.button
                   key={i}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
                   aria-label={s.label}
-                  className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-primary dark:hover:bg-premium-gold hover:text-slate-900 dark:hover:text-slate-900 hover:border-primary dark:hover:border-premium-gold hover:scale-110 shadow-sm transition-all duration-300"
+                  className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-primary dark:hover:bg-premium-gold hover:text-slate-900 dark:hover:text-slate-900 hover:border-primary dark:hover:border-premium-gold shadow-sm transition-all duration-300"
                 >
                   <span className="material-symbols-outlined text-lg">
                     {s.icon}
                   </span>
-                </button>
+                </motion.button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="mt-8 rounded-2xl overflow-hidden shadow-xl ring-1 ring-slate-200 dark:ring-white/10">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.7 }}
+            className="mt-8 rounded-2xl overflow-hidden shadow-xl ring-1 ring-slate-200 dark:ring-white/10"
+          >
             <img
               src={Contect}
               alt="Diverse group of students collaborating and learning together"
               className="w-full h-48 object-cover grayscale-[20%] hover:grayscale-0 hover:scale-105 transition-all duration-500 origin-center"
             />
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
 
 export default ContactInfoPanel;
+

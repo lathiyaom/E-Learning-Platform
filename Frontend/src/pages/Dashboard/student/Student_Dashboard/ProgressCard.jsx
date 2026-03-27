@@ -26,14 +26,17 @@ const ProgressCard = ({
   const visibleLessons = lessons.slice(0, 3);
   const remainingLessons = Math.max(0, lessons.length - visibleLessons.length);
 
-  const formattedDate = createdAt ? moment(createdAt).format("DD MMM YYYY") : "Date not available";
+  const formattedDate = createdAt
+    ? moment(createdAt).format("DD MMM YYYY")
+    : "Date not available";
 
-  const initials = (instructor || "IN")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((chunk) => chunk[0]?.toUpperCase())
-    .join("") || "IN";
+  const initials =
+    (instructor || "IN")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((chunk) => chunk[0]?.toUpperCase())
+      .join("") || "IN";
 
   const handlePlay = () => {
     if (!courseId) return;

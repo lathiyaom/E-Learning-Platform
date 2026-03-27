@@ -7,8 +7,12 @@ import { useGetMarketplaceCoursesQuery } from "../../../../redux/Apis/courseApi"
 
 const getInstructorFromCourse = (course) => {
   const teacher =
-    (course?.teacher_id && typeof course.teacher_id === "object" ? course.teacher_id : null) ||
-    (course?.createdBy && typeof course.createdBy === "object" ? course.createdBy : null);
+    (course?.teacher_id && typeof course.teacher_id === "object"
+      ? course.teacher_id
+      : null) ||
+    (course?.createdBy && typeof course.createdBy === "object"
+      ? course.createdBy
+      : null);
 
   const instructorName = teacher?.firstName
     ? `${teacher.firstName} ${teacher.lastName || ""}`.trim()
@@ -28,7 +32,8 @@ function RecommendedSection() {
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
   const cardRefs = useRef([]);
-  const { data: coursesData, isLoading } = useGetMarketplaceCoursesQuery("popular");
+  const { data: coursesData, isLoading } =
+    useGetMarketplaceCoursesQuery("popular");
 
   const courses = (coursesData?.data || [])
     .slice()
@@ -126,16 +131,22 @@ function RecommendedSection() {
               course={{
                 id: course._id || course.id,
                 title: course.title,
-                image: course.image || course.imageUrl || "https://via.placeholder.com/400x300",
+                image:
+                  course.image ||
+                  course.imageUrl ||
+                  "https://via.placeholder.com/400x300",
                 category: course.category || "General",
                 categoryIcon: "code",
-                badge: course.isFeatured ? { text: "Featured", bgColor: "bg-studprimary" } : null,
+                badge: course.isFeatured
+                  ? { text: "Featured", bgColor: "bg-studprimary" }
+                  : null,
                 duration: course.duration || "N/A",
                 rating: course.rating || 0,
                 reviews: course.reviews || 0,
                 level: course.level || "Beginner",
                 instructor: getInstructorFromCourse(course).instructorName,
-                instructorImage: getInstructorFromCourse(course).instructorImage,
+                instructorImage:
+                  getInstructorFromCourse(course).instructorImage,
                 createdAt: course.createdAt || course.created_at,
                 price: course.price || 0,
               }}

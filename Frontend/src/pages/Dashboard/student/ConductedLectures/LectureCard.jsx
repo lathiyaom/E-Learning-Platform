@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import {
   Clock,
   MapPin,
@@ -13,15 +14,16 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { Card } from "../../../../components/Card";
 import { Badge } from "../../../../components/Badge";
 
 /* ── Status config — drives accent bar, icon bg, badge variant ── */
 const STATUS = {
   ongoing: {
     bar: "bg-green-500",
-    iconWrap: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
-    badgeClass: "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/40",
+    iconWrap:
+      "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+    badgeClass:
+      "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/40",
     dot: "bg-green-500 animate-pulse",
     Icon: Radio,
     label: "Live Now",
@@ -31,7 +33,8 @@ const STATUS = {
   completed: {
     bar: "bg-slate-400",
     iconWrap: "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400",
-    badgeClass: "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10",
+    badgeClass:
+      "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10",
     dot: "bg-slate-400",
     Icon: CheckCircle2,
     label: "Completed",
@@ -41,7 +44,8 @@ const STATUS = {
   cancelled: {
     bar: "bg-red-400",
     iconWrap: "bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400",
-    badgeClass: "bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/40",
+    badgeClass:
+      "bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/40",
     dot: "bg-red-500",
     Icon: XCircle,
     label: "Cancelled",
@@ -51,11 +55,13 @@ const STATUS = {
   scheduled: {
     bar: "bg-studprimary",
     iconWrap: "bg-studprimary/10 dark:bg-studprimary/20 text-studprimary",
-    badgeClass: "bg-studprimary/10 text-studprimary border border-studprimary/20 dark:bg-studprimary/20 dark:border-studprimary/30",
+    badgeClass:
+      "bg-studprimary/10 text-studprimary border border-studprimary/20 dark:bg-studprimary/20 dark:border-studprimary/30",
     dot: "bg-studprimary",
     Icon: Clock,
     label: "Scheduled",
-    btnClass: "bg-studprimary hover:bg-studprimary/90 shadow-studprimary/25 text-white",
+    btnClass:
+      "bg-studprimary hover:bg-studprimary/90 shadow-studprimary/25 text-white",
     joinLabel: "Join Lecture",
   },
 };
@@ -66,8 +72,12 @@ function MetaItem({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center gap-2 text-sm min-w-0">
       <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
-      <span className="text-slate-500 dark:text-slate-400 shrink-0">{label}:</span>
-      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{value}</span>
+      <span className="text-slate-500 dark:text-slate-400 shrink-0">
+        {label}:
+      </span>
+      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+        {value}
+      </span>
     </div>
   );
 }
@@ -95,17 +105,25 @@ function LectureCard({ lecture, hideAction = false }) {
     : null;
 
   return (
-    <Card className="relative bg-white dark:bg-transparent dark:dark-glass border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg dark:hover:shadow-premium-gold/5 transition-all duration-300 hover:-translate-y-0.5 p-0 gap-0">
+    <motion.div 
+      whileHover={{ y: -5, scale: 1.005 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-premium-gold/5 transition-all duration-300 p-0 gap-0"
+    >
       {/* Left accent bar */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.bar} rounded-l-2xl`} />
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.bar} rounded-l-2xl z-20`}
+      />
 
       {/* Corner decoration — same pattern as HelpTopics cards */}
-      <div className="absolute right-0 top-0 w-28 h-28 bg-studprimary/5 dark:bg-premium-gold/5 rounded-bl-[5rem] pointer-events-none" />
+      <div className="absolute right-0 top-0 w-28 h-28 bg-studprimary/5 dark:bg-premium-gold/5 rounded-bl-[5rem] pointer-events-none z-0" />
 
       <div className="pl-6 pr-5 pt-5 pb-5 flex flex-col gap-4">
         {/* ── Row 1: icon + title + status badge ── */}
         <div className="flex items-start gap-4">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${cfg.iconWrap}`}>
+          <div
+            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${cfg.iconWrap}`}
+          >
             <Play className="w-5 h-5" />
           </div>
 
@@ -115,7 +133,9 @@ function LectureCard({ lecture, hideAction = false }) {
                 {lecture.title}
               </h3>
               {/* Status badge — uses inline classes (Badge component doesn't have these variants) */}
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${cfg.badgeClass}`}>
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${cfg.badgeClass}`}
+              >
                 <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                 <StatusIcon className="w-3 h-3" />
                 {cfg.label}
@@ -134,7 +154,11 @@ function LectureCard({ lecture, hideAction = false }) {
           <MetaItem icon={Calendar} label="Date" value={dateStr} />
           <MetaItem icon={Clock} label="Time" value={timeRange} />
           <MetaItem icon={MapPin} label="Room" value={lecture.room} />
-          <MetaItem icon={GraduationCap} label="Course" value={lecture.courseId?.title} />
+          <MetaItem
+            icon={GraduationCap}
+            label="Course"
+            value={lecture.courseId?.title}
+          />
           <MetaItem icon={User2} label="Instructor" value={instructor} />
         </div>
 
@@ -182,7 +206,7 @@ function LectureCard({ lecture, hideAction = false }) {
           )}
         </div>
       </div>
-    </Card>
+    </motion.div>
   );
 }
 

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Star, Send, MessageSquare, Loader2, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import {
   useCreateFeedbackMutation,
@@ -14,12 +15,31 @@ import { getApiErrorMessage } from "../../../utils/apiError";
 import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 function FeedbackStars({ rating, interactive, onSelect, disabled }) {
   const stars = [1, 2, 3, 4, 5];
 
   if (!interactive) {
     return (
-      <div className="flex gap-1">
+      <div className="flex gap-1 items-center">
         {stars.map((s) => (
           <Star
             key={s}
@@ -31,34 +51,36 @@ function FeedbackStars({ rating, interactive, onSelect, disabled }) {
             }
           />
         ))}
-        <span className="ml-2 text-sm text-slate-700 dark:text-slate-200">
-          {rating}/5
+        <span className="ml-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+          {rating}.0
         </span>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2.5">
       {stars.map((s) => (
-        <button
+        <motion.button
           key={s}
+          whileHover={{ scale: 1.2, rotate: 15 }}
+          whileTap={{ scale: 0.9 }}
           type="button"
-          className="p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-studprimary/30 dark:focus-visible:ring-premium-gold/30 disabled:cursor-not-allowed"
+          className="p-1 rounded-xl focus:outline-none disabled:cursor-not-allowed group"
           onClick={() => !disabled && onSelect?.(s)}
           aria-label={`${s} star`}
           aria-pressed={s === rating}
           disabled={disabled}
         >
           <Star
-            size={26}
-            className={
+            size={28}
+            className={`transition-colors duration-300 ${
               s <= rating
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-slate-300 dark:text-slate-600"
-            }
+                ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.4)]"
+                : "text-slate-300 dark:text-slate-600 group-hover:text-yellow-400/50"
+            }`}
           />
-        </button>
+        </motion.button>
       ))}
     </div>
   );
@@ -66,27 +88,28 @@ function FeedbackStars({ rating, interactive, onSelect, disabled }) {
 
 function FeedbackCard({ feedback }) {
   return (
-    <Card className="p-6 mb-3 last:mb-0 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border-slate-200 dark:border-white/10 hover:border-studprimary/30 dark:hover:border-premium-gold/30 transition-all">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <b className="text-lg text-slate-900 dark:text-white">
-            {feedback.course}
-          </b>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {feedback.date
-              ? new Date(feedback.date).toLocaleDateString()
-              : "—"}
-          </p>
+    <motion.div variants={itemVariants} className="mb-4 last:mb-0">
+      <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border-slate-200 dark:border-white/10 hover:border-studprimary/30 dark:hover:border-premium-gold/30 hover:shadow-lg dark:hover:shadow-premium-gold/5 transition-all duration-300 group">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <b className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors">
+              {feedback.course}
+            </b>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              {feedback.date ? new Date(feedback.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+            </p>
+          </div>
+          <div className="shrink-0">
+            <FeedbackStars rating={feedback.rating} />
+          </div>
         </div>
-        <div className="shrink-0 text-right">
-          <FeedbackStars rating={feedback.rating} />
-        </div>
-      </div>
 
-      <p className="mt-4 text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-        {feedback.message}
-      </p>
-    </Card>
+        <p className="mt-4 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-medium h-fit">
+          {feedback.message}
+        </p>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -216,205 +239,244 @@ export default function StudentFeedbackSystem() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-10 px-4 sm:px-6 lg:px-8 py-6"
+      >
         {/* HERO */}
-        <section className="relative bg-lavender-light dark:bg-navy-charcoal rounded-2xl md:rounded-[2.5rem] px-4 py-8 sm:px-6 sm:py-10 border border-white/50 dark:border-white/10 shadow-sm dark:shadow-2xl overflow-hidden text-center">
+        <motion.section 
+          variants={itemVariants}
+          className="relative bg-gradient-to-br from-[#F5F3FF] via-[#EDE9FE] to-[#F5F3FF] dark:from-navy-charcoal dark:to-deep-charcoal rounded-2xl md:rounded-[3rem] px-4 py-12 sm:px-12 sm:py-20 border border-white/50 dark:border-white/10 shadow-sm dark:shadow-2xl overflow-hidden text-center"
+        >
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-studprimary/10 dark:bg-premium-gold/10 rounded-full blur-[100px]" />
-            <div className="absolute bottom-0 right-0 w-[30%] h-[30%] bg-purple-500/10 dark:bg-premium-gold/5 rounded-full blur-[80px] translate-y-1/2 translate-x-1/2" />
-            <div
-              className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] text-studprimary dark:text-premium-gold"
-              style={{
-                backgroundImage: `radial-gradient(currentColor 1px, transparent 1px)`,
-                backgroundSize: "1.5rem 1.5rem",
-              }}
+            <motion.div 
+              animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -10, 0] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-studprimary/10 dark:bg-premium-gold/10 rounded-full blur-[100px]" 
+            />
+            <motion.div 
+              animate={{ scale: [1, 1.2, 1], x: [0, -30, 0], y: [0, 20, 0] }}
+              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute bottom-0 right-0 w-[30%] h-[30%] bg-purple-500/10 dark:bg-premium-gold/5 rounded-full blur-[80px] translate-y-1/2 translate-x-1/2" 
             />
           </div>
 
-          <div className="relative z-10 max-w-4xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-studprimary/10 dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold text-xs font-bold tracking-wider uppercase border border-studprimary/20 dark:border-premium-gold/20 backdrop-blur-sm">
+          <div className="relative z-10 max-w-4xl mx-auto space-y-6">
+            <motion.div 
+              variants={itemVariants}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-studprimary/10 dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold text-[10px] font-bold tracking-widest uppercase border border-studprimary/20 dark:border-premium-gold/20 backdrop-blur-sm"
+            >
               <Sparkles className="w-4 h-4" />
-              <span>Student Feedback</span>
-            </div>
+              <span>Learning Experience</span>
+            </motion.div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
-              Share your experience
+            <motion.h1 
+              variants={itemVariants}
+              className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight"
+            >
+              Share your insights
               <span className="text-studprimary dark:text-premium-gold">.</span>
-            </h1>
+            </motion.h1>
 
-            <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-              Rate your courses and send thoughtful feedback. It helps improve
-              content quality for everyone.
-            </p>
+            <motion.p 
+              variants={itemVariants}
+              className="text-slate-600 dark:text-slate-400 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
+            >
+              Your voice matters. Rating your courses helps us refine content quality and create a better learning experience for the entire community.
+            </motion.p>
           </div>
-        </section>
+        </motion.section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* FORM */}
-          <div className="lg:col-span-4">
+          <motion.div variants={itemVariants} className="lg:col-span-12 xl:col-span-4">
             <div className="lg:sticky lg:top-6">
-              <Card className="p-6 rounded-2xl bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 shadow-sm h-fit">
-                <div className="flex items-start justify-between gap-4 mb-4">
+              <Card className="p-8 rounded-[2.5rem] bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 shadow-xl dark:shadow-black/20 h-fit">
+                <div className="flex items-start justify-between gap-4 mb-8">
                   <div className="min-w-0">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                      Submit Feedback
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      Submit Review
                     </h2>
-                    <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
-                      Your rating helps improve course quality.
+                    <p className="text-sm mt-1 text-slate-500 dark:text-slate-400 font-medium">
+                      Help us improve course quality.
                     </p>
                   </div>
-                  <div className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-studprimary/10 dark:bg-premium-gold/10 px-3 py-1.5 border border-studprimary/20 dark:border-premium-gold/20">
+                  <div className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-studprimary/10 dark:bg-premium-gold/10 px-4 py-2 border border-studprimary/20 dark:border-premium-gold/20">
                     <Sparkles className="w-4 h-4 text-studprimary dark:text-premium-gold" />
-                    <span className="text-xs font-bold text-studprimary dark:text-premium-gold">
-                      Quick Rate
+                    <span className="text-[10px] font-bold text-studprimary dark:text-premium-gold uppercase tracking-wider">
+                      Quick rate
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                    Select course
-                  </label>
-                  <select
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-studprimary/30 dark:focus:ring-premium-gold/30"
-                    value={selectedCourse}
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                  >
-                    <option value="">Select Course</option>
-                    {enrolledCourses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                    Rating
-                  </label>
-                  <FeedbackStars
-                    rating={rating}
-                    interactive
-                    onSelect={setRating}
-                    disabled={submitting}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                    Feedback (optional but recommended)
-                  </label>
-                  <textarea
-                    maxLength={500}
-                    className="w-full px-3 py-3 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-deep-charcoal text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-studprimary/30 dark:focus:ring-premium-gold/30 resize-none min-h-[120px]"
-                    placeholder="Write your feedback..."
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                  />
-                  <div className="flex items-center justify-between">
-                    <small className="text-xs text-slate-500 dark:text-slate-400">
-                      {feedback.length}/500 characters
-                    </small>
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1">
+                      Target Course
+                    </label>
+                    <div className="relative group">
+                      <select
+                        className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-studprimary/20 dark:focus:ring-premium-gold/20 transition-all appearance-none cursor-pointer"
+                        value={selectedCourse}
+                        onChange={(e) => setSelectedCourse(e.target.value)}
+                      >
+                        <option value="">Choose Course</option>
+                        {enrolledCourses.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <Loader2 className={`w-4 h-4 animate-spin ${submitting ? "block" : "hidden"}`} />
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <Button
-                  type="button"
-                  onClick={submitFeedback}
-                  disabled={submitting}
-                  className="w-full h-12 bg-studprimary dark:bg-premium-gold hover:bg-studprimary/90 dark:hover:brightness-110 text-white dark:text-deep-charcoal font-bold shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20 hover:shadow-studprimary/40 flex items-center justify-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed rounded-xl"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={18} />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send size={18} /> Submit Feedback
-                    </>
-                  )}
-                </Button>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1">
+                      Overall Rating
+                    </label>
+                    <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-center shadow-inner">
+                      <FeedbackStars
+                        rating={rating}
+                        interactive
+                        onSelect={setRating}
+                        disabled={submitting}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1">
+                      Your Thoughts
+                    </label>
+                    <textarea
+                      maxLength={500}
+                      className="w-full px-4 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-studprimary/20 dark:focus:ring-premium-gold/20 resize-none min-h-[160px] transition-all"
+                      placeholder="What did you like about this course?"
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                    />
+                    <div className="flex items-center justify-between px-1">
+                      <small className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        {feedback.length} / 500 characters
+                      </small>
+                    </div>
+                  </div>
+
+                  <motion.div
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <Button
+                      type="button"
+                      onClick={submitFeedback}
+                      disabled={submitting}
+                      className="w-full h-14 bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal font-bold shadow-xl shadow-studprimary/25 dark:shadow-premium-gold/25 flex items-center justify-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-base"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="animate-spin w-5 h-5" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
+                          Submit Feedback
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
                 </div>
               </Card>
             </div>
-          </div>
+          </motion.div>
 
           {/* LIST */}
-          <div className="lg:col-span-8">
-            <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
-              <div className="flex items-center justify-between gap-3 mb-4">
+          <motion.div variants={itemVariants} className="lg:col-span-12 xl:col-span-8">
+            <Card className="p-8 rounded-[2.5rem] bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 shadow-lg h-full flex flex-col">
+              <div className="flex items-center justify-between gap-4 mb-8">
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Your Feedback
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Feedback History
                   </h2>
-                  <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
-                    {feedbacks.length} rating{feedbacks.length === 1 ? "" : "s"} submitted
+                  <p className="text-sm mt-1 text-slate-500 dark:text-slate-400 font-medium">
+                    {feedbacks.length} testimonial{feedbacks.length === 1 ? "" : "s"} shared
                   </p>
                 </div>
-                <div className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-white/5 px-3 py-1.5 border border-slate-200 dark:border-white/10">
+                <div className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-white/5 px-4 py-2 border border-slate-200 dark:border-white/10">
                   <MessageSquare className="w-4 h-4 text-slate-500 dark:text-slate-300" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Latest
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">
+                    Recent
                   </span>
                 </div>
               </div>
 
               {feedbacks.length === 0 ? (
-                <div className="py-10 text-center">
-                  <MessageSquare className="mx-auto mb-3 text-slate-400 dark:text-slate-500" size={54} />
-                  <p className="text-slate-600 dark:text-slate-300">
-                    No feedback submitted yet
-                  </p>
+                <div className="flex-1 flex flex-col items-center justify-center py-20 gap-6 text-center">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-[2.5rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center relative z-10">
+                      <MessageSquare className="text-slate-300 dark:text-slate-600 w-12 h-12" />
+                    </div>
+                    <motion.div 
+                      animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      className="absolute inset-0 rounded-[2.5rem] border-2 border-slate-200 dark:border-white/10 scale-110" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xl font-bold text-slate-700 dark:text-slate-200">No testimonials yet</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                      You haven't submitted any feedback for your courses. Start by selecting a course on the left.
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div className="overflow-y-auto modal-scrollbar modal-scroll-smooth max-h-[52vh] lg:max-h-[62vh] pr-2">
-                  {feedbacks.map((f) => (
-                    <FeedbackCard key={f.id} feedback={f} />
-                  ))}
+                <div className="flex-1 overflow-y-auto modal-scrollbar modal-scroll-smooth max-h-[65vh] pr-4 -mr-4">
+                  <motion.div variants={containerVariants}>
+                    {feedbacks.map((f) => (
+                      <FeedbackCard key={f.id} feedback={f} />
+                    ))}
+                  </motion.div>
                 </div>
               )}
             </Card>
-          </div>
+          </motion.div>
         </div>
 
         {/* STATS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
-            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
-              Average Rating
-            </p>
-            <div className="flex items-end gap-3">
-              <b className="text-3xl text-studprimary dark:text-premium-gold font-extrabold leading-none">
-                {stats.average}
-              </b>
-              <span className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                /5.0
-              </span>
-            </div>
-          </Card>
-
-          <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
-            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
-              Total Feedback
-            </p>
-            <b className="text-3xl text-emerald-600 dark:text-emerald-400 font-extrabold">
-              {stats.total}
-            </b>
-          </Card>
-
-          <Card className="p-6 rounded-2xl bg-white/70 dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10">
-            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
-              Courses Rated
-            </p>
-            <b className="text-3xl text-violet-600 dark:text-violet-400 font-extrabold">
-              {stats.coursesRated}
-            </b>
-          </Card>
-        </div>
-      </div>
+        <motion.div 
+          variants={containerVariants}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          {[
+            { label: "Average Rating", value: stats.average, suffix: "/5.0", color: "text-studprimary dark:text-premium-gold", borderColor: "border-studprimary/20 dark:border-premium-gold/20" },
+            { label: "Total Feedback", value: stats.total, color: "text-emerald-600 dark:text-emerald-400", borderColor: "border-emerald-500/20 dark:border-emerald-400/20" },
+            { label: "Courses Rated", value: stats.coursesRated, color: "text-studprimary dark:text-premium-gold", borderColor: "border-studprimary/20 dark:border-premium-gold/20" }
+          ].map((stat, i) => (
+            <motion.div key={i} variants={itemVariants} whileHover={{ y: -5 }}>
+              <Card className={`p-8 rounded-[2rem] bg-white dark:bg-transparent dark:dark-glass border ${stat.borderColor} shadow-sm group hover:shadow-xl transition-all duration-300`}>
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-3">
+                  {stat.label}
+                </p>
+                <div className="flex items-end gap-2">
+                  <b className={`text-4xl font-extrabold leading-none ${stat.color}`}>
+                    {stat.value}
+                  </b>
+                  {stat.suffix && (
+                    <span className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-1">
+                      {stat.suffix}
+                    </span>
+                  )}
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
     </AdminLayout>
   );
 }

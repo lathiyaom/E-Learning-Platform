@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { getUpcomingLectures } from "../../../redux/Apis/lectureApi";
 import AdminLayout from "../../../utils/Adminlayoute";
@@ -74,7 +75,8 @@ const StudentUpcomingLectures = () => {
   const courses = useMemo(() => {
     const map = new Map();
     futureOnly.forEach((l) => {
-      if (l.courseId?._id) map.set(l.courseId._id, l.courseId.title || "Untitled");
+      if (l.courseId?._id)
+        map.set(l.courseId._id, l.courseId.title || "Untitled");
     });
     return Array.from(map.entries()).map(([id, title]) => ({ id, title }));
   }, [futureOnly]);
@@ -114,60 +116,128 @@ const StudentUpcomingLectures = () => {
   const courseCount = courses.length;
 
   return (
-    <AdminLayout showSearch={false} breadcrumbItems={getBreadcrumbs("DASHBOARD")}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-charcoal dark:via-deep-charcoal dark:to-navy-charcoal px-4 sm:px-6 lg:px-8 py-6">
+    <AdminLayout
+      showSearch={false}
+      breadcrumbItems={getBreadcrumbs("DASHBOARD")}
+    >
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-charcoal dark:via-deep-charcoal dark:to-navy-charcoal px-4 sm:px-6 lg:px-8 py-10"
+      >
+        <div className="max-w-7xl mx-auto space-y-12">
+          {/* Hero poster */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <UpcomingPoster
+              totalCount={loading ? 0 : filtered.length}
+              dayCount={loading ? 0 : dayCount}
+              courseCount={loading ? 0 : courseCount}
+            />
+          </motion.div>
 
-        {/* Hero poster */}
-        <UpcomingPoster
-          totalCount={loading ? 0 : filtered.length}
-          dayCount={loading ? 0 : dayCount}
-          courseCount={loading ? 0 : courseCount}
-        />
+          {/* Filter bar */}
+          <AnimatePresence mode="wait">
+            {!loading && futureOnly.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <UpcomingFilters
+                  courses={courses}
+                  filters={filters}
+                  onChange={setFilters}
+                  onClear={() => setFilters(DEFAULT_FILTERS)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Filter bar */}
-        {!loading && futureOnly.length > 0 && (
-          <UpcomingFilters
-            courses={courses}
-            filters={filters}
-            onChange={setFilters}
-            onClear={() => setFilters(DEFAULT_FILTERS)}
-          />
-        )}
-
-        {/* Content */}
-        {loading ? (
-          <UpcomingSkeleton />
-        ) : filtered.length === 0 ? (
-          <UpcomingEmpty filtered={futureOnly.length > 0 && filtered.length === 0} />
-        ) : (
-          <div className="space-y-8">
-            {grouped.map(([dateStr, dayLectures]) => (
-              <section key={dateStr}>
-                {/* Day group header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-studprimary/10 dark:bg-premium-gold/10 border border-studprimary/20 dark:border-premium-gold/20">
-                    <CalendarDays className="w-4 h-4 text-studprimary dark:text-premium-gold" />
-                    <span className="text-sm font-bold text-studprimary dark:text-premium-gold">
-                      {dayLabel(dateStr)}
+          {/* Content */}
+          {loading ? (
+            <UpcomingSkeleton />
+          ) : filtered.length === 0 ? (
+            <UpcomingEmpty
+              filtered={futureOnly.length > 0 && filtered.length === 0}
+            />
+          ) : (
+            <motion.div 
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.15,
+                  },
+                },
+              }}
+              initial="hidden"
+              animate="visible"
+              className="space-y-10"
+            >
+              {grouped.map(([dateStr, dayLectures]) => (
+                <motion.section 
+                  key={dateStr}
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
+                  }}
+                >
+                  {/* Day group header */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-studprimary/10 dark:bg-premium-gold/10 border border-studprimary/20 dark:border-premium-gold/20 shadow-sm">
+                      <CalendarDays className="w-4 h-4 text-studprimary dark:text-premium-gold" />
+                      <span className="text-sm font-bold text-studprimary dark:text-premium-gold uppercase tracking-wider">
+                        {dayLabel(dateStr)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-500 font-bold uppercase tracking-widest">
+                      {dayLectures.length}{" "}
+                      {dayLectures.length === 1 ? "lecture" : "lectures"}
                     </span>
+                    <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
                   </div>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-                    {dayLectures.length} {dayLectures.length === 1 ? "lecture" : "lectures"}
-                  </span>
-                  <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
-                </div>
 
-                {/* Lecture cards for this day */}
-                <div className="space-y-4">
-                  {dayLectures.map((lecture) => (
-                    <LectureCard key={lecture._id} lecture={lecture} hideAction />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-      </div>
+                  {/* Lecture cards for this day */}
+                  <motion.div 
+                    variants={{
+                      hidden: { opacity: 0 },
+                      visible: {
+                        opacity: 1,
+                        transition: {
+                          staggerChildren: 0.1,
+                        },
+                      },
+                    }}
+                    className="space-y-5"
+                  >
+                    {dayLectures.map((lecture) => (
+                      <motion.div 
+                        key={lecture._id}
+                        variants={{
+                          hidden: { opacity: 0, x: -10 },
+                          visible: { opacity: 1, x: 0 }
+                        }}
+                      >
+                        <LectureCard
+                          lecture={lecture}
+                          hideAction
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </motion.section>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
     </AdminLayout>
   );
 };

@@ -1,6 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, Award, Play, CheckCircle2, BookOpen, Clock } from "lucide-react";
+import {
+  CalendarDays,
+  Award,
+  Play,
+  CheckCircle2,
+  BookOpen,
+  Clock,
+} from "lucide-react";
 import { Card, CardContent } from "../../../../components/Card";
 import moment from "moment";
 
@@ -48,12 +55,13 @@ function EnrollmentCard({ enrollment }) {
       ? `${course.teacherId.firstName || ""} ${course.teacherId.lastName || ""}`.trim()
       : null;
 
-  const initials = (instructor || course.title || "C")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("") || "C";
+  const initials =
+    (instructor || course.title || "C")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase())
+      .join("") || "C";
 
   const handleView = () => {
     if (course._id) navigate(`/card/${course._id}`, { state: { course } });
@@ -87,7 +95,9 @@ function EnrollmentCard({ enrollment }) {
 
         {/* Status badge */}
         <div className="absolute top-3 right-3">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border backdrop-blur-sm ${cfg.cls}`}>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border backdrop-blur-sm ${cfg.cls}`}
+          >
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
             {cfg.label}
           </span>
@@ -116,7 +126,9 @@ function EnrollmentCard({ enrollment }) {
             <div className="w-7 h-7 rounded-full bg-lavender-light dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold font-bold text-xs flex items-center justify-center border border-slate-200 dark:border-white/10 shrink-0">
               {initials}
             </div>
-            <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{instructor}</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
+              {instructor}
+            </span>
           </div>
         )}
 
@@ -125,19 +137,34 @@ function EnrollmentCard({ enrollment }) {
           {enrolledAt && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <CalendarDays className="w-3.5 h-3.5 shrink-0 text-studprimary dark:text-premium-gold" />
-              <span>Enrolled: <span className="font-semibold text-slate-700 dark:text-slate-300">{moment(enrolledAt).format("DD MMM YYYY")}</span></span>
+              <span>
+                Enrolled:{" "}
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {moment(enrolledAt).format("DD MMM YYYY")}
+                </span>
+              </span>
             </div>
           )}
           {completedAt && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
-              <span>Completed: <span className="font-semibold text-slate-700 dark:text-slate-300">{moment(completedAt).format("DD MMM YYYY")}</span></span>
+              <span>
+                Completed:{" "}
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {moment(completedAt).format("DD MMM YYYY")}
+                </span>
+              </span>
             </div>
           )}
           {lastAccessed && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <Clock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-              <span>Last accessed: <span className="font-semibold text-slate-700 dark:text-slate-300">{moment(lastAccessed).fromNow()}</span></span>
+              <span>
+                Last accessed:{" "}
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {moment(lastAccessed).fromNow()}
+                </span>
+              </span>
             </div>
           )}
         </div>

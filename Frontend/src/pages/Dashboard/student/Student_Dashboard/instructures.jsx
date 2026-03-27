@@ -3,7 +3,8 @@ import { useMemo } from "react";
 import { useGetMarketplaceCoursesQuery } from "../../../../redux/Apis/courseApi";
 
 function Instructures() {
-  const { data: coursesData, isLoading } = useGetMarketplaceCoursesQuery("popular");
+  const { data: coursesData, isLoading } =
+    useGetMarketplaceCoursesQuery("popular");
 
   const instructors = useMemo(() => {
     const courses = coursesData?.data || [];
@@ -11,8 +12,10 @@ function Instructures() {
 
     for (const course of courses) {
       const teacherObj = course.teacher_id || course.teacherId;
-      const teacherName = `${teacherObj?.firstName || ""} ${teacherObj?.lastName || ""}`.trim();
-      const name = course.instructorName || course.teacherName || teacherName || null;
+      const teacherName =
+        `${teacherObj?.firstName || ""} ${teacherObj?.lastName || ""}`.trim();
+      const name =
+        course.instructorName || course.teacherName || teacherName || null;
 
       if (!name || byName.has(name)) continue;
 
@@ -41,10 +44,14 @@ function Instructures() {
       </div>
       <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar">
         {isLoading && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Loading instructors...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Loading instructors...
+          </p>
         )}
         {!isLoading && instructors.length === 0 && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">No instructors available.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            No instructors available.
+          </p>
         )}
         {instructors.map((instructor) => (
           <InstructorCard

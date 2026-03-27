@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import { getTodayLectures } from "../../../redux/Apis/lectureApi";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { getBreadcrumbs } from "../../../utils/breadcrumbs";
@@ -45,6 +46,29 @@ function LectureCardSkeleton() {
   );
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
 const StudentConductedLectures = () => {
   const dispatch = useDispatch();
   const { lectures, loading } = useSelector((state) => state.lecture);
@@ -60,27 +84,58 @@ const StudentConductedLectures = () => {
       showSearch={false}
       breadcrumbItems={getBreadcrumbs("DASHBOARD")}
     >
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-charcoal dark:via-deep-charcoal dark:to-navy-charcoal px-4 sm:px-6 lg:px-8 py-6">
-        {/* Hero poster — same structure as help/poster.jsx */}
-        <LecturesPoster count={count} />
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-charcoal dark:via-deep-charcoal dark:to-navy-charcoal px-4 sm:px-6 lg:px-8 py-6"
+      >
+        <motion.div variants={itemVariants}>
+          <LecturesPoster count={count} />
+        </motion.div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="space-y-4">
-            {[0, 1, 2].map((i) => (
-              <LectureCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : !lectures || lectures.length === 0 ? (
-          <LecturesEmpty />
-        ) : (
-          <div className="space-y-4">
-            {lectures.map((lecture) => (
-              <LectureCard key={lecture._id} lecture={lecture} />
-            ))}
-          </div>
-        )}
-      </div>
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div 
+              key="loading"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              {[0, 1, 2].map((i) => (
+                <motion.div key={i} variants={itemVariants}>
+                  <LectureCardSkeleton />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : !lectures || lectures.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <LecturesEmpty />
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="content"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-4"
+            >
+              {lectures.map((lecture) => (
+                <motion.div key={lecture._id} variants={itemVariants}>
+                  <LectureCard lecture={lecture} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </AdminLayout>
   );
 };

@@ -1,5 +1,6 @@
 import React from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import { motion } from "framer-motion";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All" },
@@ -13,7 +14,12 @@ function AssignmentsFilters({ courses, filters, onChange, onClear }) {
   const hasActive = filters.course !== "" || filters.status !== "all" || filters.search !== "";
 
   return (
-    <div className="bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 rounded-2xl p-4 mb-6 shadow-sm">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+      className="bg-white dark:bg-transparent dark:dark-glass border border-slate-200 dark:border-white/10 rounded-2xl p-4 mb-6 shadow-sm"
+    >
       <div className="flex flex-wrap items-end gap-4">
         {/* Search */}
         <div className="flex-1 min-w-[180px]">
@@ -56,8 +62,10 @@ function AssignmentsFilters({ courses, filters, onChange, onClear }) {
           </label>
           <div className="flex flex-wrap gap-1.5">
             {STATUS_OPTIONS.map((opt) => (
-              <button
+              <motion.button
                 key={opt.value}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => onChange({ ...filters, status: opt.value })}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
                   filters.status === opt.value
@@ -66,20 +74,23 @@ function AssignmentsFilters({ courses, filters, onChange, onClear }) {
                 }`}
               >
                 {opt.label}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
 
         {/* Clear */}
         {hasActive && (
-          <button
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileTap={{ scale: 0.95 }}
             onClick={onClear}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 dark:text-red-400 border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors self-end"
           >
             <X className="w-3.5 h-3.5" />
             Clear
-          </button>
+          </motion.button>
         )}
 
         {/* Filter icon */}
@@ -87,7 +98,7 @@ function AssignmentsFilters({ courses, filters, onChange, onClear }) {
           <SlidersHorizontal className="w-4 h-4" />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

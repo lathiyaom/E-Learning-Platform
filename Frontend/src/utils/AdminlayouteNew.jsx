@@ -41,7 +41,7 @@ const Z_INDEX = {
 /**
  * AdminLayout Component
  * Main layout wrapper for authenticated admin/teacher/student pages
- * 
+ *
  * Features:
  * - Responsive sidebar with collapse functionality
  * - Mobile-friendly navigation drawer
@@ -49,7 +49,7 @@ const Z_INDEX = {
  * - Breadcrumb navigation
  * - Dark mode support
  * - Accessibility compliant (ARIA labels, semantic HTML)
- * 
+ *
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Page content
  * @param {Array} props.customNavItems - Custom navigation items (optional)
@@ -65,21 +65,24 @@ const AdminLayout = ({
   // State management
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
+
   // Hooks
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useAuth();
   const [logoutMutation, { isLoading: isPending }] = useLogoutMutation();
-  
+
   // Derived state
   const userRole = user?.userType?.toUpperCase();
   const email = user?.email;
-  const displayName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || 
-                      user?.email?.split("@")[0] || 
-                      "User";
-  const avatarInitial = user?.firstName?.charAt(0) || user?.email?.charAt(0) || "U";
-  const accountType = userRole === "TEACHER" ? "Instructor Account" : "Student Account";
+  const displayName =
+    `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+    user?.email?.split("@")[0] ||
+    "User";
+  const avatarInitial =
+    user?.firstName?.charAt(0) || user?.email?.charAt(0) || "U";
+  const accountType =
+    userRole === "TEACHER" ? "Instructor Account" : "Student Account";
 
   //Navigation items configuration
   const navItems = useMemo(() => {
@@ -270,7 +273,7 @@ const AdminLayout = ({
 
   const isActiveLink = useCallback(
     (link) => location.pathname === link,
-    [location.pathname]
+    [location.pathname],
   );
 
   const handleSignOut = useCallback(async () => {
@@ -330,7 +333,7 @@ const AdminLayout = ({
         </Link>
       );
     },
-    [isActiveLink, closeMobileSidebar]
+    [isActiveLink, closeMobileSidebar],
   );
 
   // Sidebar Content Component
@@ -339,9 +342,11 @@ const AdminLayout = ({
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         {/* Logo Section */}
         <div className="p-6 flex-shrink-0">
-          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2"}`}>
-            <Link 
-              to="/" 
+          <div
+            className={`flex items-center ${collapsed ? "justify-center" : "gap-2"}`}
+          >
+            <Link
+              to="/"
               className="rounded-xl flex items-center justify-center flex-shrink-0"
               aria-label="Go to home page"
             >
@@ -368,7 +373,7 @@ const AdminLayout = ({
         <div className="w-[85%] h-[1px] bg-slate-200 dark:bg-slate-700 mx-auto flex-shrink-0" />
 
         {/* Navigation */}
-        <nav 
+        <nav
           className="flex-1 min-h-0 px-4 pr-2 space-y-1 mt-4 overflow-y-auto overflow-x-hidden overscroll-contain sidebar-scroll-hover"
           style={{ WebkitOverflowScrolling: "touch" }}
           onWheelCapture={handleSidebarWheelCapture}
@@ -401,17 +406,25 @@ const AdminLayout = ({
             title={collapsed ? "Logout" : undefined}
           >
             <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
-            {!collapsed && <span>{isPending ? "Signing out..." : "Logout"}</span>}
+            {!collapsed && (
+              <span>{isPending ? "Signing out..." : "Logout"}</span>
+            )}
           </button>
         </div>
       </div>
     ),
-    [navItems, NavItem, handleSignOut, isPending, userRole, handleSidebarWheelCapture]
+    [
+      navItems,
+      NavItem,
+      handleSignOut,
+      isPending,
+      userRole,
+      handleSidebarWheelCapture,
+    ],
   );
 
   return (
     <div className="min-h-screen bg-[#f9fafb] dark:bg-deep-charcoal transition-colors duration-300">
-      
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
@@ -481,12 +494,11 @@ const AdminLayout = ({
         `.trim()}
       >
         {/* Header */}
-        <header 
+        <header
           className="sticky top-0 bg-[#f9fafb]/80 dark:bg-navy-charcoal/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 shadow-none dark:shadow-gold transition-all duration-300"
           style={{ zIndex: Z_INDEX.HEADER }}
         >
           <div className="flex items-center justify-between px-6 py-4">
-            
             {/* Left Section - Menu & Breadcrumbs */}
             <div className="flex items-center gap-4 flex-1 max-w-xl">
               <button
@@ -507,12 +519,14 @@ const AdminLayout = ({
 
             {/* Right Section - Actions */}
             <div className="flex items-center gap-3 md:gap-6">
-              
               {/* Dark Mode Toggle */}
               <DarkModeToggle />
 
               {/* Divider */}
-              <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" aria-hidden="true" />
+              <div
+                className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block"
+                aria-hidden="true"
+              />
 
               {/* Notification Button */}
               <NotificationCenter />

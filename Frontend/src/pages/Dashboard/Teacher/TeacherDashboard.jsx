@@ -27,7 +27,7 @@ const SOFT_ITEM_CLASS =
   "rounded-xl border border-studprimary/10 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-lavender-light/40 dark:hover:bg-premium-gold/10 transition-colors duration-200";
 
 const LIVE_BADGE_CLASS =
-  "border border-studprimary/30 bg-lavender-light dark:bg-premium-gold/10 text-premium-gold/90 dark:text-premium-gold text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 hover:bg-lavender-light/40 dark:hover:bg-premium-gold/10 transition-colors duration-200";
+  "border border-studprimary/30 bg-lavender-light dark:bg-premium-gold/10 text-superadminprimary dark:text-premium-gold text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 hover:bg-lavender-light/40 dark:hover:bg-premium-gold/10 transition-colors duration-200";
 
 const FILTER_BUTTON_CLASS =
   "px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border";
@@ -104,7 +104,7 @@ const StatCard = ({ item, loading }) => {
           <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-lavender-light to-lavender dark:from-premium-gold/15 dark:to-premium-gold/10 text-studprimary dark:text-premium-gold shadow-sm">
             <IconComponent className="h-5 w-5" />
           </div>
-          <Badge className={LIVE_BADGE_CLASS}>Live</Badge>
+          <Badge variant="outline" className={LIVE_BADGE_CLASS}>Live</Badge>
         </div>
         <p className="text-xs font-semibold uppercase tracking-wider text-studprimary dark:text-premium-gold">{item.label}</p>
         <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">

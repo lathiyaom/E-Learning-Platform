@@ -1,18 +1,46 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
 
 const AboutCTA = () => {
   return (
     <section className="relative py-20 bg-white dark:bg-navy-charcoal transition-colors duration-300 overflow-hidden">
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* CTA Card */}
-        <div className="relative bg-gradient-to-br from-slate-900 to-[#1a1d2b] dark:from-navy-charcoal dark:to-background-dark rounded-3xl overflow-hidden border border-white/5 dark:border-premium-gold/10 shadow-2xl dark:shadow-premium-gold/5">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="relative bg-gradient-to-br from-slate-900 to-[#1a1d2b] dark:from-navy-charcoal dark:to-background-dark rounded-3xl overflow-hidden border border-white/5 dark:border-premium-gold/10 shadow-2xl dark:shadow-premium-gold/5"
+        >
           {/* Glow orbs */}
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/15 dark:bg-premium-gold/10 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-primary/10 dark:bg-premium-gold/5 rounded-full blur-[100px] pointer-events-none" />
-          {/* Skewed accent */}
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-premium-gold/5 skew-x-12 translate-x-16 pointer-events-none" />
-
+          
           {/* Dot grid */}
           <div
             className="absolute inset-0 opacity-[0.05] dark:opacity-[0.06] pointer-events-none"
@@ -24,28 +52,46 @@ const AboutCTA = () => {
           />
 
           {/* Content */}
-          <div className="relative z-10 px-8 py-14 sm:px-14 sm:py-20 text-center">
-            <span className="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full bg-primary/15 dark:bg-premium-gold/15 text-primary dark:text-premium-gold text-xs font-bold tracking-wider uppercase mb-6 border border-primary/20 dark:border-premium-gold/20 backdrop-blur-sm">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="relative z-10 px-8 py-14 sm:px-14 sm:py-20 text-center"
+          >
+            <motion.span 
+              variants={itemVariants}
+              className="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full bg-primary/15 dark:bg-premium-gold/15 text-primary dark:text-premium-gold text-xs font-bold tracking-wider uppercase mb-6 border border-primary/20 dark:border-premium-gold/20 backdrop-blur-sm"
+            >
               <span className="material-symbols-outlined text-sm">
                 rocket_launch
               </span>
               Join the Journey
-            </span>
+            </motion.span>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 font-lexend leading-tight">
+            <motion.h2 
+              variants={itemVariants}
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 font-lexend leading-tight"
+            >
               Ready to{" "}
               <span className="text-primary dark:text-premium-gold">join</span>{" "}
               the journey?
-            </h2>
+            </motion.h2>
 
-            <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto mb-10">
+            <motion.p 
+              variants={itemVariants}
+              className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto mb-10"
+            >
               Whether you&rsquo;re a student looking to grow or an educator
               wanting to share your voice, there&rsquo;s a place for you in the
               EduVerse.
-            </p>
+            </motion.p>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <motion.div 
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            >
               <Link
                 to="/Sign-Up"
                 className="inline-flex items-center gap-2 bg-primary dark:bg-premium-gold text-slate-900 font-extrabold px-10 py-4 rounded-xl shadow-lg shadow-primary/25 dark:shadow-premium-gold/25 hover:brightness-110 hover:scale-105 hover:shadow-2xl transition-all duration-300 whitespace-nowrap"
@@ -64,10 +110,13 @@ const AboutCTA = () => {
                 </span>
                 Become a Mentor
               </Link>
-            </div>
+            </motion.div>
 
             {/* Social proof chips */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-5">
+            <motion.div 
+               variants={itemVariants}
+               className="mt-10 flex flex-wrap items-center justify-center gap-5"
+            >
               {[
                 { icon: "check_circle", text: "No experience required" },
                 { icon: "check_circle", text: "Free 7-day trial" },
@@ -86,12 +135,13 @@ const AboutCTA = () => {
                   {item.text}
                 </span>
               ))}
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );
 };
 
 export default AboutCTA;
+

@@ -14,7 +14,8 @@ import {
   Clock,
   ExternalLink
 } from "lucide-react";
-import AdminLayout from "../../utils/AdminlayouteNew";
+// import AdminLayout from "../../utils/AdminlayouteNew";
+import AdminLayout from "../../utils/Adminlayoute";
 import SuperAdminLayout from "../../utils/SuperAdminLayout";
 import { useAuth, getAuth } from "../../utils/users";
 import { 
@@ -88,26 +89,26 @@ const NotificationsPage = () => {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => markAllAsRead()}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-superadminprimary dark:bg-navy-charcoal border border-slate-200 dark:border-slate-700 text-sm font-bold text-white dark:text-superadminprimary hover:bg-superadminprimary/80 dark:hover:bg-navy-charcoal/80 transition-all shadow-sm dark:hover:text-white"
             >
-              <CheckCheck className="h-4 w-4" />
+              <CheckCheck className="h-4 w-4 text-white/80" />
               Mark all read
             </button>
           </div>
         </div>
 
         {/* Filters & Search (Mock for now) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 mb-8 flex flex-col md:flex-row gap-4 items-center">
+        <div className="bg-white dark:bg-white/5 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 mb-8 flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input 
               type="text" 
               placeholder="Search notifications..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border-none text-sm focus:ring-2 focus:ring-superadminprimary/20"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-deep-charcoal border-none text-sm "
             />
           </div>
           <div className="flex gap-2 w-full md:w-auto">
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-500">
+            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-deep-charcoal rounded-xl text-xs font-bold text-slate-500">
               <Filter className="h-3 w-3" />
               Filter
             </button>
@@ -209,7 +210,7 @@ const NotificationsPage = () => {
               className="flex flex-col items-center justify-center py-32 text-center"
             >
               <div className="h-24 w-24 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
-                <Inbox className="h-10 w-10 text-slate-200 dark:text-slate-700" />
+                <Inbox className="h-10 w-10 text-slate-200 dark:text-superadminprimary/85" />
               </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">All Clear!</h2>
               <p className="text-slate-500 mt-2 max-w-xs mx-auto">You don't have any notifications at the moment. We'll let you know when something important happens.</p>

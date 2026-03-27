@@ -481,7 +481,7 @@ const AdminLayout = ({
       <aside
         className={`
           fixed inset-y-0 left-0 w-64 flex flex-col
-          bg-white dark:bg-navy-charcoal
+          bg-white dark:bg-deep-charcoal
           border-r border-slate-200 dark:border-white/5
           shadow-xl transition-transform duration-300 ease-in-out
           lg:hidden overflow-hidden
@@ -503,8 +503,8 @@ const AdminLayout = ({
       <aside
         className={`
           hidden lg:fixed lg:left-0 lg:top-0 lg:h-full lg:flex lg:flex-col
-          bg-white dark:bg-navy-charcoal
-          border-r border-slate-200 dark:border-white/5
+          bg-white dark:bg-deep-charcoal
+          border-r border-slate-200 dark:border-white/25
           transition-all duration-300 ease-in-out overflow-visible
           ${isCollapsed ? "lg:w-20" : "lg:w-64"}
         `.trim()}
@@ -534,7 +534,7 @@ const AdminLayout = ({
         `.trim()}
       >
         <header
-          className="sticky top-0 bg-[#f9fafb]/80 dark:bg-navy-charcoal/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 shadow-none dark:shadow-gold transition-all duration-300"
+          className="sticky top-0 bg-[#f9fafb]/80 dark:bg-deep-charcoal backdrop-blur-xl border-b border-slate-200 dark:border-white/25 shadow-none dark:shadow-gold transition-all duration-300"
           style={{ zIndex: Z_INDEX.HEADER }}
         >
           <div className="flex items-center justify-between px-6 py-4">

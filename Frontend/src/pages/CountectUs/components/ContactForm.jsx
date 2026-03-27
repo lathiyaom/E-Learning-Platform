@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useSubmitContactMutation } from "../../../redux/Apis/contactApi";
 import { SuccessToster, ErrorToster } from "../../../components/toster";
 
@@ -8,6 +9,29 @@ const INITIAL_FORM = {
   phone: "",
   subject: "",
   message: "",
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
 };
 
 const ContactForm = () => {
@@ -47,14 +71,28 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+      className="space-y-6"
+    >
       {/* ── Form Card ── */}
-      <div className="bg-white dark:bg-transparent dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm p-6 sm:p-8 hover:shadow-lg dark:hover:border-premium-gold/20 transition-all duration-300">
+      <motion.div 
+        variants={itemVariants}
+        className="bg-white dark:bg-transparent dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm p-6 sm:p-8 hover:shadow-lg dark:hover:border-premium-gold/20 transition-all duration-300"
+      >
         {/* Card Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-premium-gold/10 flex items-center justify-center text-primary dark:text-premium-gold">
+          <motion.div 
+            initial={{ rotate: -20, scale: 0.8 }}
+            animate={{ rotate: 0, scale: 1 }}
+            transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+            className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-premium-gold/10 flex items-center justify-center text-primary dark:text-premium-gold"
+          >
             <span className="material-symbols-outlined text-xl">edit_note</span>
-          </div>
+          </motion.div>
           <div>
             <h2 className="font-bold text-lg text-slate-900 dark:text-white font-lexend">
               Send Us a Message
@@ -192,16 +230,21 @@ const ContactForm = () => {
           </div>
 
           {/* Submit Button */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2.5 bg-primary dark:bg-premium-gold text-slate-900 font-bold py-4 rounded-xl shadow-lg shadow-primary/25 dark:shadow-premium-gold/20 hover:brightness-110 hover:scale-[1.01] hover:shadow-xl hover:shadow-primary/30 dark:hover:shadow-premium-gold/25 active:scale-[0.99] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2.5 bg-primary dark:bg-premium-gold text-slate-900 font-bold py-4 rounded-xl shadow-lg shadow-primary/25 dark:shadow-premium-gold/20 hover:brightness-110 hover:scale-[1.01] hover:shadow-xl active:scale-[0.99] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <span className="material-symbols-outlined text-xl animate-spin">
+                <motion.span 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="material-symbols-outlined text-xl"
+                >
                   progress_activity
-                </span>
+                </motion.span>
                 Sending...
               </>
             ) : (
@@ -210,22 +253,27 @@ const ContactForm = () => {
                 Send Message
               </>
             )}
-          </button>
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
 
       {/* ── OR QUICK CHAT Divider ── */}
-      <div className="relative flex items-center gap-4 py-2">
+      <motion.div 
+        variants={itemVariants}
+        className="relative flex items-center gap-4 py-2"
+      >
         <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
         <span className="shrink-0 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">
           OR QUICK CHAT
         </span>
         <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
-      </div>
+      </motion.div>
 
       {/* ── WhatsApp Button ── */}
-      <button
+      <motion.button
+        variants={itemVariants}
         onClick={openWhatsApp}
+        whileTap={{ scale: 0.98 }}
         className="group w-full flex items-center justify-center gap-3 py-4 bg-[#25D366] hover:bg-[#20bd5c] text-white font-bold rounded-2xl shadow-lg shadow-[#25D366]/25 hover:shadow-[#25D366]/40 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
       >
         {/* WhatsApp SVG */}
@@ -237,18 +285,26 @@ const ContactForm = () => {
           <path d="M17.472 14.382c-.301-.15-1.767-.872-2.04-.971-.272-.1-.47-.15-.67.15-.198.3-.771.971-.945 1.171-.174.2-.347.225-.648.075-.301-.15-1.27-.468-2.42-1.492-.894-.798-1.498-1.784-1.674-2.083-.176-.3-.019-.462.13-.61.135-.133.301-.35.452-.524.151-.174.2-.299.301-.499.101-.2.05-.375-.025-.524-.075-.15-.67-1.616-.918-2.214-.242-.584-.487-.504-.67-.514-.173-.009-.371-.01-.57-.01-.199 0-.523.075-.797.375-.274.3-1.045 1.021-1.045 2.489 0 1.468 1.069 2.887 1.218 3.088.15.2 2.103 3.209 5.094 4.499.711.307 1.267.49 1.7.63.714.227 1.365.195 1.878.118.572-.086 1.767-.722 2.016-1.417.25-.695.25-1.291.174-1.417-.076-.126-.273-.201-.573-.351zm-5.472 7.618h-.001c-1.758 0-3.486-.474-5.002-1.37l-.358-.214-3.72.976.993-3.626-.235-.374C2.517 15.394 2 13.581 2 11.716 2 6.304 6.406 1.898 11.822 1.898c2.623 0 5.089 1.021 6.942 2.876 1.854 1.855 2.875 4.319 2.875 6.942 0 5.414-4.409 9.82-9.82 9.82zM12 0C5.383 0 0 5.383 0 12c0 2.112.55 4.172 1.594 5.986L0 24l6.191-1.623C7.931 23.325 9.899 23.826 12 23.826c6.617 0 12-5.383 12-12 0-3.206-1.248-6.22-3.515-8.485C18.22 1.248 15.206 0 12 0z" />
         </svg>
         <span>Chat With Us on WhatsApp</span>
-        <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform duration-300">
+        <motion.span 
+          animate={{ x: [0, 3, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="material-symbols-outlined text-xl"
+        >
           arrow_forward
-        </span>
-      </button>
+        </motion.span>
+      </motion.button>
 
       {/* Live indicator */}
-      <p className="flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+      <motion.p 
+        variants={itemVariants}
+        className="flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500"
+      >
         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
         Typically replies in less than 5 minutes
-      </p>
-    </div>
+      </motion.p>
+    </motion.div>
   );
 };
 
 export default ContactForm;
+

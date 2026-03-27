@@ -13,13 +13,13 @@ const isUsableCourseObject = (value) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   return Boolean(
     value.title ||
-      value.description ||
-      value.category ||
-      value.teacher_id ||
-      value.createdBy ||
-      value.videoUrl ||
-      value.video_url ||
-      (Array.isArray(value.lessons) && value.lessons.length > 0)
+    value.description ||
+    value.category ||
+    value.teacher_id ||
+    value.createdBy ||
+    value.videoUrl ||
+    value.video_url ||
+    (Array.isArray(value.lessons) && value.lessons.length > 0),
   );
 };
 
@@ -119,7 +119,7 @@ function MyProgress() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {visibleCourses.map((enrollment) => {
           const course = resolveEnrollmentCourse(enrollment);
-          
+
           // Build lesson links - safely extract YouTube/Vimeo URLs
           const lessonLinks = [];
           if (Array.isArray(course.lessons) && course.lessons.length > 0) {
@@ -133,16 +133,20 @@ function MyProgress() {
               }
             });
           }
-          
+
           // Fallback to single legacy video if no lessons array
-          if (lessonLinks.length === 0 && (course.videoUrl || course.video_url)) {
+          if (
+            lessonLinks.length === 0 &&
+            (course.videoUrl || course.video_url)
+          ) {
             lessonLinks.push({
               videoUrl: course.videoUrl || course.video_url,
               description: "Course intro",
             });
           }
 
-          const totalLessons = lessonLinks.length || Number(course.totalLessons) || 0;
+          const totalLessons =
+            lessonLinks.length || Number(course.totalLessons) || 0;
 
           const completedLessonsCandidates = [
             enrollment.completedLessons,
@@ -150,7 +154,9 @@ function MyProgress() {
             enrollment.lessonsDone,
             enrollment.completedCount,
           ];
-          const completedLessonsRaw = completedLessonsCandidates.find((val) => Number.isFinite(Number(val)));
+          const completedLessonsRaw = completedLessonsCandidates.find((val) =>
+            Number.isFinite(Number(val)),
+          );
           const completedLessons = Number.isFinite(Number(completedLessonsRaw))
             ? Math.max(0, Number(completedLessonsRaw))
             : null;
@@ -160,7 +166,9 @@ function MyProgress() {
             enrollment.progress,
             enrollment.course_progress,
           ];
-          const rawProgress = rawProgressCandidates.find((val) => Number.isFinite(Number(val)));
+          const rawProgress = rawProgressCandidates.find((val) =>
+            Number.isFinite(Number(val)),
+          );
 
           const computedProgress =
             completedLessons !== null && totalLessons > 0
@@ -171,17 +179,25 @@ function MyProgress() {
 
           const lessonsDone =
             completedLessons !== null
-              ? Math.min(totalLessons, Math.max(0, Math.round(completedLessons)))
-              : Math.min(totalLessons, Math.floor((completionValue / 100) * totalLessons));
+              ? Math.min(
+                  totalLessons,
+                  Math.max(0, Math.round(completedLessons)),
+                )
+              : Math.min(
+                  totalLessons,
+                  Math.floor((completionValue / 100) * totalLessons),
+                );
 
           const teacher = course.teacher_id || course.createdBy || {};
           const fallbackInstructorName =
-            course.teacherName || course.instructorName || course.instructor || "Instructor";
+            course.teacherName ||
+            course.instructorName ||
+            course.instructor ||
+            "Instructor";
 
-          const instructorName =
-            teacher.firstName
-              ? `${teacher.firstName} ${teacher.lastName || ""}`.trim()
-              : fallbackInstructorName;
+          const instructorName = teacher.firstName
+            ? `${teacher.firstName} ${teacher.lastName || ""}`.trim()
+            : fallbackInstructorName;
 
           const instructorImage =
             teacher.profilePic ||
@@ -198,8 +214,12 @@ function MyProgress() {
             null;
 
           const enrollmentCourseId =
-            (typeof enrollment.courseId === "object" ? enrollment.courseId?._id : enrollment.courseId) ||
-            (typeof enrollment.course_id === "object" ? enrollment.course_id?._id : enrollment.course_id);
+            (typeof enrollment.courseId === "object"
+              ? enrollment.courseId?._id
+              : enrollment.courseId) ||
+            (typeof enrollment.course_id === "object"
+              ? enrollment.course_id?._id
+              : enrollment.course_id);
 
           const courseId = course._id || course.id || enrollmentCourseId;
 

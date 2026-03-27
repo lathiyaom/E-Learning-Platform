@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 const values = [
   {
@@ -24,6 +25,29 @@ const values = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
 const ShapeBlob = ({ variant }) => {
   const styles = {
     1: "from-primary/30 dark:from-premium-gold/20 to-primary/10 dark:to-premium-gold/5",
@@ -31,7 +55,12 @@ const ShapeBlob = ({ variant }) => {
     3: "from-primary/25 dark:from-premium-gold/18 to-primary/8 dark:to-premium-gold/3",
   };
   return (
-    <div
+    <motion.div
+      animate={{ 
+        scale: [1, 1.05, 1],
+        rotate: [0, 5, 0],
+      }}
+      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       className={`w-28 h-28 rounded-[40%_60%_65%_35%/40%_45%_55%_60%] bg-gradient-to-br ${styles[variant]} opacity-80 dark:opacity-60 shrink-0`}
     />
   );
@@ -51,7 +80,12 @@ const AboutValues = () => {
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
           <span className="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full bg-primary/10 dark:bg-premium-gold/10 text-primary dark:text-premium-gold text-xs font-bold tracking-wider uppercase mb-5 border border-primary/20 dark:border-premium-gold/20">
             <span className="material-symbols-outlined text-sm">favorite</span>
             What We Stand For
@@ -67,13 +101,20 @@ const AboutValues = () => {
             an ecosystem where every student feels seen, supported, and
             empowered to lead.
           </p>
-        </div>
+        </motion.div>
 
         {/* Values list */}
-        <div className="space-y-12">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="space-y-12"
+        >
           {values.map((v, i) => (
-            <div
+            <motion.div
               key={i}
+              variants={itemVariants}
               className={`group flex flex-col gap-6 items-center ${
                 v.side === "right"
                   ? "md:flex-row-reverse md:text-right"
@@ -106,12 +147,13 @@ const AboutValues = () => {
               {i < values.length - 1 && (
                 <div className="w-full h-px bg-slate-100 dark:bg-white/5 md:hidden mt-4" />
               )}
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 };
 
 export default AboutValues;
+

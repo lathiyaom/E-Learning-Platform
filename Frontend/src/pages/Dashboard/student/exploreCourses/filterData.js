@@ -13,9 +13,9 @@ const filterData = {
   ],
 
   levels: [
-    { name: "Beginner" },
-    { name: "Intermediate" },
-    { name: "Advanced" },
+    { name: "Hard" },
+    { name: "Medium" },
+    { name: "Easy" },
   ],
 
   priceRanges: [

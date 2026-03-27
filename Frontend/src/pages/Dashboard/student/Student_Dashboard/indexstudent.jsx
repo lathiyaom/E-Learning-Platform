@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import GretingPoster from "./GretingPoster";
 import MyProgress from "./myProgress";
 import RecommendedSection from "./recommended";
@@ -6,7 +7,8 @@ import ChartSection from "./chartsection";
 import Instructures from "./instructures";
 import QuickAccess from "./QuickAccess"; 
 // import AdminLayout from './../../../../utils/Adminlayoute';
-import AdminLayout from "../../../../utils/AdminlayouteNew";
+// import AdminLayout from "../../../../utils/AdminlayouteNew";
+import AdminLayout from "../../../../utils/Adminlayoute";
 import { getBreadcrumbs } from "../../../../utils/breadcrumbs";
 import { eventApi } from "../../../../api/eventApi";
 import { holidayApi } from "../../../../api/holidayApi";
@@ -48,12 +50,19 @@ function IndexStud() {
       className="p-0"
       breadcrumbItems={breadcrumbItems}
     >
-      <GretingPoster />
-      <QuickAccess />
-      <MyProgress />
-      <RecommendedSection/>
-      <ChartSection/>
-      <Instructures/>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col gap-12 md:gap-12 px-1 sm:px-2 lg:px-4 py-2 lg:py-2"
+      >
+        <GretingPoster />
+        <QuickAccess />
+        <MyProgress />
+        <RecommendedSection />
+        <ChartSection />
+        <Instructures />
+      </motion.div>
     </AdminLayout>
   );
 }

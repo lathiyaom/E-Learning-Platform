@@ -39,7 +39,7 @@ const StatsBar = () => {
       {stats.map((s, i) => (
         <div
           key={i}
-          className="group bg-white dark:bg-transparent dark:dark-glass rounded-2xl p-6 border border-slate-100 dark:border-white/10 shadow-sm text-center hover:shadow-lg dark:hover:shadow-premium-gold/8 hover:-translate-y-1 dark:hover:border-premium-gold/30 transition-all duration-300 relative overflow-hidden"
+          className="group bg-white dark:bg-white/5 dark:dark-glass rounded-2xl p-6 border border-slate-100 dark:border-white/10 shadow-sm text-center hover:shadow-lg dark:hover:shadow-premium-gold/8 hover:-translate-y-1 dark:hover:border-premium-gold/30 transition-all duration-300 relative overflow-hidden"
         >
           {/* Corner shimmer */}
           {/* <div className="absolute right-0 top-0 w-16 h-16 bg-primary/5 dark:bg-premium-gold/5 rounded-bl-3xl transition-transform group-hover:scale-150 duration-500" /> */}
@@ -63,7 +63,7 @@ const StatsBar = () => {
 
 const TestimonialsSection = () => {
   return (
-    <section className="relative py-20 bg-white dark:bg-background-dark transition-colors duration-300 overflow-hidden">
+    <section className="relative py-20 bg-white dark:bg-premium-surface transition-colors duration-300 overflow-hidden">
       {/* Dark mode decorative blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] dark:bg-premium-gold/4 rounded-full blur-[150px]" />

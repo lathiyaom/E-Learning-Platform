@@ -40,7 +40,9 @@ import {
 
 const Attendance = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [attendanceData, setAttendanceData] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -48,16 +50,18 @@ const Attendance = () => {
   const user = useSelector(selectCurrentUser);
 
   const { data: coursesData } = useGetAllCoursesQuery();
-  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useGetCourseEnrollmentsQuery(
-    selectedCourse,
-    { skip: !selectedCourse }
-  );
-  const { data: attendanceReportData, refetch: refetchAttendanceReport } = useGetAttendanceReportQuery(selectedCourse, {
-    skip: !selectedCourse,
-  });
-  const [markAttendance, { isLoading: submitting }] = useMarkAttendanceMutation();
-  const [updateAttendance, { isLoading: updating }] = useUpdateAttendanceMutation();
-  const [deleteAttendance, { isLoading: deleting }] = useDeleteAttendanceMutation();
+  const { data: enrollmentsData, isLoading: enrollmentsLoading } =
+    useGetCourseEnrollmentsQuery(selectedCourse, { skip: !selectedCourse });
+  const { data: attendanceReportData, refetch: refetchAttendanceReport } =
+    useGetAttendanceReportQuery(selectedCourse, {
+      skip: !selectedCourse,
+    });
+  const [markAttendance, { isLoading: submitting }] =
+    useMarkAttendanceMutation();
+  const [updateAttendance, { isLoading: updating }] =
+    useUpdateAttendanceMutation();
+  const [deleteAttendance, { isLoading: deleting }] =
+    useDeleteAttendanceMutation();
 
   const courseId = selectedCourse;
   const courseList = coursesData?.data || [];
@@ -65,7 +69,7 @@ const Attendance = () => {
   const myCourses = courseList.filter(
     (course) =>
       String(course?.createdBy?._id || course?.createdBy || "") === teacherId ||
-      String(course?.teacher_id?._id || course?.teacher_id || "") === teacherId
+      String(course?.teacher_id?._id || course?.teacher_id || "") === teacherId,
   );
   const students = enrollmentsData?.data || [];
   const attendanceReport = attendanceReportData?.data || [];
@@ -99,7 +103,7 @@ const Attendance = () => {
 
       return acc;
     },
-    { present: 0, absent: 0, late: 0 }
+    { present: 0, absent: 0, late: 0 },
   );
 
   const handleStatusChange = (studentId, newStatus) => {
@@ -143,7 +147,10 @@ const Attendance = () => {
       refetchAttendanceReport();
     } catch (error) {
       console.error("Error marking attendance:", error);
-      alert("Failed to mark attendance: " + (error?.data?.message || error?.message));
+      alert(
+        "Failed to mark attendance: " +
+          (error?.data?.message || error?.message),
+      );
     }
   };
 
@@ -163,7 +170,10 @@ const Attendance = () => {
       setAttendanceData({});
       refetchAttendanceReport();
     } catch (error) {
-      alert("Failed to delete attendance: " + (error?.data?.message || error?.message));
+      alert(
+        "Failed to delete attendance: " +
+          (error?.data?.message || error?.message),
+      );
     }
   };
 
@@ -180,7 +190,7 @@ const Attendance = () => {
   };
 
   const selectClassName =
-    "w-full rounded-lg border border-studprimary/15 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/20 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20";
+    "w-full rounded-lg border border-studprimary/15 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/20 dark:border-white/10 dark:bg-navy-charcoal dark:text-slate-100 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20";
 
   const ITEMS_PER_PAGE = 8;
 
@@ -204,13 +214,19 @@ const Attendance = () => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     return studentRows.filter((row) => {
-      const matchSearch = !normalizedSearch || row.displayName.toLowerCase().includes(normalizedSearch);
-      const matchStatus = statusFilter === "all" || row.selectedStatus === statusFilter;
+      const matchSearch =
+        !normalizedSearch ||
+        row.displayName.toLowerCase().includes(normalizedSearch);
+      const matchStatus =
+        statusFilter === "all" || row.selectedStatus === statusFilter;
       return matchSearch && matchStatus;
     });
   }, [studentRows, searchTerm, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRows.length / ITEMS_PER_PAGE),
+  );
 
   React.useEffect(() => {
     if (currentPage > totalPages) {
@@ -259,7 +275,8 @@ const Attendance = () => {
                 Mark Course Attendance
               </h1>
               <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-                Select a class date, update student status, and keep attendance records accurate in one streamlined workflow.
+                Select a class date, update student status, and keep attendance
+                records accurate in one streamlined workflow.
               </p>
             </div>
 
@@ -267,8 +284,12 @@ const Attendance = () => {
               <Card className="rounded-xl border-studprimary/12 !py-3 dark:border-white/10">
                 <CardContent className="flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Students</p>
-                    <p className="text-lg font-extrabold text-slate-900 dark:text-white">{students.length}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Students
+                    </p>
+                    <p className="text-lg font-extrabold text-slate-900 dark:text-white">
+                      {students.length}
+                    </p>
                   </div>
                   <Users className="h-4 w-4 text-studprimary dark:text-premium-gold" />
                 </CardContent>
@@ -277,8 +298,12 @@ const Attendance = () => {
               <Card className="rounded-xl border-studprimary/12 !py-3 dark:border-white/10">
                 <CardContent className="flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Present</p>
-                    <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-300">{statusBreakdown.present}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Present
+                    </p>
+                    <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-300">
+                      {statusBreakdown.present}
+                    </p>
                   </div>
                   <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
                 </CardContent>
@@ -287,8 +312,12 @@ const Attendance = () => {
               <Card className="rounded-xl border-studprimary/12 !py-3 dark:border-white/10 sm:col-span-2 lg:col-span-1">
                 <CardContent className="flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Needs Attention</p>
-                    <p className="text-lg font-extrabold text-rose-600 dark:text-rose-300">{statusBreakdown.absent + statusBreakdown.late}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Needs Attention
+                    </p>
+                    <p className="text-lg font-extrabold text-rose-600 dark:text-rose-300">
+                      {statusBreakdown.absent + statusBreakdown.late}
+                    </p>
                   </div>
                   <UserX className="h-4 w-4 text-rose-600 dark:text-rose-300" />
                 </CardContent>
@@ -325,7 +354,10 @@ const Attendance = () => {
                   >
                     <option value="">-- Select Course --</option>
                     {myCourses.map((course) => (
-                      <option key={course._id || course.id} value={course._id || course.id}>
+                      <option
+                        key={course._id || course.id}
+                        value={course._id || course.id}
+                      >
                         {course.title}
                       </option>
                     ))}
@@ -390,7 +422,9 @@ const Attendance = () => {
               {!selectedCourse && (
                 <div className="rounded-xl border border-dashed border-studprimary/25 bg-background-light px-4 py-8 text-center dark:border-premium-gold/30 dark:bg-white/5">
                   <BookOpen className="mx-auto mb-2 h-8 w-8 text-studprimary dark:text-premium-gold" />
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select a course to begin attendance tracking.</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Select a course to begin attendance tracking.
+                  </p>
                 </div>
               )}
 
@@ -403,12 +437,16 @@ const Attendance = () => {
                   ) : students.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-studprimary/25 bg-background-light px-4 py-8 text-center dark:border-premium-gold/30 dark:bg-white/5">
                       <Users className="mx-auto mb-2 h-8 w-8 text-studprimary dark:text-premium-gold" />
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No students are enrolled in this course yet.</p>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        No students are enrolled in this course yet.
+                      </p>
                     </div>
                   ) : filteredRows.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-studprimary/25 bg-background-light px-4 py-8 text-center dark:border-premium-gold/30 dark:bg-white/5">
                       <Users className="mx-auto mb-2 h-8 w-8 text-studprimary dark:text-premium-gold" />
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No students matched your filter.</p>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        No students matched your filter.
+                      </p>
                     </div>
                   ) : (
                     <>
@@ -423,19 +461,30 @@ const Attendance = () => {
                         </TableHeader>
                         <TableBody>
                           {paginatedRows.map((row) => {
-                            const { enrollment, sid, displayName, selectedStatus } = row;
+                            const {
+                              enrollment,
+                              sid,
+                              displayName,
+                              selectedStatus,
+                            } = row;
 
                             return (
                               <TableRow key={enrollment._id || enrollment.id}>
-                                <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{displayName}</TableCell>
+                                <TableCell className="font-semibold text-slate-900 dark:text-slate-100">
+                                  {displayName}
+                                </TableCell>
                                 <TableCell>
                                   {enrollment.enrollmentDate
-                                    ? new Date(enrollment.enrollmentDate).toLocaleDateString()
+                                    ? new Date(
+                                        enrollment.enrollmentDate,
+                                      ).toLocaleDateString()
                                     : "-"}
                                 </TableCell>
                                 <TableCell>
                                   <span className="inline-flex min-w-[90px] justify-center rounded-md bg-background-light px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-white/10 dark:text-slate-200">
-                                    {formatEnrollmentTenure(enrollment.enrollmentDate)}
+                                    {formatEnrollmentTenure(
+                                      enrollment.enrollmentDate,
+                                    )}
                                   </span>
                                 </TableCell>
                                 <TableCell>
@@ -448,7 +497,9 @@ const Attendance = () => {
                                     </Badge>
                                     <select
                                       value={selectedStatus}
-                                      onChange={(e) => handleStatusChange(sid, e.target.value)}
+                                      onChange={(e) =>
+                                        handleStatusChange(sid, e.target.value)
+                                      }
                                       className="w-full rounded-md border border-studprimary/20 bg-white px-2.5 py-1.5 text-xs font-semibold capitalize text-slate-700 outline-none transition focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/20 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20 sm:w-[130px]"
                                     >
                                       <option value="present">Present</option>
@@ -465,13 +516,16 @@ const Attendance = () => {
 
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-studprimary/10 bg-white/70 px-3.5 py-3 dark:border-white/10 dark:bg-white/5">
                         <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                          Showing {paginatedRows.length} of {filteredRows.length} matched students
+                          Showing {paginatedRows.length} of{" "}
+                          {filteredRows.length} matched students
                         </p>
                         <div className="flex items-center gap-2">
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                            onClick={() =>
+                              setCurrentPage((prev) => Math.max(1, prev - 1))
+                            }
                             disabled={currentPage === 1}
                             className="h-8 border-studprimary/25 text-studprimary hover:bg-lavender-light dark:border-premium-gold/30 dark:text-premium-gold dark:hover:bg-premium-gold/10"
                           >
@@ -483,7 +537,11 @@ const Attendance = () => {
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                            onClick={() =>
+                              setCurrentPage((prev) =>
+                                Math.min(totalPages, prev + 1),
+                              )
+                            }
                             disabled={currentPage === totalPages}
                             className="h-8 border-studprimary/25 text-studprimary hover:bg-lavender-light dark:border-premium-gold/30 dark:text-premium-gold dark:hover:bg-premium-gold/10"
                           >
@@ -528,34 +586,55 @@ const Attendance = () => {
 
           <Card className="rounded-2xl border-studprimary/15 bg-white/85 shadow-sm dark:border-white/10 dark:bg-white/5">
             <CardHeader>
-              <CardTitle className="text-slate-900 dark:text-white">Session Insights</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Session Insights
+              </CardTitle>
               <CardDescription className="text-slate-600 dark:text-slate-300">
                 Quick overview for the selected date and class.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="rounded-lg border border-studprimary/10 bg-background-light px-3 py-2.5 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Attendance Date</p>
-                <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">{new Date(selectedDate).toLocaleDateString()}</p>
-              </div>
-
-              <div className="rounded-lg border border-studprimary/10 bg-background-light px-3 py-2.5 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Attendance Mode</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Attendance Date
+                </p>
                 <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  {existingAttendance ? "Edit Existing Record" : "Create New Record"}
+                  {new Date(selectedDate).toLocaleDateString()}
                 </p>
               </div>
 
               <div className="rounded-lg border border-studprimary/10 bg-background-light px-3 py-2.5 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status Split</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Attendance Mode
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {existingAttendance
+                    ? "Edit Existing Record"
+                    : "Create New Record"}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-studprimary/10 bg-background-light px-3 py-2.5 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Status Split
+                </p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300">
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300"
+                  >
                     Present: {statusBreakdown.present}
                   </Badge>
-                  <Badge variant="outline" className="border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-300">
+                  <Badge
+                    variant="outline"
+                    className="border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-300"
+                  >
                     Absent: {statusBreakdown.absent}
                   </Badge>
-                  <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300">
+                  <Badge
+                    variant="outline"
+                    className="border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300"
+                  >
                     Late: {statusBreakdown.late}
                   </Badge>
                 </div>

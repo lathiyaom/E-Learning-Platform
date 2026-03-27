@@ -1,15 +1,27 @@
 import React from "react";
-import { CalendarClock, Sparkles, TrendingUp, BookMarked, Clock4 } from "lucide-react";
+import {
+  CalendarClock,
+  Sparkles,
+  TrendingUp,
+  BookMarked,
+  Clock4,
+} from "lucide-react";
 
 function StatChip({ icon: Icon, label, value, accent }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/70 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 backdrop-blur-sm shadow-sm">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent}`}>
+      <div
+        className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent}`}
+      >
         <Icon className="w-4 h-4" />
       </div>
       <div className="leading-none">
-        <p className="text-xl font-extrabold text-slate-900 dark:text-white">{value}</p>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>
+        <p className="text-xl font-extrabold text-slate-900 dark:text-white">
+          {value}
+        </p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+          {label}
+        </p>
       </div>
     </div>
   );
@@ -52,13 +64,19 @@ function UpcomingPoster({ totalCount = 0, dayCount = 0, courseCount = 0 }) {
                   viewBox="0 0 100 10"
                   preserveAspectRatio="none"
                 >
-                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                  <path
+                    d="M0 5 Q 50 10 100 5"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                  />
                 </svg>
               </span>
             </h1>
 
             <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed max-w-md">
-              Stay ahead of your schedule. View, prepare, and join your upcoming lectures for the next 7 days.
+              Stay ahead of your schedule. View, prepare, and join your upcoming
+              lectures for the next 7 days.
             </p>
           </div>
 

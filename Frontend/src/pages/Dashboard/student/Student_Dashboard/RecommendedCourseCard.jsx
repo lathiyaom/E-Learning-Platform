@@ -29,12 +29,13 @@ const CourseCard = ({
   } = course;
 
   const relativeDate = createdAt ? moment(createdAt).fromNow() : "recently";
-  const initials = (instructor || "IN")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((chunk) => chunk[0]?.toUpperCase())
-    .join("") || "IN";
+  const initials =
+    (instructor || "IN")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((chunk) => chunk[0]?.toUpperCase())
+      .join("") || "IN";
 
   return (
     <Card className="w-full bg-white dark:dark-glass rounded-3xl overflow-hidden border border-slate-100 dark:border-white/10 group hover:shadow-xl dark:hover:shadow-premium-gold/5 transition-all flex flex-col h-full py-0">
@@ -83,7 +84,6 @@ const CourseCard = ({
 
       {/* Content Section */}
       <CardContent className="p-5 flex-1 flex flex-col">
-
         {/* Title */}
         <h3 className="font-bold text-lg mb-2 leading-snug text-slate-900 dark:text-white group-hover:text-studprimary dark:group-hover:text-premium-gold transition-colors line-clamp-2">
           {title}
@@ -161,7 +161,9 @@ const CourseCard = ({
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
               <Clock3 className="w-3.5 h-3.5" />
               <span className="truncate">{relativeDate}</span>
-              {duration && duration !== "N/A" ? <span>• {duration}</span> : null}
+              {duration && duration !== "N/A" ? (
+                <span>• {duration}</span>
+              ) : null}
             </p>
 
             {/* Instructor Info */}

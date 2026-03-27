@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import {
   Accordion,
   AccordionItem,
@@ -39,18 +40,54 @@ const faqs = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
 const ContactFAQ = () => {
   return (
     <section className="relative py-20 bg-slate-50 dark:bg-navy-charcoal transition-colors duration-300 overflow-hidden">
       {/* Decorative blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -bottom-32 -right-32 w-[400px] h-[400px] dark:bg-premium-gold/5 rounded-full blur-[120px]" />
-        <div className="absolute -top-32 -left-32 w-[350px] h-[350px] dark:bg-primary/5 rounded-full blur-[100px]" />
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-32 -right-32 w-[400px] h-[400px] dark:bg-premium-gold/5 rounded-full blur-[120px]" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-32 -left-32 w-[350px] h-[350px] dark:bg-primary/5 rounded-full blur-[100px]" 
+        />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="text-center max-w-2xl mx-auto mb-12"
+        >
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 dark:bg-premium-gold/10 text-primary dark:text-premium-gold text-xs font-bold tracking-wider uppercase mb-4 border border-primary/20 dark:border-premium-gold/20 backdrop-blur-sm">
             <span className="material-symbols-outlined text-sm">quiz</span>
             FAQ
@@ -65,37 +102,45 @@ const ContactFAQ = () => {
             Can&apos;t find what you&apos;re looking for? Send us a message
             above or chat on WhatsApp.
           </p>
-        </div>
+        </motion.div>
 
         {/* Radix Accordion */}
-        <div className="max-w-3xl mx-auto">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="max-w-3xl mx-auto"
+        >
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq) => (
-              <AccordionItem
-                key={faq.id}
-                value={faq.id}
-                className="group bg-white dark:bg-transparent dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:border-primary/20 dark:hover:border-premium-gold/20 hover:shadow-md data-[state=open]:border-primary/30 dark:data-[state=open]:border-premium-gold/30 data-[state=open]:shadow-md overflow-hidden transition-all duration-300 not-last:border-b-0"
-              >
-                <AccordionTrigger className="w-full flex items-center gap-4 px-5 py-4 text-left hover:no-underline border-0 rounded-2xl">
-                  {/* Icon + Question */}
-                  <span className="material-symbols-outlined text-xl shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-primary dark:group-hover:text-premium-gold group-data-[state=open]:text-primary dark:group-data-[state=open]:text-premium-gold transition-colors duration-200">
-                    {faq.icon}
-                  </span>
-                  <span className="flex-1 font-bold text-sm sm:text-base text-slate-800 dark:text-slate-100 group-hover:text-primary dark:group-hover:text-premium-gold group-data-[state=open]:text-primary dark:group-data-[state=open]:text-premium-gold transition-colors duration-200">
-                    {faq.q}
-                  </span>
-                </AccordionTrigger>
+              <motion.div key={faq.id} variants={itemVariants}>
+                <AccordionItem
+                  value={faq.id}
+                  className="group bg-white dark:bg-transparent dark:dark-glass rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm hover:border-primary/20 dark:hover:border-premium-gold/20 hover:shadow-md data-[state=open]:border-primary/30 dark:data-[state=open]:border-premium-gold/30 data-[state=open]:shadow-md overflow-hidden transition-all duration-300 not-last:border-b-0"
+                >
+                  <AccordionTrigger className="w-full flex items-center gap-4 px-5 py-4 text-left hover:no-underline border-0 rounded-2xl">
+                    {/* Icon + Question */}
+                    <span className="material-symbols-outlined text-xl shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-primary dark:group-hover:text-premium-gold group-data-[state=open]:text-primary dark:group-data-[state=open]:text-premium-gold transition-colors duration-200">
+                      {faq.icon}
+                    </span>
+                    <span className="flex-1 font-bold text-sm sm:text-base text-slate-800 dark:text-slate-100 group-hover:text-primary dark:group-hover:text-premium-gold group-data-[state=open]:text-primary dark:group-data-[state=open]:text-premium-gold transition-colors duration-200">
+                      {faq.q}
+                    </span>
+                  </AccordionTrigger>
 
-                <AccordionContent className="pl-14 pr-5 pb-5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {faq.a}
-                </AccordionContent>
-              </AccordionItem>
+                  <AccordionContent className="pl-14 pr-5 pb-5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
             ))}
           </Accordion>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 };
 
 export default ContactFAQ;
+

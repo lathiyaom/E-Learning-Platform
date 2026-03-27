@@ -24,7 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 const PANEL_CLASS =
     "rounded-2xl border border-studprimary/15 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm";
 const INPUT_CLASS =
-    "w-full rounded-lg border border-studprimary/15 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/20 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20";
+    "w-full rounded-lg border border-studprimary/15 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/20 dark:border-white/10 dark:bg-deep-charcoal dark:text-white/80 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20";
 const BADGE_HOVER_CLASS = "border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm";
 
 const DEFAULT_FORM_DATA = {
@@ -54,9 +54,9 @@ const getStatusBadgeClass = (status) => {
 
 const getClassroomBadgeClass = (classroomLabel) => {
     if (String(classroomLabel).toLowerCase() === "virtual") {
-        return `${BADGE_HOVER_CLASS} border-studprimary/25 bg-lavender-light text-studprimary hover:bg-lavender dark:border-premium-gold/35 dark:bg-premium-gold/15 dark:text-premium-gold dark:hover:bg-premium-gold/25`;
+        return `${BADGE_HOVER_CLASS} border-studprimary/25 bg-lavender-light text-superadminprimary hover:bg-lavender dark:border-premium-gold/35 dark:bg-premium-gold/15 dark:text-premium-gold dark:hover:bg-premium-gold/25`;
     }
-    return `${BADGE_HOVER_CLASS} border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-white/20 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20`;
+    return `${BADGE_HOVER_CLASS} border-slate-200 bg-slate-100 text-superadminprimary hover:bg-slate-200 dark:border-white/20 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20`;
 };
 
 const getClassroomLabel = (lecture) => {
@@ -659,10 +659,10 @@ const TeacherLectureManagement = () => {
                                                         </p>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge className={getClassroomBadgeClass(classroomLabel)}>{classroomLabel}</Badge>
+                                                        <Badge  variant="outline" className={getClassroomBadgeClass(classroomLabel)}>{classroomLabel}</Badge>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge className={`${getStatusBadgeClass(lecture.status)} capitalize`}>{lecture.status || "scheduled"}</Badge>
+                                                        <Badge variant="outline" className={`${getStatusBadgeClass(lecture.status)} capitalize`}>{lecture.status || "scheduled"}</Badge>
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-1.5">
