@@ -76,6 +76,14 @@ const isRoleLikeFallbackName = (value) =>
     String(value || "").trim(),
   );
 
+const isSelfParticipant = (participant, currentUserId, currentUserModel) => {
+  if (!participant) return false;
+  const participantId = String(participant.id || participant._id || "");
+  const participantModel = participant.model || participant.participant_model || "User";
+
+  return participantId === currentUserId && participantModel === currentUserModel;
+};
+
 const roleLabelMap = {
   student: "Student",
   teacher: "Teacher",
@@ -219,16 +227,28 @@ function ChatPage() {
     const onConversationUpdated = ({ conversation: payload }) => {
       if (!payload?._id) return;
       markConversationUpdated(payload);
+
+      if (activeConversationRef.current === payload._id && payload.isUnread) {
+        fetchMessages(payload._id);
+        markAsRead(payload._id);
+      }
     };
 
     const onNewMessage = ({ conversationId, message: serverMessage }) => {
       if (!serverMessage?._id || !conversationId) return;
 
+      const isActiveConversation = activeConversationRef.current === conversationId;
+      const senderId = String(serverMessage?.sender_id?._id || serverMessage?.sender_id || "");
+      const senderModel = serverMessage?.sender_model || "User";
+      const isFromCurrentUser =
+        senderId === currentUserId &&
+        (senderModel === currentUserModel || ["User", "Tenant"].includes(senderModel));
+
       setMessages((prev) => {
         const exists = prev.some((entry) => entry._id === serverMessage._id);
         if (exists) return prev;
 
-        if (activeConversationRef.current === conversationId) {
+        if (isActiveConversation) {
           const withoutOptimistic = prev.filter((entry) => {
             if (!entry?.isOptimistic) return true;
             const sameText = String(entry?.message || "").trim() === String(serverMessage?.message || "").trim();
@@ -244,17 +264,37 @@ function ChatPage() {
         return prev;
       });
 
-      setConversations((prev) =>
-        prev.map((conversation) =>
-          conversation._id === conversationId
-            ? {
-                ...conversation,
-                last_message: serverMessage.message,
-                last_message_at: serverMessage.created_at || new Date().toISOString(),
-              }
-            : conversation,
-        ),
-      );
+      setConversations((prev) => {
+        const next = prev.map((conversation) => {
+          if (conversation._id !== conversationId) {
+            return conversation;
+          }
+
+          const unreadCount = isActiveConversation || isFromCurrentUser
+            ? 0
+            : Number(conversation.unreadCount || 0) + 1;
+
+          return {
+            ...conversation,
+            last_message: serverMessage.message,
+            last_message_at: serverMessage.created_at || new Date().toISOString(),
+            isUnread: !(isActiveConversation || isFromCurrentUser),
+            unreadCount,
+          };
+        });
+
+        next.sort((a, b) => {
+          const aTime = new Date(a.last_message_at || 0).getTime();
+          const bTime = new Date(b.last_message_at || 0).getTime();
+          return bTime - aTime;
+        });
+
+        return next;
+      });
+
+      if (isActiveConversation && !isFromCurrentUser) {
+        markAsRead(conversationId);
+      }
     };
 
     const onTyping = ({ conversationId, participantKey, userId }) => {
@@ -311,12 +351,13 @@ function ChatPage() {
       socket.off("user_status_change", onUserStatus);
       disconnectSocket();
     };
-  }, [currentUserId, markConversationUpdated]);
+  }, [currentUserId, currentUserModel, fetchMessages, markAsRead, markConversationUpdated]);
 
   useEffect(() => {
+    activeConversationRef.current = selectedConversationId || null;
+
     if (!selectedConversationId) return undefined;
 
-    activeConversationRef.current = selectedConversationId;
     joinConversation(selectedConversationId).catch(() => false);
 
     fetchMessages(selectedConversationId);
@@ -334,8 +375,14 @@ function ChatPage() {
 
   const chatsData = useMemo(() => {
     const items = conversations.map((conversation) => {
+        const payloadOtherParticipant =
+          conversation.otherParticipant &&
+          !isSelfParticipant(conversation.otherParticipant, currentUserId, currentUserModel)
+            ? conversation.otherParticipant
+            : null;
+
         const otherParticipant =
-          conversation.otherParticipant ||
+          payloadOtherParticipant ||
           (conversation.participants || []).find((entry) => {
             const entryId = String(entry.id || entry._id || "");
             const entryModel = entry.model || entry.participant_model || "User";
@@ -594,7 +641,7 @@ function ChatPage() {
   const showMainPane = Boolean(selectedConversationId);
 
   return (
-    <div className="chat-shell flex w-full bg-white dark:bg-deep-charcoal overflow-hidden">
+    <div className="chat-shell flex w-full min-w-0 bg-white dark:bg-deep-charcoal overflow-hidden">
       <ChatSidebar
         chatsData={chatsData}
         selectedChat={selectedChatData}

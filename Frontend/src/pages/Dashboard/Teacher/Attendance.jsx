@@ -94,7 +94,8 @@ const Attendance = () => {
 
   const statusBreakdown = students.reduce(
     (acc, enrollment) => {
-      const sid = enrollment.studentId?._id || enrollment.studentId;
+      const studentObj = enrollment.studentId || enrollment.student_id;
+      const sid = studentObj?._id || studentObj || enrollment.studentId || enrollment.student_id;
       const status = attendanceData[sid] || "present";
 
       if (status === "present") acc.present += 1;
@@ -121,7 +122,8 @@ const Attendance = () => {
 
     try {
       const attendanceRecords = students.map((enrollment) => {
-        const sid = enrollment.studentId?._id || enrollment.studentId;
+        const studentObj = enrollment.studentId || enrollment.student_id;
+        const sid = studentObj?._id || studentObj || enrollment.studentId || enrollment.student_id;
         return {
           studentId: sid,
           status: attendanceData[sid] || "present",
@@ -196,15 +198,31 @@ const Attendance = () => {
 
   const studentRows = React.useMemo(() => {
     return students.map((enrollment) => {
-      const sid = enrollment.studentId?._id || enrollment.studentId;
-      const displayName = enrollment.studentId?.firstName
-        ? `${enrollment.studentId.firstName} ${enrollment.studentId.lastName || ""}`.trim()
-        : sid;
+      const studentObj = enrollment.studentId || enrollment.student_id;
+      const sid =
+        studentObj?._id ||
+        studentObj ||
+        enrollment.studentId ||
+        enrollment.student_id;
+
+      const sInfo = typeof studentObj === "object" ? studentObj : null;
+      const displayName = sInfo?.firstName
+        ? `${sInfo.firstName} ${sInfo.lastName || ""}`.trim()
+        : sid && typeof sid === "string"
+          ? `Student (${sid.substring(0, 8)}...)`
+          : "Unknown Student";
+
+      const enrollmentDate =
+        enrollment.enrolledAt ||
+        enrollment.enrolled_at ||
+        enrollment.createdAt ||
+        enrollment.enrollmentDate;
 
       return {
         enrollment,
         sid,
         displayName,
+        enrollmentDate,
         selectedStatus: attendanceData[sid] || "present",
       };
     });
@@ -461,12 +479,13 @@ const Attendance = () => {
                         </TableHeader>
                         <TableBody>
                           {paginatedRows.map((row) => {
-                            const {
-                              enrollment,
-                              sid,
-                              displayName,
-                              selectedStatus,
-                            } = row;
+                              const {
+                                enrollment,
+                                sid,
+                                displayName,
+                                enrollmentDate,
+                                selectedStatus,
+                              } = row;
 
                             return (
                               <TableRow key={enrollment._id || enrollment.id}>
@@ -474,17 +493,13 @@ const Attendance = () => {
                                   {displayName}
                                 </TableCell>
                                 <TableCell>
-                                  {enrollment.enrollmentDate
-                                    ? new Date(
-                                        enrollment.enrollmentDate,
-                                      ).toLocaleDateString()
+                                  {enrollmentDate
+                                    ? new Date(enrollmentDate).toLocaleDateString()
                                     : "-"}
                                 </TableCell>
                                 <TableCell>
                                   <span className="inline-flex min-w-[90px] justify-center rounded-md bg-background-light px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-white/10 dark:text-slate-200">
-                                    {formatEnrollmentTenure(
-                                      enrollment.enrollmentDate,
-                                    )}
+                                    {formatEnrollmentTenure(enrollmentDate)}
                                   </span>
                                 </TableCell>
                                 <TableCell>

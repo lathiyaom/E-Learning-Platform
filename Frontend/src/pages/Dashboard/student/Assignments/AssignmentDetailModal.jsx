@@ -4,6 +4,8 @@ import {
   Award, BookOpen, Clock, CheckCircle2, Upload,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { ErrorToster } from "../../../../components/toster";
+import { downloadFileFromUrl } from "../../../../utils/downloadFile";
 
 function InfoRow({ icon: Icon, label, value }) {
   if (!value) return null;
@@ -24,6 +26,19 @@ function AssignmentDetailModal({ assignment, onClose, onSubmit }) {
   if (!assignment) return null;
 
   const canSubmit = assignment.submissionStatus !== "submitted" && assignment.submissionStatus !== "graded";
+
+  const handleAttachmentDownload = async (event, attachment) => {
+    if (attachment.attachmentType !== "file") return;
+
+    event.preventDefault();
+
+    try {
+      await downloadFileFromUrl(attachment.url, attachment.name || "assignment-file");
+    } catch (_) {
+      ErrorToster("File download failed. Opening file in a new tab.");
+      window.open(attachment.url, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -112,6 +127,7 @@ function AssignmentDetailModal({ assignment, onClose, onSubmit }) {
                     href={att.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => handleAttachmentDownload(e, att)}
                     download={att.attachmentType === "file" ? att.name : undefined}
                     className="flex items-center gap-3.5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:border-studprimary/50 dark:hover:border-premium-gold/50 hover:bg-studprimary/5 dark:hover:bg-premium-gold/5 transition-all group"
                   >

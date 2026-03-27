@@ -38,6 +38,7 @@ import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import { useUploadDocumentMutation, useDeleteFileMutation } from "../../../redux/Apis/uploadApi";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { SuccessToster, ErrorToster } from "../../../components/toster";
+import { downloadFileFromUrl } from "../../../utils/downloadFile";
 
 /* reusable components */
 import {
@@ -183,6 +184,17 @@ const SubmissionsModal = ({ assignment, onClose }) => {
   });
   const submissions = submissionsData?.data || [];
 
+  const handleSubmissionFileDownload = async (event, file) => {
+    event.preventDefault();
+
+    try {
+      await downloadFileFromUrl(file.url, file.originalName || file.filename || "submission-file");
+    } catch (_) {
+      ErrorToster("File download failed. Opening file in a new tab.");
+      window.open(file.url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -276,6 +288,7 @@ const SubmissionsModal = ({ assignment, onClose }) => {
                           href={file.url}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => handleSubmissionFileDownload(e, file)}
                           className="inline-flex items-center gap-2 text-xs font-medium text-studprimary dark:text-premium-gold hover:underline"
                         >
                           <Download size={12} /> {file.originalName}

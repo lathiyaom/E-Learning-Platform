@@ -17,8 +17,10 @@ const ChatProfile = ({ selectedChat, showProfile, setShowProfile }) => {
 
       <aside
         className={`${
-          showProfile ? "translate-x-0" : "translate-x-full"
-        } fixed right-0 top-0 h-full z-50 lg:static lg:z-auto transition-transform duration-300 ease-in-out w-[86vw] max-w-[340px] lg:w-[320px] xl:w-[360px] shrink-0 border-l border-slate-100 dark:border-white/5 flex flex-col bg-slate-50/30 dark:bg-navy-charcoal/50`}
+          showProfile
+            ? "translate-x-0 lg:w-[320px] xl:w-[360px] lg:opacity-100"
+            : "translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0 lg:border-l-0 lg:overflow-hidden lg:pointer-events-none"
+        } fixed right-0 top-0 h-full z-50 lg:relative lg:top-auto lg:right-auto lg:z-auto transition-all duration-300 ease-in-out w-[86vw] max-w-[340px] shrink-0 border-l border-slate-100 dark:border-white/5 flex flex-col bg-slate-50/30 dark:bg-navy-charcoal/50`}
       >
         {/* Close button */}
         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5">

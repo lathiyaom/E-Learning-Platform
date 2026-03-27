@@ -348,7 +348,7 @@ const ChatWindow = ({
   isSocketConnected = true, // Connection status for UI feedback
 }) => {
   return (
-    <main className="flex-1 flex flex-col h-full bg-white dark:bg-navy-charcoal overflow-hidden relative">
+    <main className="flex-1 min-w-0 flex flex-col h-full bg-white dark:bg-navy-charcoal overflow-hidden relative">
       <ChatHeader
         selectedChat={selectedChat}
         showProfile={showProfile}

@@ -124,11 +124,39 @@ exports.getTeacherAssignments = async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    const assignmentIds = assignments.map((assignment) => assignment._id);
+    const submissionCounts = assignmentIds.length
+      ? await AssignmentSubmission.aggregate([
+          {
+            $match: {
+              assignmentId: { $in: assignmentIds },
+              isDeleted: false,
+              status: { $ne: "draft" },
+            },
+          },
+          {
+            $group: {
+              _id: "$assignmentId",
+              count: { $sum: 1 },
+            },
+          },
+        ])
+      : [];
+
+    const submissionCountMap = new Map(
+      submissionCounts.map((item) => [item._id.toString(), item.count]),
+    );
+
+    const assignmentsWithSubmissionCount = assignments.map((assignment) => ({
+      ...assignment.toObject(),
+      submissionCount: submissionCountMap.get(assignment._id.toString()) || 0,
+    }));
+
     const total = await Assignment.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      data: assignments,
+      data: assignmentsWithSubmissionCount,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

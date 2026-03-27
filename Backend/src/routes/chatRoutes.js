@@ -257,11 +257,53 @@ const getUserContactsByRole = async (organizationId, role) => {
   }).select("firstName lastName email userType avatar currentOrganization organizations tenant_id");
 };
 
-const emitConversationUpdateToParticipants = (io, conversationPayload) => {
-  if (!io || !conversationPayload?.participants) return;
+const buildConversationRequester = (participant) => {
+  const model = participant?.participant_model || participant?.model || "User";
+  const id = getIdString(participant?.participant_id || participant?.id);
+  const role = normalizeRole(participant?.participant_role || participant?.role);
 
-  conversationPayload.participants.forEach((participant) => {
-    io.to(buildSocketRoom({ model: participant.model, id: participant.id })).emit(
+  return {
+    id,
+    model,
+    role,
+    key: buildParticipantKey({ model, id }),
+  };
+};
+
+const emitConversationUpdateToParticipants = (io, conversationDoc) => {
+  if (!io || !conversationDoc) return;
+
+  const rawConversation =
+    typeof conversationDoc.toObject === "function"
+      ? conversationDoc.toObject({ virtuals: false })
+      : conversationDoc;
+
+  const participantList = Array.isArray(rawConversation?.participants) && rawConversation.participants.length
+    ? rawConversation.participants
+    : [
+        rawConversation?.student_id
+          ? {
+              participant_id: rawConversation.student_id?._id || rawConversation.student_id,
+              participant_model: "User",
+              participant_role: "student",
+            }
+          : null,
+        rawConversation?.teacher_id
+          ? {
+              participant_id: rawConversation.teacher_id?._id || rawConversation.teacher_id,
+              participant_model: "User",
+              participant_role: "teacher",
+            }
+          : null,
+      ].filter(Boolean);
+
+  participantList.forEach((participant) => {
+    const requester = buildConversationRequester(participant);
+    if (!requester?.id) return;
+
+    const conversationPayload = normalizeConversation(conversationDoc, requester);
+
+    io.to(buildSocketRoom({ model: requester.model, id: requester.id })).emit(
       "conversation_updated",
       { conversation: conversationPayload },
     );
@@ -695,8 +737,6 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
     );
     await populateConversation(conversation);
 
-    const conversationPayload = normalizeConversation(conversation, requester);
-
     const io = req.app.get("io");
     if (io) {
       io.to(`conversation_${conversation_id}`).emit("new_message", {
@@ -704,7 +744,7 @@ router.post("/send-message", authenticate, tenantScope, async (req, res) => {
         message: newMessage,
       });
 
-      emitConversationUpdateToParticipants(io, conversationPayload);
+      emitConversationUpdateToParticipants(io, conversation);
     }
 
     return res.status(201).json({
