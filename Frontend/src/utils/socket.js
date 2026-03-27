@@ -1,7 +1,8 @@
 import { io } from "socket.io-client";
 import { store } from "../redux/store/store";
+import { resolveSocketUrl } from "./networkConfig";
 
-const SOCKET_URL = import.meta.env.VITE_APP_API_URL || "http://localhost:5000";
+const SOCKET_URL = resolveSocketUrl();
 
 let socket = null;
 let authUnsubscribe = null;

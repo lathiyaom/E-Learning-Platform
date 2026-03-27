@@ -25,6 +25,7 @@ const optionalEnvVars = {
   NODE_ENV: "development",
   FRONTEND_URL_DEV: "http://localhost:3000",
   FRONTEND_URL_PROD: "https://example.com",
+  FRONTEND_URLS: "",
   VITE_APP_API_URL: "http://localhost:5000",
   LOG_LEVEL: "info",
   RATE_LIMIT_WINDOW: "15", // minutes
@@ -70,14 +71,20 @@ const config = {
 
   // CORS
   cors: {
-    origins: [
-      process.env.FRONTEND_URL_DEV || "http://localhost:3000",
-      process.env.FRONTEND_URL_PROD || "https://example.com",
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:5173",
-      "http://localhost:4173",
-    ],
+    origins: Array.from(
+      new Set([
+        process.env.FRONTEND_URL_DEV || "http://localhost:3000",
+        process.env.FRONTEND_URL_PROD || "https://example.com",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:5173",
+        "http://localhost:4173",
+        ...String(process.env.FRONTEND_URLS || "")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ])
+    ),
   },
 
   // API

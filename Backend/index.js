@@ -138,12 +138,25 @@ const superAdminTeachersRoute = require("./src/routes/superAdminTeachersRoute");
 const teacherApplicationRoutes = require("./src/routes/teacherApplicationRoutes");
 const subjectRoutes = require("./src/routes/subjectRoutes");
 
+const normalizeOrigin = (origin) => {
+  if (!origin || typeof origin !== "string") return origin;
+  return origin.replace(/\/+$/, "");
+};
+
+const allowedOriginSet = new Set((config.cors.origins || []).map(normalizeOrigin).filter(Boolean));
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (config.isDevelopment) return true;
+  return allowedOriginSet.has(normalizeOrigin(origin));
+};
+
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = config.cors.origins;
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
     } else {
+      logger.warn(`Blocked CORS origin: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -165,7 +178,14 @@ const corsOptions = {
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: config.cors.origins,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        logger.warn(`Blocked Socket.IO origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },

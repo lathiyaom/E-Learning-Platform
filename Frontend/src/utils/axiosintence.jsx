@@ -1,8 +1,9 @@
 import axios from "axios";
 import { store } from "../redux/store/store";
 import { logout, updateAccessToken } from "../redux/slice/authSlice";
+import { resolveApiBaseUrl } from "./networkConfig";
 
-const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "http://localhost:5000";
+const API_BASE_URL = resolveApiBaseUrl();
 
 const API = axios.create({
   baseURL: API_BASE_URL,
