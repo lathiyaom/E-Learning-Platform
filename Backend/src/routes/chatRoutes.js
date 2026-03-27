@@ -259,7 +259,8 @@ const getUserContactsByRole = async (organizationId, role) => {
 
 const buildConversationRequester = (participant) => {
   const model = participant?.participant_model || participant?.model || "User";
-  const id = getIdString(participant?.participant_id || participant?.id);
+  const rawId = participant?.participant_id || participant?.id;
+  const id = getIdString(rawId?._id || rawId);
   const role = normalizeRole(participant?.participant_role || participant?.role);
 
   return {

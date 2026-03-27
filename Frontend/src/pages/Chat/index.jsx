@@ -123,11 +123,45 @@ function ChatPage() {
     setConversations((prev) => {
       const existingIndex = prev.findIndex((entry) => entry._id === conversationPayload._id);
       if (existingIndex === -1) {
-        return [conversationPayload, ...prev];
+        const normalizedUnread = conversationPayload?.isUnread
+          ? Math.max(1, Number(conversationPayload?.unreadCount || 0))
+          : 0;
+
+        return [
+          {
+            ...conversationPayload,
+            isUnread: Boolean(conversationPayload?.isUnread),
+            unreadCount: normalizedUnread,
+          },
+          ...prev,
+        ];
       }
 
       const updated = [...prev];
-      updated[existingIndex] = { ...updated[existingIndex], ...conversationPayload };
+      const previous = updated[existingIndex];
+      const previousTime = new Date(previous?.last_message_at || 0).getTime();
+      const payloadTime = new Date(conversationPayload?.last_message_at || 0).getTime();
+      const hasNewerMessage = payloadTime > previousTime;
+
+      let unreadCount = conversationPayload?.isUnread
+        ? Math.max(1, Number(conversationPayload?.unreadCount || 0))
+        : 0;
+
+      if (
+        conversationPayload?.isUnread &&
+        previous?.isUnread &&
+        hasNewerMessage &&
+        unreadCount <= 1
+      ) {
+        unreadCount = Number(previous?.unreadCount || 0) + 1;
+      }
+
+      updated[existingIndex] = {
+        ...previous,
+        ...conversationPayload,
+        isUnread: Boolean(conversationPayload?.isUnread),
+        unreadCount,
+      };
       updated.sort((a, b) => {
         const aTime = new Date(a.last_message_at || 0).getTime();
         const bTime = new Date(b.last_message_at || 0).getTime();
