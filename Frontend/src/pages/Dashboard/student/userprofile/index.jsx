@@ -8,7 +8,7 @@ import AcademicHonors from "./AcademicHonors";
 import VerifiedCertifications from "./VerifiedCertifications";
 import { ProfileProvider } from "./ProfileContext.jsx";
 
-const breadcrumbItems = getBreadcrumbs("USER_PROFILE");
+const breadcrumbItems = getBreadcrumbs("PROFILE");
 
 function Userprofile() {
   return (

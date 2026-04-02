@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   flexRender,
   getCoreRowModel,
@@ -374,42 +375,65 @@ const UserModal = ({ mode, user, onClose, onSaved }) => {
 
 const ViewModal = ({ user, onClose }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div className="bg-white dark:bg-navy-charcoal rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-white/10">
-      <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-white/10">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">User Details</h2>
+    <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-white/10 dark:bg-navy-charcoal">
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-r from-studprimary/10 via-transparent to-premium-gold/10 dark:from-premium-gold/15 dark:via-transparent dark:to-studprimary/10" />
+      <div className="relative flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-white/10">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-studprimary dark:text-premium-gold">User Profile</p>
+          <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white">User Details</h2>
+        </div>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500">
           <X className="h-5 w-5" />
         </button>
       </div>
-      <div className="p-6 space-y-4">
-        <div className="flex items-center gap-4">
-          <UserAvatar user={user} size="h-16 w-16" />
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+      <div className="relative grid gap-0 lg:grid-cols-[280px_1fr]">
+        <div className="border-b border-slate-200 p-6 dark:border-white/10 lg:border-b-0 lg:border-r">
+          <div className="flex flex-col items-center text-center">
+            <UserAvatar user={user} size="h-24 w-24" />
+            <h3 className="mt-4 text-2xl font-black text-slate-900 dark:text-white">
               {user.firstName} {user.lastName}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold capitalize ${ROLE_COLORS[user.userType] || ROLE_COLORS.student}`}>
+                {user.userType || "student"}
+              </span>
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold capitalize ${STATUS_COLORS[user.status] || STATUS_COLORS.inactive}`}>
+                {user.status || "inactive"}
+              </span>
+            </div>
           </div>
         </div>
-        {[
-          ["Role", user.userType],
-          ["Status", user.status],
-          ["Phone", user.phoneNo || "-"],
-          ["Gender", user.gender || "-"],
-          ["About", user.about || "-"],
-          ["Joined", user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"],
-        ].map(([label, value]) => (
-          <div key={label} className="flex justify-between text-sm">
-            <span className="text-slate-500 dark:text-slate-400 font-medium">{label}</span>
-            <span className="text-slate-900 dark:text-white capitalize">{value}</span>
+
+        <div className="p-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["Phone", user.phoneNo || "-"],
+              ["Gender", user.gender || "-"],
+              ["Joined", user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"],
+              ["Role", user.userType || "-"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">{label}</p>
+                <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white capitalize">{value}</p>
+              </div>
+            ))}
           </div>
-        ))}
+
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">About</p>
+            <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
+              {user.about || "No additional profile notes added."}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 );
 
 const ManageUsers = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -621,7 +645,7 @@ const ManageUsers = () => {
               </button>
               <button
                 title="Edit"
-                onClick={() => setModal({ type: "edit", user: u })}
+                onClick={() => navigate(`/admin/users/create?edit=${u._id}`)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 dark:hover:text-cyan-300 dark:hover:bg-cyan-500/10 transition-colors"
               >
                 <Edit className="h-4 w-4" />
@@ -717,10 +741,10 @@ const ManageUsers = () => {
               </p>
             </div>
             <button
-              onClick={() => setModal({ type: "add" })}
+              onClick={() => navigate("/admin/users/create")}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal text-sm font-semibold transition-colors shadow-sm hover:bg-studprimary/90 dark:hover:brightness-110"
             >
-              <Plus className="h-4 w-4" /> Add User
+              <Plus className="h-4 w-4" /> Create User
             </button>
           </div>
         </motion.section>
@@ -859,7 +883,6 @@ const ManageUsers = () => {
           </motion.section>
         )}
 
-        {modal?.type === "add" && <UserModal mode="create" onClose={closeModal} onSaved={onSaved} />}
         {modal?.type === "edit" && <UserModal mode="edit" user={modal.user} onClose={closeModal} onSaved={onSaved} />}
         {modal?.type === "view" && <ViewModal user={modal.user} onClose={closeModal} />}
       </motion.div>

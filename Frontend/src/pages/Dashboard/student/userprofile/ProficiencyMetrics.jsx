@@ -1,23 +1,21 @@
 import React from "react";
 import { SkillsRadarChart } from "../Student_Dashboard/ChartComponents";
 import { useProfile } from "./useProfile";
-import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 
 function ProficiencyMetrics() {
-  const { formData } = useProfile();
-  const { data: enrollmentsData } = useGetMyEnrollmentsQuery();
-  const enrollments = enrollmentsData?.data || [];
+  const { formData, userRole, enrollments, teacherCourses } = useProfile();
 
   const filledProfileFields = [
     formData?.firstName,
     formData?.lastName,
     formData?.email,
     formData?.phoneNo,
-    formData?.campus,
     formData?.about,
   ].filter((value) => String(value || "").trim().length > 0).length;
 
-  const averageProgress = enrollments.length
+  const profileCompletion = Math.round((filledProfileFields / 5) * 100);
+
+  const studentAverageProgress = enrollments.length
     ? Math.round(
         enrollments.reduce(
           (sum, enrollment) => sum + Number(enrollment.progressPercent || enrollment.progress || 0),
@@ -26,30 +24,61 @@ function ProficiencyMetrics() {
       )
     : 0;
 
-  const completedCourses = enrollments.filter(
+  const studentCompletedCourses = enrollments.filter(
     (enrollment) => Number(enrollment.progressPercent || enrollment.progress || 0) >= 100,
   ).length;
 
-  const progressData = [
-    {
-      name: "Profile Completion",
-      value: Math.round((filledProfileFields / 6) * 100),
-      color: "bg-blue-500",
-      text: "text-blue-500",
-    },
-    {
-      name: "Avg Course Progress",
-      value: averageProgress,
-      color: "bg-green-500",
-      text: "text-green-500",
-    },
-    {
-      name: "Course Completion",
-      value: enrollments.length ? Math.round((completedCourses / enrollments.length) * 100) : 0,
-      color: "bg-amber-500",
-      text: "text-amber-500",
-    },
-  ];
+  const teacherTotalStudents = teacherCourses.reduce(
+    (sum, course) => sum + Number(course?.totalStudents || course?.studentCount || course?.enrollmentCount || 0),
+    0,
+  );
+
+  const activeTeacherCourses = teacherCourses.filter(
+    (course) => String(course?.status || "active").toLowerCase() !== "draft",
+  ).length;
+
+  const progressData =
+    userRole === "teacher"
+      ? [
+          {
+            name: "Profile Completion",
+            value: profileCompletion,
+            color: "bg-blue-500",
+            text: "text-blue-500",
+          },
+          {
+            name: "Course Activity",
+            value: teacherCourses.length ? Math.round((activeTeacherCourses / teacherCourses.length) * 100) : 0,
+            color: "bg-green-500",
+            text: "text-green-500",
+          },
+          {
+            name: "Learner Reach",
+            value: Math.min(100, teacherTotalStudents),
+            color: "bg-amber-500",
+            text: "text-amber-500",
+          },
+        ]
+      : [
+          {
+            name: "Profile Completion",
+            value: profileCompletion,
+            color: "bg-blue-500",
+            text: "text-blue-500",
+          },
+          {
+            name: "Avg Course Progress",
+            value: studentAverageProgress,
+            color: "bg-green-500",
+            text: "text-green-500",
+          },
+          {
+            name: "Course Completion",
+            value: enrollments.length ? Math.round((studentCompletedCourses / enrollments.length) * 100) : 0,
+            color: "bg-amber-500",
+            text: "text-amber-500",
+          },
+        ];
 
   return (
     <section className="bg-white dark:dark-glass rounded-2xl md:rounded-[2.5rem] p-8 md:p-10 border border-slate-200 dark:border-white/5 shadow-md dark:shadow-2xl transition-all duration-300">

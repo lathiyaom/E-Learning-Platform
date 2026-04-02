@@ -4,7 +4,7 @@ import Poster from "./poster";
 import HelpTopics from "./HelpTopics";
 import HelpInfoAndContect from "./HelpInfoAndContect";
 import { getBreadcrumbs } from "../../utils/breadcrumbs";
-function Help() {
+function SubHelp() {
   const breadcrumbItems = getBreadcrumbs("HELP");
   return (
     <AdminLayout
@@ -20,5 +20,5 @@ function Help() {
     </AdminLayout>
   );
 }
-export default Help;
+export default SubHelp;
 

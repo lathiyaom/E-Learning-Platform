@@ -85,6 +85,86 @@ const createUser = async (userData) => {
   return userJSON;
 };
 
+const createAdminUser = async (userData) => {
+  const {
+    tenant_id,
+    organizations,
+    currentOrganization,
+    userType,
+    firstName,
+    lastName,
+    age,
+    gender,
+    phoneNo,
+    email,
+    password,
+    about,
+  } = userData;
+
+  if (!tenant_id || !userType || !firstName || !lastName || !email || !password) {
+    throw new Error("Required user fields are missing");
+  }
+
+  const emailValidation = validators.validateEmail(email);
+  if (!emailValidation.valid) throw new Error(emailValidation.error);
+
+  const firstNameValidation = validators.validateName(firstName, "First name");
+  if (!firstNameValidation.valid) throw new Error(firstNameValidation.error);
+
+  const lastNameValidation = validators.validateName(lastName, "Last name");
+  if (!lastNameValidation.valid) throw new Error(lastNameValidation.error);
+
+  if (age !== undefined && age !== null && age !== "") {
+    const ageValidation = validators.validateAge(age);
+    if (!ageValidation.valid) throw new Error(ageValidation.error);
+  }
+
+  if (phoneNo) {
+    const phoneValidation = validators.validatePhone(phoneNo);
+    if (!phoneValidation.valid) throw new Error(phoneValidation.error);
+  }
+
+  if (gender && !["male", "female"].includes(String(gender).toLowerCase())) {
+    throw new Error("Gender must be either male or female");
+  }
+
+  const passwordValidation = validators.validatePassword(password);
+  if (!passwordValidation.valid) {
+    throw new Error(`${passwordValidation.error}: ${passwordValidation.errors.join("; ")}`);
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new Error("User already exists with this email");
+  }
+
+  const existingTenant = await Tenant.findOne({ email });
+  if (existingTenant) {
+    throw new Error("Email already exists as organization account");
+  }
+
+  const newUser = await User.create({
+    tenant_id,
+    organizations: Array.isArray(organizations) ? organizations : [tenant_id],
+    currentOrganization: currentOrganization !== undefined ? currentOrganization : tenant_id,
+    userType,
+    firstName,
+    lastName,
+    age: age !== undefined && age !== "" ? age : undefined,
+    gender,
+    phoneNo,
+    email,
+    password,
+    agreeTerms: true,
+    about,
+  });
+
+  const userJSON = newUser.toObject();
+  delete userJSON.password;
+
+  return userJSON;
+};
+
 const getUserDetails = async (email) => {
   if (!email) throw new Error("Email parameter is required");
 
@@ -176,6 +256,7 @@ const deleteUser = async (email, requesterTenantId, requesterUserType) => {
 
 module.exports = {
   createUser,
+  createAdminUser,
   getUserDetails,
   getAllUsers,
   updateUsers,

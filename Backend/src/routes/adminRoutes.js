@@ -4,7 +4,7 @@ const adminController = require("../controllers/adminController");
 const { authenticate, isTenantOwner, authorize } = require("../middlewares/authMiddleware");
 const tenantScope = require("../middlewares/tenantScope.middleware");
 const { 
-  validateUserSignup, 
+  validateAdminUserCreate, 
   validateUserUpdate, 
   validateIdParam 
 } = require("../middlewares/validation.middleware");
@@ -22,7 +22,7 @@ router.get("/MyUsers", adminController.getMyUsers);
 router.get("/MyUsers/:id", validateIdParam, adminController.getUserById);
 
 // POST /Admin/CreateUser - Create a new user
-router.post("/CreateUser", validateUserSignup, adminController.createUser);
+router.post("/CreateUser", validateAdminUserCreate, adminController.createUser);
 
 // PATCH /Admin/UpdateUser/:id - Update user details
 router.patch("/UpdateUser/:id", validateIdParam, validateUserUpdate, adminController.updateUser);

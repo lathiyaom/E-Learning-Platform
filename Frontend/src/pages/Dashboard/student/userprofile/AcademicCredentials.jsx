@@ -2,7 +2,7 @@ import React from "react";
 import { useProfile } from "./useProfile";
 
 function AcademicCredentials() {
-  const { formData, handleChange, isLoading, error } = useProfile();
+  const { formData, handleChange, validationErrors, isLoading, error } = useProfile();
 
   if (isLoading) {
     return (
@@ -46,6 +46,9 @@ function AcademicCredentials() {
             value={formData.firstName}
             onChange={handleChange}
           />
+          {validationErrors.firstName ? (
+            <p className="text-xs font-semibold text-red-600 dark:text-red-300">{validationErrors.firstName}</p>
+          ) : null}
         </div>
         <div className="space-y-3 relative group">
           <label className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 transition-all group-focus-within:text-studprimary dark:group-focus-within:text-premium-gold">
@@ -58,6 +61,9 @@ function AcademicCredentials() {
             value={formData.lastName}
             onChange={handleChange}
           />
+          {validationErrors.lastName ? (
+            <p className="text-xs font-semibold text-red-600 dark:text-red-300">{validationErrors.lastName}</p>
+          ) : null}
         </div>
         <div className="space-y-3 relative group">
           <label className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 transition-all group-focus-within:text-studprimary dark:group-focus-within:text-premium-gold">
@@ -82,18 +88,9 @@ function AcademicCredentials() {
             value={formData.phoneNo}
             onChange={handleChange}
           />
-        </div>
-        <div className="space-y-3 relative group">
-          <label className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 transition-all group-focus-within:text-studprimary dark:group-focus-within:text-premium-gold">
-            Location
-          </label>
-          <input
-            name="campus"
-            className="w-full bg-slate-50/50 dark:bg-[#1A1B23]/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 px-4 focus:border-studprimary dark:focus:ring-1 dark:focus:ring-premium-gold/40 dark:focus:border-premium-gold/40 focus:outline-none text-sm font-medium text-slate-900 dark:text-slate-200 transition-all"
-            type="text"
-            value={formData.campus}
-            onChange={handleChange}
-          />
+          {validationErrors.phoneNo ? (
+            <p className="text-xs font-semibold text-red-600 dark:text-red-300">{validationErrors.phoneNo}</p>
+          ) : null}
         </div>
         <div className="md:col-span-2 space-y-3 relative group">
           <label className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 transition-all group-focus-within:text-studprimary dark:group-focus-within:text-premium-gold">
@@ -107,6 +104,14 @@ function AcademicCredentials() {
             onChange={handleChange}
             placeholder="Tell us about yourself..."
           />
+          <div className="flex items-center justify-between gap-2">
+            {validationErrors.about ? (
+              <p className="text-xs font-semibold text-red-600 dark:text-red-300">{validationErrors.about}</p>
+            ) : (
+              <span className="text-xs text-slate-500 dark:text-slate-400">Max 500 characters</span>
+            )}
+            <span className="text-xs text-slate-500 dark:text-slate-400">{String(formData.about || "").length}/500</span>
+          </div>
         </div>
       </div>
     </section>

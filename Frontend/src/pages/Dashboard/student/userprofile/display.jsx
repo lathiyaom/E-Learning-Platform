@@ -1,21 +1,22 @@
 import React from "react";
-import { Camera, MapPin, Mail, Globe } from "lucide-react";
+import { Camera, Mail, Globe } from "lucide-react";
 import profileImg from "../../../../assets/imgs/profile-placeholder.jpg";
 import { useProfile } from "./useProfile";
 
 function Display() {
-  const { user, formData, handleSave, isUpdating } = useProfile();
+  const { user, userRole, formData, handleSave, isUpdating } = useProfile();
 
   const handlePreview = () => {
     const previewDetails = [
       `Name: ${formData.firstName || ""} ${formData.lastName || ""}`.trim(),
       `Email: ${formData.email || user?.email || "Not provided"}`,
       `Phone: ${formData.phoneNo || "Not provided"}`,
-      `Location: ${formData.campus || "Not provided"}`,
       `About: ${formData.about || "Not provided"}`,
     ];
     window.alert(previewDetails.join("\n"));
   };
+
+  const roleLabel = userRole === "teacher" ? "Teacher Account" : "Student Account";
 
   return (
     <section className="relative bg-white dark:bg-navy-charcoal rounded-2xl md:rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-2xl">
@@ -61,20 +62,11 @@ function Display() {
             </h2>
           </div>
           <p className="text-slate-500 dark:text-slate-400 font-semibold text-sm sm:text-base md:text-lg mb-4 md:mb-6 flex items-center justify-center md:justify-start gap-2">
-            Full-Stack Architect{" "}
-            <span className="text-slate-400 dark:text-premium-gold/70">
-              San Francisco, USA
-            </span>
+            {roleLabel}
           </p>
 
           {/* Contact Info & Social Links */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4 md:gap-6">
-            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400">
-              <MapPin className="w-4 h-4 text-amber-500 dark:text-premium-gold" />
-              <span className="text-xs sm:text-sm font-medium">
-                San Francisco, CA
-              </span>
-            </div>
             <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400">
               <Mail className="w-4 h-4 text-amber-500 dark:text-premium-gold" />
               <span className="text-xs sm:text-sm font-medium">

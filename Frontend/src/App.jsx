@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import Home from "./pages/Home";
 import HomeNew from "./pages/HomeNew";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import About from "./pages/About2/index";
@@ -19,6 +18,8 @@ import UserUpdateForm from "./pages/Profile/Admin/UserUpdateForm.jsx";
 import AdminSetting from "./pages/Dashboard/Admin/AdminSetting.jsx";
 // import UserComments from "./pages/Profile/Admin/UserComments.jsx";
 import ManageUsers from "./pages/Dashboard/Admin/Users.jsx";
+import AdminUserCreate from "./pages/Dashboard/Admin/UserCreate.jsx";
+import AdminCourseCreate from "./pages/Dashboard/Admin/CourseCreate.jsx";
 import ManageCourses from "./pages/Dashboard/Admin/Courses.jsx";
 import AssignTeachers from "./pages/Dashboard/Admin/AssignTeachers.jsx";
 import Attendance from "./pages/Dashboard/Admin/Attendance.jsx";
@@ -30,7 +31,8 @@ import Subjects from "./pages/Dashboard/Admin/Subjects.jsx";
 import TeacherMarketplace from "./pages/Admin/TeacherMarketplace/index.jsx";
 import Resources from "./pages/resources/index.jsx";
 import Schedule from "./pages/schedule/index.jsx";
-import Help from "./pages/help/index.jsx";
+import Help from "./pages/MainHelp/index.jsx";
+import SubHelp from "./pages/help/index.jsx";
 import { DarkModeProvider } from "./context/DarkModeContext.jsx";
 import Dashboard from "./pages/Dashboard/student/index";
 import ExploreCourses from "./pages/Dashboard/student/exploreCourses/index.jsx";
@@ -54,6 +56,7 @@ import TeacherAssignments from "./pages/Dashboard/Teacher/Assignments.jsx";
 import TeacherStudents from "./pages/Dashboard/Teacher/Students.jsx";
 import TeacherMaterials from "./pages/Dashboard/Teacher/TeacherMaterials.jsx";
 import TeacherLectureManagement from "./pages/Dashboard/Teacher/TeacherLectureManagement.jsx";
+import LectureForm from "./pages/Dashboard/Teacher/LectureForm.jsx";
 import TeacherAnalyticsDashboard from "./pages/Dashboard/Teacher/TeacherAnalyticsDashboard.jsx";
 import CourseForm from "./pages/Dashboard/Teacher/CourseForm.jsx";
 import Enrollments from "./pages/Dashboard/student/Enrollments.jsx";
@@ -61,6 +64,7 @@ import StudentAttendance from "./pages/Dashboard/student/StudentAttendance.jsx";
 import StudentConductedLectures from "./pages/Dashboard/student/StudentConductedLectures.jsx";
 import StudentUpcomingLectures from "./pages/Dashboard/student/StudentUpcomingLectures.jsx";
 import StudentAssignments from "./pages/Dashboard/student/StudentAssignments.jsx";
+import CourseReviews from "./pages/Dashboard/Teacher/CourseReviews.jsx";
 
 import RateCourse from "./pages/Dashboard/student/RateCourse.jsx";
 import StudentFeedbackSystem from "./pages/Dashboard/student/StudentFeedbackSystem.jsx";
@@ -116,9 +120,7 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<HomeNew />} />
-            <Route path="/home-classic" element={<Home />} />
             <Route path="/Login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/Sign-Up" element={<SignUp />} />
             <Route
@@ -132,6 +134,9 @@ function App() {
             <Route path="/resources" element={<Resources />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/help-center" element={<SubHelp />} />
+            
+
             <Route
               path="/teacher/invitation-result"
               element={<InvitationResult />}
@@ -182,6 +187,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AssignTeachers />
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/admin/chat"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <ChatInterface />
                 </ProtectedRoute>
               }
             />
@@ -242,6 +255,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/users/create"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminUserCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/users"
               element={
                 <ProtectedRoute requiredRole="admin">
@@ -259,10 +280,18 @@ function App() {
               }
             />
             <Route
+              path="/admin/courses/create"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminCourseCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/AddCourse"
               element={
                 <ProtectedRoute requiredRole="admin">
-                  <AddCourse />
+                  <AdminCourseCreate />
                 </ProtectedRoute>
               }
             />
@@ -359,10 +388,26 @@ function App() {
               }
             />
             <Route
+              path="/teacher/lecture-form"
+              element={
+                <ProtectedRoute requiredRole="teacher">
+                  <LectureForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/teacher/analytics"
               element={
                 <ProtectedRoute requiredRole="teacher">
                   <TeacherAnalyticsDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/reviews"
+              element={
+                <ProtectedRoute requiredRole="teacher">
+                  <CourseReviews />
                 </ProtectedRoute>
               }
             />
@@ -411,7 +456,7 @@ function App() {
             <Route
               path="/profile"
               element={
-                <ProtectedRoute requiredRole="student">
+                <ProtectedRoute>
                   <Userprofile />
                 </ProtectedRoute>
               }

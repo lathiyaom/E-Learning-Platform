@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
     CalendarClock,
-    CheckCircle2,
     Clock3,
     Edit,
     FileUp,
@@ -12,7 +12,7 @@ import {
     Video,
     X,
 } from "lucide-react";
-import { getLecturesByCourse, createLecture, updateLecture, deleteLecture } from "../../../redux/Apis/lectureApi";
+import { getLecturesByCourse, deleteLecture } from "../../../redux/Apis/lectureApi";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/Card";
@@ -26,17 +26,6 @@ const PANEL_CLASS =
 const INPUT_CLASS =
     "w-full rounded-lg border border-studprimary/15 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-studprimary/40 focus:ring-2 focus:ring-studprimary/20 dark:border-white/10 dark:bg-deep-charcoal dark:text-white/80 dark:focus:border-premium-gold/45 dark:focus:ring-premium-gold/20";
 const BADGE_HOVER_CLASS = "border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm";
-
-const DEFAULT_FORM_DATA = {
-    title: "",
-    description: "",
-    lectureDate: "",
-    startTime: "",
-    endTime: "",
-    room: "",
-    type: "theory",
-    videoUrl: "",
-};
 
 const getStatusBadgeClass = (status) => {
     const normalized = String(status || "scheduled").toLowerCase();
@@ -72,145 +61,6 @@ const isUpcomingLecture = (lecture) => {
     lectureDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
     return lectureDate >= today;
-};
-
-const LectureFormModal = ({
-    showModal,
-    editingLecture,
-    formData,
-    handleInputChange,
-    handleSubmit,
-    handleCloseModal,
-    loading,
-}) => {
-    if (!showModal) return null;
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-3xl overflow-auto rounded-2xl border border-studprimary/20 bg-white shadow-2xl dark:border-white/10 dark:bg-navy-charcoal max-h-[92vh]">
-                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-studprimary/10 bg-white/95 px-6 py-4 backdrop-blur dark:border-white/10 dark:bg-navy-charcoal/95">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">{editingLecture ? "Edit" : "Schedule"} Lecture</h2>
-                    <button
-                        onClick={handleCloseModal}
-                        className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
-                        aria-label="Close modal"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4 p-6">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Lecture Title *</label>
-                            <input
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleInputChange}
-                                required
-                                className={INPUT_CLASS}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Type</label>
-                            <select name="type" value={formData.type} onChange={handleInputChange} className={INPUT_CLASS}>
-                                <option value="theory">Theory</option>
-                                <option value="practical">Practical</option>
-                                <option value="lab">Lab</option>
-                                <option value="tutorial">Tutorial</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Date *</label>
-                            <input
-                                type="date"
-                                name="lectureDate"
-                                value={formData.lectureDate}
-                                onChange={handleInputChange}
-                                required
-                                className={INPUT_CLASS}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Room / Mode</label>
-                            <input
-                                type="text"
-                                name="room"
-                                value={formData.room}
-                                onChange={handleInputChange}
-                                placeholder="e.g., Room 302 or Virtual"
-                                className={INPUT_CLASS}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Start Time *</label>
-                            <input
-                                type="time"
-                                name="startTime"
-                                value={formData.startTime}
-                                onChange={handleInputChange}
-                                required
-                                className={INPUT_CLASS}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">End Time *</label>
-                            <input
-                                type="time"
-                                name="endTime"
-                                value={formData.endTime}
-                                onChange={handleInputChange}
-                                required
-                                className={INPUT_CLASS}
-                            />
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Description</label>
-                            <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
-                                rows={3}
-                                className={INPUT_CLASS}
-                            />
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Video URL</label>
-                            <input
-                                type="url"
-                                name="videoUrl"
-                                value={formData.videoUrl}
-                                onChange={handleInputChange}
-                                placeholder="https://..."
-                                className={INPUT_CLASS}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 border-t border-studprimary/10 pt-4 sm:flex-row">
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-1 bg-studprimary text-white hover:bg-studprimary/90 dark:bg-premium-gold dark:text-deep-charcoal dark:hover:bg-premium-gold/90"
-                        >
-                            {editingLecture ? "Update" : "Schedule"} Lecture
-                        </Button>
-                        <Button type="button" onClick={handleCloseModal} variant="outline" className="flex-1 border-studprimary/20">
-                            Cancel
-                        </Button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
 };
 
 const MaterialsModal = ({
@@ -310,6 +160,7 @@ const MaterialsModal = ({
 
 const TeacherLectureManagement = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { lectures, loading, error, pagination } = useSelector((state) => state.lecture);
     const { user } = useSelector((state) => state.auth || {});
     const teacherId = String(user?._id || user?.id || "");
@@ -320,11 +171,8 @@ const TeacherLectureManagement = () => {
     const [statusFilter, setStatusFilter] = useState("all");
     const [typeFilter, setTypeFilter] = useState("all");
     const [timeTab, setTimeTab] = useState("upcoming");
-    const [showModal, setShowModal] = useState(false);
-    const [editingLecture, setEditingLecture] = useState(null);
     const [showMaterialsModal, setShowMaterialsModal] = useState(false);
     const [selectedLecture, setSelectedLecture] = useState(null);
-    const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
     const [materials, setMaterials] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadMessage, setUploadMessage] = useState({ text: "", type: "" });
@@ -390,53 +238,6 @@ const TeacherLectureManagement = () => {
     const totalPages = Math.max(pagination?.pages || 1, 1);
     const pageNumbers = useMemo(() => Array.from({ length: totalPages }, (_, index) => index + 1), [totalPages]);
 
-    const handleOpenModal = (lecture = null) => {
-        if (lecture) {
-            setEditingLecture(lecture);
-            setFormData({
-                title: lecture?.title || "",
-                description: lecture?.description || "",
-                lectureDate: lecture?.lectureDate?.split("T")[0] || "",
-                startTime: lecture?.startTime || "",
-                endTime: lecture?.endTime || "",
-                room: lecture?.room || "",
-                type: lecture?.type || "theory",
-                videoUrl: lecture?.videoUrl || "",
-            });
-        } else {
-            setEditingLecture(null);
-            setFormData(DEFAULT_FORM_DATA);
-        }
-        setShowModal(true);
-    };
-
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setEditingLecture(null);
-    };
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-
-        const lectureData = {
-            ...formData,
-            courseId: selectedCourse,
-            conductedBy: user?._id || user?.id,
-        };
-
-        try {
-            if (editingLecture?._id) {
-                await dispatch(updateLecture({ id: editingLecture._id, data: formData })).unwrap();
-            } else {
-                await dispatch(createLecture(lectureData)).unwrap();
-            }
-            handleCloseModal();
-            refreshLectures();
-        } catch {
-            // Existing redux error flow handles surface state.
-        }
-    };
-
     const handleDeleteLecture = async (lectureId) => {
         if (!lectureId) return;
         const confirmed = window.confirm("Delete this lecture?");
@@ -448,11 +249,6 @@ const TeacherLectureManagement = () => {
         } catch {
             // Existing redux error flow handles surface state.
         }
-    };
-
-    const handleInputChange = (event) => {
-        const { name, value } = event.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleUploadFile = async (event) => {
@@ -533,7 +329,7 @@ const TeacherLectureManagement = () => {
 
                         <Button
                             type="button"
-                            onClick={() => handleOpenModal()}
+                            onClick={() => navigate(`/teacher/lecture-form?course=${selectedCourse}`)}
                             disabled={!selectedCourse}
                             className="bg-studprimary text-white hover:bg-studprimary/90 disabled:opacity-50 dark:bg-premium-gold dark:text-deep-charcoal dark:hover:bg-premium-gold/90"
                         >
@@ -684,7 +480,12 @@ const TeacherLectureManagement = () => {
                                                                 type="button"
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => handleOpenModal(lecture)}
+                                                                onClick={() => {
+                                                                    const lectureCourseId = lecture?.courseId?._id || lecture?.courseId || selectedCourse;
+                                                                    navigate(`/teacher/lecture-form?edit=${lecture._id}&course=${lectureCourseId}`, {
+                                                                        state: { lecture },
+                                                                    });
+                                                                }}
                                                                 className="h-8 border-studprimary/20 px-2"
                                                                 title="Edit"
                                                             >
@@ -782,7 +583,7 @@ const TeacherLectureManagement = () => {
                             <CardContent className="space-y-2">
                                 <Button
                                     type="button"
-                                    onClick={() => handleOpenModal()}
+                                    onClick={() => navigate(`/teacher/lecture-form?course=${selectedCourse}`)}
                                     disabled={!selectedCourse}
                                     className="w-full justify-start bg-studprimary text-white hover:bg-studprimary/90 disabled:opacity-50 dark:bg-premium-gold dark:text-deep-charcoal dark:hover:bg-premium-gold/90"
                                 >
@@ -811,16 +612,6 @@ const TeacherLectureManagement = () => {
                         </Card>
                     </div>
                 </section>
-
-                <LectureFormModal
-                    showModal={showModal}
-                    editingLecture={editingLecture}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    handleSubmit={handleSubmit}
-                    handleCloseModal={handleCloseModal}
-                    loading={loading}
-                />
 
                 <MaterialsModal
                     showMaterialsModal={showMaterialsModal}

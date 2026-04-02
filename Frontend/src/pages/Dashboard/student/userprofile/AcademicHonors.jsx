@@ -1,17 +1,14 @@
 import React from "react";
 import { Medal, Sparkles, Terminal, Zap } from "lucide-react";
-import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 import { useProfile } from "./useProfile";
 
 function AcademicHonors() {
-  const { data: enrollmentsData } = useGetMyEnrollmentsQuery();
-  const { formData } = useProfile();
-  const enrollments = enrollmentsData?.data || [];
+  const { formData, userRole, enrollments, teacherCourses } = useProfile();
 
-  const completedCount = enrollments.filter(
+  const studentCompletedCount = enrollments.filter(
     (item) => Number(item.progressPercent || item.progress || 0) >= 100,
   ).length;
-  const avgProgress = enrollments.length
+  const avgStudentProgress = enrollments.length
     ? Math.round(
         enrollments.reduce(
           (sum, item) => sum + Number(item.progressPercent || item.progress || 0),
@@ -20,32 +17,69 @@ function AcademicHonors() {
       )
     : 0;
 
-  const honors = [
-    {
-      label: "Starter",
-      unlocked: enrollments.length > 0,
-      icon: Sparkles,
-      color: "text-blue-600",
-    },
-    {
-      label: "Focused Learner",
-      unlocked: avgProgress >= 50,
-      icon: Terminal,
-      color: "text-green-600",
-    },
-    {
-      label: "Finisher",
-      unlocked: completedCount > 0,
-      icon: Medal,
-      color: "text-amber-600",
-    },
-    {
-      label: "Profile Ready",
-      unlocked: Boolean(formData?.about && String(formData.about).trim().length > 0),
-      icon: Zap,
-      color: "text-orange-600",
-    },
-  ];
+  const activeTeacherCourses = teacherCourses.filter(
+    (course) => String(course?.status || "active").toLowerCase() !== "draft",
+  ).length;
+
+  const teacherReach = teacherCourses.reduce(
+    (sum, course) => sum + Number(course?.totalStudents || course?.studentCount || course?.enrollmentCount || 0),
+    0,
+  );
+
+  const honors =
+    userRole === "teacher"
+      ? [
+          {
+            label: "Starter Mentor",
+            unlocked: teacherCourses.length > 0,
+            icon: Sparkles,
+            color: "text-blue-600",
+          },
+          {
+            label: "Active Instructor",
+            unlocked: activeTeacherCourses > 0,
+            icon: Terminal,
+            color: "text-green-600",
+          },
+          {
+            label: "Learner Impact",
+            unlocked: teacherReach > 0,
+            icon: Medal,
+            color: "text-amber-600",
+          },
+          {
+            label: "Profile Ready",
+            unlocked: Boolean(formData?.about && String(formData.about).trim().length > 0),
+            icon: Zap,
+            color: "text-orange-600",
+          },
+        ]
+      : [
+          {
+            label: "Starter",
+            unlocked: enrollments.length > 0,
+            icon: Sparkles,
+            color: "text-blue-600",
+          },
+          {
+            label: "Focused Learner",
+            unlocked: avgStudentProgress >= 50,
+            icon: Terminal,
+            color: "text-green-600",
+          },
+          {
+            label: "Finisher",
+            unlocked: studentCompletedCount > 0,
+            icon: Medal,
+            color: "text-amber-600",
+          },
+          {
+            label: "Profile Ready",
+            unlocked: Boolean(formData?.about && String(formData.about).trim().length > 0),
+            icon: Zap,
+            color: "text-orange-600",
+          },
+        ];
 
   return (
     <section className="bg-white dark:dark-glass rounded-2xl md:rounded-[2.5rem] p-8 md:p-10 border border-slate-200 dark:border-white/5 shadow-md dark:shadow-2xl transition-all duration-300">

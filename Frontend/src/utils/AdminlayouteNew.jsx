@@ -12,6 +12,7 @@ import {
   Menu,
   LogOut,
   MessageCircle,
+  MessageSquare,
   X,
   ChevronLeft,
   BookOpenText,
@@ -82,7 +83,11 @@ const AdminLayout = ({
   const avatarInitial =
     user?.firstName?.charAt(0) || user?.email?.charAt(0) || "U";
   const accountType =
-    userRole === "TEACHER" ? "Instructor Account" : "Student Account";
+    userRole === "TEACHER"
+      ? "Instructor Account"
+      : userRole === "ADMIN"
+        ? "Admin Account"
+        : "Student Account";
 
   //Navigation items configuration
   const navItems = useMemo(() => {
@@ -144,6 +149,13 @@ const AdminLayout = ({
         label: "Analytics",
         link: "/teacher/analytics",
         breadcrumb: "Analytics",
+      },
+      {
+        id: "reviews",
+        icon: MessageSquare,
+        label: "Reviews",
+        link: "/teacher/reviews",
+        breadcrumb: "Student Feedback",
       },
       {
         id: "chat",
@@ -255,7 +267,82 @@ const AdminLayout = ({
       },
     ];
 
-    return userRole === "TEACHER" ? teacherNavItems : studentNavItems;
+    const adminNavItems = [
+      {
+        id: "dashboard",
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        link: "/admin/dashboard",
+        breadcrumb: "Dashboard",
+      },
+      {
+        id: "users",
+        icon: Users2,
+        label: "Users",
+        link: "/admin/users",
+        breadcrumb: "Users",
+      },
+      {
+        id: "courses",
+        icon: BookOpen,
+        label: "Courses",
+        link: "/managecourses",
+        breadcrumb: "Courses",
+      },
+      {
+        id: "subjects",
+        icon: BookOpenText,
+        label: "Subjects",
+        link: "/admin/subjects",
+        breadcrumb: "Subjects",
+      },
+      {
+        id: "attendance",
+        icon: ClipboardList,
+        label: "Attendance",
+        link: "/admin/attendance",
+        breadcrumb: "Attendance",
+      },
+      {
+        id: "assign-teachers",
+        icon: User,
+        label: "Assign Teachers",
+        link: "/admin/assign-teachers",
+        breadcrumb: "Assign Teachers",
+      },
+      {
+        id: "events",
+        icon: Calendar,
+        label: "Events",
+        link: "/admin/events",
+        breadcrumb: "Events",
+      },
+      {
+        id: "holidays",
+        icon: Calendar,
+        label: "Holidays",
+        link: "/admin/holidays",
+        breadcrumb: "Holidays",
+      },
+      {
+        id: "chat",
+        icon: MessageCircle,
+        label: "Chat",
+        link: "/admin/chat",
+        breadcrumb: "Messages",
+      },
+      {
+        id: "settings",
+        icon: User,
+        label: "Settings",
+        link: "/settings",
+        breadcrumb: "Settings",
+      },
+    ];
+
+    if (userRole === "TEACHER") return teacherNavItems;
+    if (userRole === "ADMIN") return adminNavItems;
+    return studentNavItems;
   }, [userRole, customNavItems]);
 
   // Event handlers

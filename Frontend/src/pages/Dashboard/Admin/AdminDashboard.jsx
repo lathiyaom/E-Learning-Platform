@@ -106,10 +106,10 @@ function AdminDashboard() {
       },
       {
         id: "add-user",
-        title: "Add User",
+        title: "Create User",
         description: "Create new student or teacher accounts",
         icon: UserPlus,
-        link: "/admin/users",
+        link: "/admin/users/create",
       },
       {
         id: "manage-courses",
@@ -120,10 +120,10 @@ function AdminDashboard() {
       },
       {
         id: "add-course",
-        title: "Add Course",
+        title: "Create Course",
         description: "Create new courses for your organization",
         icon: GraduationCap,
-        link: "/AddCourse",
+        link: "/admin/courses/create",
       },
     ],
     [],
@@ -132,11 +132,11 @@ function AdminDashboard() {
   const supportActions = useMemo(
     () => [
       {
-        id: "comments",
-        title: "User Comments",
-        subtitle: "View feedback",
+        id: "chat",
+        title: "Messages",
+        subtitle: "Chat with users",
         icon: MessageSquare,
-        link: "/Comments",
+        link: "/admin/chat",
       },
       {
         id: "settings",
@@ -146,6 +146,7 @@ function AdminDashboard() {
         link: "/settings",
       },
     ],
+
     [],
   );
 

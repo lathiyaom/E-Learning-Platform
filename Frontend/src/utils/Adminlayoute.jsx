@@ -12,6 +12,7 @@ import {
   Menu,
   LogOut,
   MessageCircle,
+  MessageSquare,
   X,
   ChevronLeft,
   BookOpenText,
@@ -129,6 +130,13 @@ const AdminLayout = ({
         breadcrumb: "Analytics",
       },
       {
+        id: "reviews",
+        icon: MessageSquare,
+        label: "Reviews",
+        link: "/teacher/reviews",
+        breadcrumb: "Student Feedback",
+      },
+      {
         id: "chat",
         icon: MessageCircle,
         label: "Chat",
@@ -139,7 +147,7 @@ const AdminLayout = ({
         id: "help",
         icon: HelpCircle,
         label: "Help Center",
-        link: "/help",
+        link: "/help-center",
         breadcrumb: "Help & Support",
       },
     ];
@@ -233,7 +241,7 @@ const AdminLayout = ({
         id: "help",
         icon: HelpCircle,
         label: "Help Center",
-        link: "/help",
+        link: "/help-center",
         breadcrumb: "Help & Support",
       },
     ];
@@ -303,12 +311,20 @@ const AdminLayout = ({
         breadcrumb: "Holidays",
       },
       {
+        id: "chat",
+        icon: MessageCircle,
+        label: "Chat",
+        link: "/admin/chat",
+        breadcrumb: "Messages",
+      },
+      {
         id: "settings",
         icon: User,
         label: "Settings",
         link: "/settings",
         breadcrumb: "Settings",
       },
+
     ];
 
     if (userRole === "TEACHER") return teacherNavItems;

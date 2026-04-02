@@ -61,6 +61,63 @@ const validateUserSignup = [
   handleValidationErrors
 ];
 
+const validateAdminUserCreate = [
+  body('firstName')
+    .trim()
+    .notEmpty()
+    .withMessage('First name is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('First name must be between 2 and 50 characters'),
+
+  body('lastName')
+    .trim()
+    .notEmpty()
+    .withMessage('Last name is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Last name must be between 2 and 50 characters'),
+
+  body('email')
+    .isEmail()
+    .withMessage('Valid email is required')
+    .normalizeEmail(),
+
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+
+  body('userType')
+    .notEmpty()
+    .withMessage('User type is required')
+    .isIn(['student', 'teacher'])
+    .withMessage('User type must be either student or teacher'),
+
+  body('age')
+    .optional({ nullable: true })
+    .isInt({ min: 1, max: 120 })
+    .withMessage('Age must be a valid number between 1 and 120'),
+
+  body('gender')
+    .optional({ nullable: true })
+    .isIn(['male', 'female'])
+    .withMessage('Gender must be either male or female'),
+
+  body('phoneNo')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ min: 7, max: 20 })
+    .withMessage('Phone number must be between 7 and 20 characters'),
+
+  body('about')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 250 })
+    .withMessage('About section cannot exceed 250 characters'),
+
+  handleValidationErrors
+];
+
 // User login validation
 const validateUserLogin = [
   body('email')
@@ -279,6 +336,7 @@ const validateEmailParam = [
 
 module.exports = {
   validateUserSignup,
+  validateAdminUserCreate,
   validateUserLogin,
   validateUserUpdate,
   validateTenantRegistration,

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   flexRender,
   getCoreRowModel,
@@ -581,6 +582,7 @@ const CourseFormModal = ({ mode, course, onClose, onSaved }) => {
 };
 
 const Courses = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);
   const [statusTab, setStatusTab] = useState("all");
@@ -874,7 +876,7 @@ const Courses = () => {
           return (
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setModal({ type: "edit", course })}
+                onClick={() => navigate(`/admin/courses/create?edit=${course._id || course.id}`)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 dark:hover:text-cyan-300 dark:hover:bg-cyan-500/10 transition-colors"
                 title="Edit course"
               >
@@ -948,7 +950,7 @@ const Courses = () => {
             </div>
 
             <button
-              onClick={() => setModal({ type: "add" })}
+              onClick={() => navigate("/admin/courses/create")}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-studprimary dark:bg-premium-gold px-4 py-2.5 text-sm font-semibold text-white dark:text-deep-charcoal shadow-sm dark:shadow-none transition hover:bg-studprimary/90 dark:hover:brightness-110"
             >
               <Plus className="h-4 w-4" />
@@ -1157,17 +1159,6 @@ const Courses = () => {
           </article>
         </motion.section>
 
-        {modal?.type === "add" && (
-          <CourseFormModal mode="create" onClose={() => setModal(null)} onSaved={onSaved} />
-        )}
-        {modal?.type === "edit" && (
-          <CourseFormModal
-            mode="edit"
-            course={modal.course}
-            onClose={() => setModal(null)}
-            onSaved={onSaved}
-          />
-        )}
       </motion.div>
     </AdminLayout>
   );

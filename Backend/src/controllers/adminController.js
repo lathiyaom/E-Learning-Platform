@@ -314,7 +314,7 @@ const createUser = async (req, res) => {
     }
     userData.currentOrganization = tenantId;
 
-    const newUser = await userService.createUser(userData);
+    const newUser = await userService.createAdminUser(userData);
 
     res.status(201).json({
       message: "User created successfully",

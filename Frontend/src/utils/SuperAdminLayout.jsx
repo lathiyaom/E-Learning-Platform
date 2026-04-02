@@ -178,7 +178,7 @@ const SuperAdminLayout = ({
             ))}
           </nav>
 
-          <div className="space-y-4 pt-4 border-t border-white/5">
+          {/* <div className="space-y-4 pt-4 border-t border-white/5">
             <AnimatePresence>
               {!isCollapsed && (
                 <motion.p
@@ -201,7 +201,7 @@ const SuperAdminLayout = ({
                 />
               ))}
             </nav>
-          </div>
+          </div> */}
         </div>
 
         {/* Sidebar Footer */}
