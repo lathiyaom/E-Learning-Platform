@@ -190,8 +190,58 @@ const getAllCourses = async (tenantId, sortBy = "popular") => {
   }
   // If no tenantId (e.g., teacher not assigned), return all courses
 
-  const courses = await enrichCourseQuery(Course.find(query)).sort(sortClause);
-  return courses;
+  // Use aggregation to include enrollment counts
+  const courses = await Course.aggregate([
+    { $match: query },
+    { $sort: sortClause },
+    {
+      $lookup: {
+        from: "enrollments",
+        let: { courseId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  { $eq: ["$course_id", "$$courseId"] },
+                  { $eq: ["$courseId", "$$courseId"] },
+                ],
+              },
+            },
+          },
+          { $count: "count" },
+        ],
+        as: "enrollmentData",
+      },
+    },
+    {
+      $addFields: {
+        totalStudents: {
+          $cond: [
+            { $gt: [{ $size: "$enrollmentData" }, 0] },
+            { $arrayElemAt: ["$enrollmentData.count", 0] },
+            0,
+          ],
+        },
+      },
+    },
+    { $project: { enrollmentData: 0 } },
+  ]);
+
+  // Populate subjectId for the aggregated results
+  const courseIds = courses.map((c) => c._id);
+  const subjects = await require("../models").Subject.find({
+    _id: { $in: courses.map((c) => c.subjectId).filter(Boolean) },
+  }).select("name code stream status");
+
+  const subjectMap = new Map(subjects.map((s) => [s._id.toString(), s]));
+
+  const enrichedCourses = courses.map((course) => ({
+    ...course,
+    subjectId: subjectMap.get(course.subjectId?.toString()) || null,
+  }));
+
+  return enrichedCourses;
 };
 
 const enrichCourseQuery = (query) => query.populate("subjectId", "name code stream status");
