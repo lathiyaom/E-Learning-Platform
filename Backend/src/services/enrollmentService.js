@@ -191,17 +191,31 @@ const updateProgress = async (enrollmentId, tenantId, progressPercent) => {
 };
 
 const markAsCompleted = async (enrollmentId, tenantId, studentId) => {
-  if (!enrollmentId || !tenantId) {
-    throw new Error("Enrollment ID and Tenant ID are required");
+  if (!enrollmentId) {
+    throw new Error("Enrollment ID is required");
   }
 
-  const enrollment = await Enrollment.findOne({
-    _id: enrollmentId,
-    $or: [
-      { tenantId, studentId },
-      { organization_id: tenantId, student_id: studentId },
-    ],
-  });
+  // Build flexible query - prioritize student ownership, then optionally tenant
+  const query = { _id: enrollmentId };
+  
+  // Always verify student ownership when studentId is provided
+  if (studentId) {
+    query.$or = [
+      { student_id: studentId },
+      { studentId: studentId },
+    ];
+  }
+
+  // Add tenant filter only if tenantId exists
+  if (tenantId) {
+    query.$or = query.$or || [];
+    query.$or.push(
+      { organization_id: tenantId },
+      { tenantId: tenantId }
+    );
+  }
+
+  const enrollment = await Enrollment.findOne(query);
 
   if (!enrollment) {
     throw new Error("Enrollment not found");

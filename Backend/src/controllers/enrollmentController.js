@@ -151,11 +151,15 @@ const updateProgress = async (req, res) => {
 const markAsCompleted = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Use tenantId from middleware or derive from user
+    const tenantId = req.tenantId || req.user?.tenantId;
+    const studentId = req.user.id;
 
     const enrollment = await enrollmentService.markAsCompleted(
       id,
-      req.tenantId,
-      req.user.id
+      tenantId,
+      studentId
     );
 
     return res.status(200).json({
@@ -164,7 +168,8 @@ const markAsCompleted = async (req, res) => {
       data: enrollment,
     });
   } catch (error) {
-    return res.status(400).json({
+    const statusCode = error.message.includes("only complete your own") ? 403 : 400;
+    return res.status(statusCode).json({
       message: error.message,
       success: false,
     });
