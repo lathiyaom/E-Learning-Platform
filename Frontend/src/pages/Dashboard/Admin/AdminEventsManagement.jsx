@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { eventApi } from "../../../api/eventApi";
 import { ErrorToster, SuccessToster } from "../../../components/toster";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   Clock3,
@@ -386,15 +387,12 @@ const EventModal = ({ form, setForm, editing, onClose, onSubmit, saving }) => {
 };
 
 const AdminEventsManagement = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(initialForm);
 
   const fetchEvents = async () => {
     try {
@@ -438,70 +436,9 @@ const AdminEventsManagement = () => {
     return { total: events.length, published, draft, upcoming };
   }, [events]);
 
-  const resetForm = () => {
-    setEditing(null);
-    setForm(initialForm);
-  };
+  const openCreate = () => navigate("/admin/events/create");
 
-  const openCreate = () => {
-    resetForm();
-    setShowForm(true);
-  };
-
-  const openEdit = (event) => {
-    setEditing(event);
-    setForm({
-      title: event.title || "",
-      description: event.description || "",
-      event_type: event.event_type || "meeting",
-      start_date: toLocalDateTime(event.start_date || event.eventDate),
-      end_date: toLocalDateTime(event.end_date || event.eventDate),
-      location: event.location || "",
-      target_role: event.target_role || "all",
-      status: event.status || "published",
-      color: event.color || "#3B82F6",
-      requires_registration: Boolean(event.requires_registration ?? event.registrationRequired),
-      max_participants: event.max_participants ?? event.maxParticipants ?? "",
-      tags: Array.isArray(event.tags) ? event.tags.join(", ") : "",
-    });
-    setShowForm(true);
-  };
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-
-    if (form.start_date && form.end_date && new Date(form.end_date) < new Date(form.start_date)) {
-      ErrorToster("End date must be after start date", 2500);
-      return;
-    }
-
-    try {
-      setSaving(true);
-      const payload = {
-        ...form,
-        max_participants: form.max_participants ? Number(form.max_participants) : null,
-        tags: form.tags
-          ? form.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
-          : [],
-      };
-
-      if (editing?._id) {
-        await eventApi.updateEvent(editing._id, payload);
-        SuccessToster("Event updated", 2500);
-      } else {
-        await eventApi.createEvent(payload);
-        SuccessToster("Event created", 2500);
-      }
-
-      setShowForm(false);
-      resetForm();
-      fetchEvents();
-    } catch (error) {
-      ErrorToster(error?.response?.data?.message || "Failed to save event", 3000);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const openEdit = (event) => navigate(`/admin/events/create?edit=${event._id}`);
 
   const onDelete = async (id) => {
     if (!window.confirm("Delete this event?")) return;
@@ -676,17 +613,6 @@ const AdminEventsManagement = () => {
           )}
         </motion.section>
       </motion.div>
-
-      {showForm ? (
-        <EventModal
-          form={form}
-          setForm={setForm}
-          editing={editing}
-          onClose={() => setShowForm(false)}
-          onSubmit={onSubmit}
-          saving={saving}
-        />
-      ) : null}
     </AdminLayout>
   );
 };

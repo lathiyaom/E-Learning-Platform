@@ -1,5 +1,6 @@
 import React from "react";
-import { Star, Users, Clock, Award, ShoppingCart, Play } from "lucide-react";
+import { Star, Users, Clock, Award, ShoppingCart, Play, Bookmark } from "lucide-react";
+import { motion } from "framer-motion";
 
 
 const CourseInfo = ({
@@ -7,6 +8,9 @@ const CourseInfo = ({
   isEnrolled = false,
   onEnroll = () => {},
   onResume = () => {},
+  onToggleBookmark = () => {},
+  isBookmarked = false,
+  canBookmark = true,
   isLoading = false,
 }) => {
   const {
@@ -38,8 +42,15 @@ const CourseInfo = ({
     return count;
   };
 
+  const hasPrice = Number(price) > 0;
+
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="space-y-6 sm:space-y-8"
+    >
       {/* Course Header Section */}
       <div className="space-y-3 sm:space-y-4">
         {/* Category Badge */}
@@ -95,8 +106,13 @@ const CourseInfo = ({
       )}
 
       {/* Course Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
+          className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+        >
           <div className="flex items-center gap-2 mb-1">
             <Users size={18} className="text-studprimary dark:text-premium-gold" />
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">
@@ -106,9 +122,14 @@ const CourseInfo = ({
           <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
             {lessonCount}
           </p>
-        </div>
+        </motion.div>
 
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
+          className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+        >
           <div className="flex items-center gap-2 mb-1">
             <Clock size={18} className="text-studprimary dark:text-premium-gold" />
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">
@@ -118,22 +139,32 @@ const CourseInfo = ({
           <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
             ~{estimatedHours}h
           </p>
-        </div>
+        </motion.div>
 
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
+          className={`p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 ${!hasPrice ? "col-span-2" : ""}`}
+        >
           <div className="flex items-center gap-2 mb-1">
             <Award size={18} className="text-studprimary dark:text-premium-gold" />
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">
               Level
             </span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white capitalize">
+          <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white capitalize break-words">
             {level}
           </p>
-        </div>
+        </motion.div>
 
-        {price > 0 && (
-          <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        {hasPrice && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.2 }}
+            className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+          >
             <div className="flex items-center gap-2 mb-1">
               <ShoppingCart size={18} className="text-studprimary dark:text-premium-gold" />
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">
@@ -143,7 +174,7 @@ const CourseInfo = ({
             <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
               ₹{price}
             </p>
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -182,14 +213,30 @@ const CourseInfo = ({
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6">
         {isEnrolled ? (
-          <button
-            onClick={onResume}
-            disabled={isLoading}
-            className="flex-1 py-3 sm:py-3.5 px-6 bg-studprimary hover:bg-studprimary/90 dark:bg-premium-gold dark:hover:bg-premium-gold/90 text-white dark:text-deep-charcoal font-bold rounded-xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20"
-          >
-            <Play size={20} fill="currentColor" />
-            Continue Watching
-          </button>
+          <>
+            <button
+              onClick={onResume}
+              disabled={isLoading}
+              className="flex-1 py-3 sm:py-3.5 px-6 bg-studprimary hover:bg-studprimary/90 dark:bg-premium-gold dark:hover:bg-premium-gold/90 text-white dark:text-deep-charcoal font-bold rounded-xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-studprimary/20 dark:shadow-premium-gold/20"
+            >
+              <Play size={20} fill="currentColor" />
+              Continue Watching
+            </button>
+
+            <button
+              onClick={onToggleBookmark}
+              disabled={isLoading || !canBookmark}
+              aria-pressed={isBookmarked}
+              className={`flex-1 py-3 sm:py-3.5 px-6 rounded-xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border font-bold ${
+                isBookmarked
+                  ? "bg-studprimary/10 dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold border-studprimary/20 dark:border-premium-gold/20"
+                  : "bg-slate-50 dark:bg-[#2f2c2c] text-slate-900 dark:text-white border-slate-200 dark:border-slate-700 hover:border-studprimary/40 dark:hover:border-premium-gold/40"
+              }`}
+            >
+              <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} />
+              {isBookmarked ? "Saved" : "Save Course"}
+            </button>
+          </>
         ) : (
           <>
             <button
@@ -200,11 +247,19 @@ const CourseInfo = ({
               <ShoppingCart size={20} />
               Enroll Now
             </button>
-            {price > 0 && (
-              <button className="flex-1 py-3 sm:py-3.5 px-6 border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-bold rounded-xl text-base sm:text-lg transition-all active:scale-95">
-                Add to Wishlist
-              </button>
-            )}
+            <button
+              onClick={onToggleBookmark}
+              disabled={isLoading || !canBookmark}
+              aria-pressed={isBookmarked}
+              className={`flex-1 py-3 sm:py-3.5 px-6 rounded-xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border font-bold ${
+                isBookmarked
+                  ? "bg-studprimary/10 dark:bg-premium-gold/10 text-studprimary dark:text-premium-gold border-studprimary/20 dark:border-premium-gold/20"
+                  : "bg-slate-50 dark:bg-[#2f2c2c] text-slate-900 dark:text-white border-slate-200 dark:border-slate-700 hover:border-studprimary/40 dark:hover:border-premium-gold/40"
+              }`}
+            >
+              <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} />
+              {isBookmarked ? "Saved" : "Save Course"}
+            </button>
           </>
         )}
       </div>
@@ -215,7 +270,7 @@ const CourseInfo = ({
           ? "You're enrolled in this course. Download materials and continue learning!"
           : "Enroll now to access all lessons, materials, and community support."}
       </p>
-    </div>
+    </motion.div>
   );
 };
 

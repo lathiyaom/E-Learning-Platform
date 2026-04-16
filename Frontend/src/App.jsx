@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import About from "./pages/About2/index";
 import ContactUs from "./pages/CountectUs/index";
 import Index from "./pages/Courses2/index";
+import Bookmarks from "./pages/Courses2/Bookmarks.jsx";
 import Login from "./pages/Login/index.jsx";
 import ForgotPassword from "./pages/ForgotPassword/index.jsx";
 import ResetPassword from "./pages/ResetPassword/index.jsx";
@@ -26,6 +27,8 @@ import Attendance from "./pages/Dashboard/Admin/Attendance.jsx";
 import AdminLecturesManagement from "./pages/Dashboard/Admin/AdminLecturesManagement.jsx";
 import AdminEventsManagement from "./pages/Dashboard/Admin/AdminEventsManagement.jsx";
 import AdminHolidaysManagement from "./pages/Dashboard/Admin/AdminHolidaysManagement.jsx";
+import EventCreate from "./pages/Dashboard/Admin/EventCreate.jsx";
+import HolidayCreate from "./pages/Dashboard/Admin/HolidayCreate.jsx";
 import Subjects from "./pages/Dashboard/Admin/Subjects.jsx";
 
 import TeacherMarketplace from "./pages/Admin/TeacherMarketplace/index.jsx";
@@ -128,6 +131,7 @@ function App() {
               element={<OrganizationRegister />}
             />
             <Route path="/courses" element={<Index />} />
+            <Route path="/courses/bookmarks" element={<Bookmarks />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/card/:id" element={<CardDetail />} />
@@ -164,6 +168,7 @@ function App() {
             <Route path="/superadmin/students" element={<ProtectedRoute requiredRole="superadmin"><StudentManagement /></ProtectedRoute>} />
             <Route path="/superadmin/analytics" element={<ProtectedRoute requiredRole="superadmin"><SuperAdminAnalytics /></ProtectedRoute>} />
             <Route path="/superadmin/announcements" element={<ProtectedRoute requiredRole="superadmin"><CreateAnnouncement /></ProtectedRoute>} />
+            <Route path="/superadmin/chat" element={<ProtectedRoute requiredRole="superadmin"><ChatInterface /></ProtectedRoute>} />
 
             {/* Admin Routes - Protected */}
             <Route
@@ -231,10 +236,26 @@ function App() {
               }
             />
             <Route
+              path="/admin/events/create"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <EventCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/holidays"
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminHolidaysManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/holidays/create"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <HolidayCreate />
                 </ProtectedRoute>
               }
             />

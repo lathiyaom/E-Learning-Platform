@@ -65,6 +65,7 @@ function Courses() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           resultCount={filteredCount}
+          bookmarksPath="/courses/bookmarks"
         />
 
         {/* Main content */}

@@ -95,6 +95,7 @@ const SuperAdminLayout = ({
     { id: "teachers", label: "Teachers", icon: Users, link: "/superadmin/teachers" },
     { id: "students", label: "Students", icon: Users, link: "/superadmin/students" },
     { id: "analytics", label: "Analytics", icon: BarChart3, link: "/superadmin/analytics" },
+    { id: "chat", label: "Chat", icon: Globe, link: "/superadmin/chat" },
   ], []);
 
   const systemItems = useMemo(() => [

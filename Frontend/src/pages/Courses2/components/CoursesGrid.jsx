@@ -1,7 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetMarketplaceCoursesQuery } from "../../../redux/Apis/courseApi";
+import { useSelector } from "react-redux";
+import {
+  useGetMarketplaceCoursesQuery,
+  useGetUserBookmarksQuery,
+  useAddBookmarkMutation,
+  useRemoveBookmarkMutation,
+  selectIsAuthenticated,
+} from "../../../redux";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -18,8 +25,14 @@ const cardVariants = {
 };
 
 // ── Course Card ────────────────────────────────────────────────────────────────
-const CourseCard = ({ course, viewMode }) => {
-  const [bookmarked, setBookmarked] = useState(false);
+const CourseCard = ({
+  course,
+  viewMode,
+  bookmarked = false,
+  onToggleBookmark = () => {},
+  canBookmark = true,
+  bookmarkBusy = false,
+}) => {
   const courseId = course._id || course.id;
   const price = course.priceUSD ?? course.price ?? course.pricing ?? 0;
   const currencySymbol = course.currency === "INR" ? "INR " : course.currency === "EUR" ? "EUR " : "$";
@@ -119,8 +132,10 @@ const CourseCard = ({ course, viewMode }) => {
 
         {/* Bookmark */}
         <button
-          onClick={() => setBookmarked((b) => !b)}
+          onClick={onToggleBookmark}
           aria-label="Bookmark"
+          disabled={!canBookmark || bookmarkBusy}
+          title={!canBookmark ? "Login to bookmark" : bookmarked ? "Remove bookmark" : "Save bookmark"}
           className={`absolute top-3 right-3 w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 ${
             bookmarked
               ? "bg-primary dark:bg-premium-gold text-slate-900"
@@ -194,8 +209,33 @@ const CoursesGrid = ({
   level,
   sortBy,
 }) => {
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const { data: bookmarkData } = useGetUserBookmarksQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+  const [addBookmark, { isLoading: isAddingBookmark }] = useAddBookmarkMutation();
+  const [removeBookmark, { isLoading: isRemovingBookmark }] = useRemoveBookmarkMutation();
   // Fetch courses from API
   const { data, isLoading, isError, error } = useGetMarketplaceCoursesQuery(sortBy);
+  const courses = data?.data || [];
+  const bookmarkIds = useMemo(() => {
+    const bookmarks = bookmarkData?.data || bookmarkData || [];
+    return new Set(
+      bookmarks
+        .map((bookmark) =>
+          String(
+            bookmark?._id ||
+              bookmark?.id ||
+              bookmark?.courseId?._id ||
+              bookmark?.courseId ||
+              bookmark?.Course?._id ||
+              bookmark?.Course?.id ||
+              ""
+          )
+        )
+        .filter(Boolean)
+    );
+  }, [bookmarkData]);
 
   // Loading state
   if (isLoading) {
@@ -232,7 +272,19 @@ const CoursesGrid = ({
     );
   }
 
-  const courses = data?.data || [];
+  const handleToggleBookmark = async (courseId) => {
+    if (!isAuthenticated || !courseId) return;
+
+    try {
+      if (bookmarkIds.has(String(courseId))) {
+        await removeBookmark(courseId).unwrap();
+      } else {
+        await addBookmark(courseId).unwrap();
+      }
+    } catch (toggleError) {
+      console.error("Bookmark toggle failed:", toggleError);
+    }
+  };
 
   // Filter courses based on search, category, and level
   const filtered = courses.filter((c) => {
@@ -277,7 +329,15 @@ const CoursesGrid = ({
     >
       <AnimatePresence mode="popLayout">
         {filtered.map((course) => (
-          <CourseCard key={course._id || course.id} course={course} viewMode={viewMode} />
+          <CourseCard
+            key={course._id || course.id}
+            course={course}
+            viewMode={viewMode}
+            bookmarked={bookmarkIds.has(String(course._id || course.id))}
+            onToggleBookmark={() => handleToggleBookmark(course._id || course.id)}
+            canBookmark={isAuthenticated}
+            bookmarkBusy={isAddingBookmark || isRemovingBookmark}
+          />
         ))}
       </AnimatePresence>
     </motion.div>

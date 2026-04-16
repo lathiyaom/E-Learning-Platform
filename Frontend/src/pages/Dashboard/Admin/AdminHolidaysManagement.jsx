@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../../../utils/Adminlayoute";
 import { holidayApi } from "../../../api/holidayApi";
 import { ErrorToster, SuccessToster } from "../../../components/toster";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   Pencil,
@@ -331,15 +332,12 @@ const HolidayModal = ({ form, setForm, editing, onClose, onSubmit, saving }) => 
 };
 
 const AdminHolidaysManagement = () => {
+  const navigate = useNavigate();
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(initialForm);
 
   const fetchHolidays = async () => {
     try {
@@ -383,65 +381,9 @@ const AdminHolidaysManagement = () => {
     return { total: holidays.length, active, draft, upcoming };
   }, [holidays]);
 
-  const resetForm = () => {
-    setEditing(null);
-    setForm(initialForm);
-  };
+  const openCreate = () => navigate("/admin/holidays/create");
 
-  const openCreate = () => {
-    resetForm();
-    setShowForm(true);
-  };
-
-  const openEdit = (holiday) => {
-    setEditing(holiday);
-    setForm({
-      title: holiday.title || "",
-      description: holiday.description || "",
-      date: toDateInput(holiday.date),
-      endDate: toDateInput(holiday.endDate),
-      holiday_type: holiday.holiday_type || "public",
-      status: holiday.status || "active",
-      color: holiday.color || "#EF4444",
-      affects_roles: holiday.affects_roles?.length ? holiday.affects_roles : ["all"],
-      tags: Array.isArray(holiday.tags) ? holiday.tags.join(", ") : "",
-    });
-    setShowForm(true);
-  };
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-
-    if (form.endDate && form.date && new Date(form.endDate) < new Date(form.date)) {
-      ErrorToster("End date must be after start date", 2500);
-      return;
-    }
-
-    try {
-      setSaving(true);
-      const payload = {
-        ...form,
-        endDate: form.endDate || form.date,
-        tags: form.tags ? form.tags.split(",").map((tag) => tag.trim()).filter(Boolean) : [],
-      };
-
-      if (editing?._id) {
-        await holidayApi.updateHoliday(editing._id, payload);
-        SuccessToster("Holiday updated", 2500);
-      } else {
-        await holidayApi.createHoliday(payload);
-        SuccessToster("Holiday created", 2500);
-      }
-
-      setShowForm(false);
-      resetForm();
-      fetchHolidays();
-    } catch (error) {
-      ErrorToster(error?.response?.data?.message || "Failed to save holiday", 3000);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const openEdit = (holiday) => navigate(`/admin/holidays/create?edit=${holiday._id}`);
 
   const onDelete = async (id) => {
     if (!window.confirm("Delete this holiday?")) return;
@@ -615,17 +557,6 @@ const AdminHolidaysManagement = () => {
           )}
         </motion.section>
       </motion.div>
-
-      {showForm ? (
-        <HolidayModal
-          form={form}
-          setForm={setForm}
-          editing={editing}
-          onClose={() => setShowForm(false)}
-          onSubmit={onSubmit}
-          saving={saving}
-        />
-      ) : null}
     </AdminLayout>
   );
 };

@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const CATEGORIES = [
   "All Subjects",
@@ -53,6 +54,7 @@ const CoursesFilter = ({
   viewMode,
   onViewModeChange,
   resultCount,
+  bookmarksPath = "/courses/bookmarks",
 }) => {
   return (
     <div className="bg-white dark:bg-navy-charcoal border-b border-slate-100 dark:border-white/5 transition-colors duration-300 sticky top-[64px] z-30 shadow-sm dark:shadow-black/20">
@@ -99,6 +101,16 @@ const CoursesFilter = ({
               </span>
               Filters
             </button>
+
+            <Link
+              to={bookmarksPath}
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-primary/40 dark:hover:border-premium-gold/40 hover:text-primary dark:hover:text-premium-gold transition-all duration-200"
+            >
+              <span className="material-symbols-outlined text-lg leading-none">
+                bookmark
+              </span>
+              Bookmarks
+            </Link>
 
             {/* View Mode Toggle */}
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl">
