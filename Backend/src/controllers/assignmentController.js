@@ -529,12 +529,29 @@ exports.submitAssignment = async (req, res) => {
       assignment.organization_id;
 
     // Check if student is enrolled
+    console.log('Assignment courseId:', assignment.courseId);
+    console.log('Student ID:', studentId);
+    
     const enrollment = await Enrollment.findOne({
-      courseId: assignment.courseId,
-      studentId,
+      course_id: assignment.courseId,
+      student_id: studentId,
       status: "active",
     });
+    
+    console.log('Enrollment found:', enrollment);
+    
+    // Try without status filter if not found
+    let finalEnrollment = enrollment;
     if (!enrollment) {
+      const enrollmentNoStatus = await Enrollment.findOne({
+        course_id: assignment.courseId,
+        student_id: studentId,
+      });
+      console.log('Enrollment found (no status):', enrollmentNoStatus);
+      finalEnrollment = enrollmentNoStatus;
+    }
+    
+    if (!finalEnrollment) {
       return res.status(403).json({
         success: false,
         message: "You are not enrolled in this course",
