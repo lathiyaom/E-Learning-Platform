@@ -31,8 +31,9 @@ function CardSkeleton() {
 const Enrollments = () => {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("all"); // "all", "active", "completed"
 
-  const { data, isLoading } = useGetMyEnrollmentsQuery();
+  const { data, isLoading, refetch } = useGetMyEnrollmentsQuery();
   const enrollments = data?.data || [];
 
   /* ── Stats ── */
@@ -46,9 +47,15 @@ const Enrollments = () => {
     [enrollments],
   );
 
-  /* ── Filter ── */
+  /* ── Filter by Tab ── */
+  const filteredByTab = useMemo(() => {
+    if (activeTab === "all") return enrollments;
+    return enrollments.filter((e) => e.status === activeTab);
+  }, [enrollments, activeTab]);
+
+  /* ── Filter by Search/Status ── */
   const filtered = useMemo(() => {
-    let result = enrollments;
+    let result = filteredByTab;
     if (filters.status !== "all") {
       result = result.filter((e) => e.status === filters.status);
     }
@@ -63,7 +70,7 @@ const Enrollments = () => {
       });
     }
     return result;
-  }, [enrollments, filters]);
+  }, [filteredByTab, filters]);
 
   /* ── Pagination ── */
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -78,6 +85,10 @@ const Enrollments = () => {
     setPage(1);
   };
 
+  const handleStatusChange = () => {
+    refetch(); // Refresh enrollments after status change
+  };
+
   return (
     <AdminLayout
       showSearch={false}
@@ -89,6 +100,42 @@ const Enrollments = () => {
 
         {/* Stats */}
         {!isLoading && <EnrollmentsStats counts={counts} />}
+
+        {/* Tabs */}
+        <div className="mb-6">
+          <div className="flex gap-2 p-1 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 w-fit">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "all"
+                  ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+              }`}
+            >
+              All Courses ({enrollments.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("active")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "active"
+                  ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+              }`}
+            >
+              In Progress ({counts.active})
+            </button>
+            <button
+              onClick={() => setActiveTab("completed")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "completed"
+                  ? "bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+              }`}
+            >
+              Completed ({counts.completed})
+            </button>
+          </div>
+        </div>
 
         {/* Filters */}
         <EnrollmentsFilters
@@ -136,7 +183,11 @@ const Enrollments = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginated.map((enrollment) => (
-                <EnrollmentCard key={enrollment._id} enrollment={enrollment} />
+                <EnrollmentCard 
+                  key={enrollment._id} 
+                  enrollment={enrollment} 
+                  onStatusChange={handleStatusChange}
+                />
               ))}
             </div>
 

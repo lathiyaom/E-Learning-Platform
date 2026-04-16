@@ -46,6 +46,23 @@ router.patch(
   enrollmentController.updateProgress
 );
 
+// Mark course as completed
+router.patch(
+  "/complete/:id",
+  authenticate,
+  tenantScope,
+  authorize("student"),
+  enrollmentController.markAsCompleted
+);
+
+// Get enrollment progress details
+router.get(
+  "/progress/:id",
+  authenticate,
+  tenantScope,
+  enrollmentController.getEnrollmentProgress
+);
+
 // Drop course
 router.patch(
   "/drop/:id",

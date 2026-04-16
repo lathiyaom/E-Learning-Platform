@@ -46,6 +46,17 @@ export const enrollmentApi = createApi({
       }),
       invalidatesTags: ["Enrollment"],
     }),
+    markAsCompleted: builder.mutation({
+      query: (id) => ({
+        url: `/Enrollment/complete/${id}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Enrollment"],
+    }),
+    getEnrollmentProgress: builder.query({
+      query: (id) => `/Enrollment/progress/${id}`,
+      providesTags: (result, error, id) => [{ type: "Enrollment", id }],
+    }),
     dropCourse: builder.mutation({
       query: (id) => ({
         url: `/Enrollment/drop/${id}`,
@@ -69,6 +80,8 @@ export const {
   useGetMyEnrollmentsQuery,
   useGetCourseEnrollmentsQuery,
   useUpdateProgressMutation,
+  useMarkAsCompletedMutation,
+  useGetEnrollmentProgressQuery,
   useDropCourseMutation,
   useDeleteEnrollmentMutation,
 } = enrollmentApi;

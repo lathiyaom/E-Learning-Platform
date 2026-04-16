@@ -148,6 +148,51 @@ const updateProgress = async (req, res) => {
   }
 };
 
+const markAsCompleted = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const enrollment = await enrollmentService.markAsCompleted(
+      id,
+      req.tenantId,
+      req.user.id
+    );
+
+    return res.status(200).json({
+      message: "Course marked as completed",
+      success: true,
+      data: enrollment,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
+const getEnrollmentProgress = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const progress = await enrollmentService.getEnrollmentProgress(
+      id,
+      req.tenantId
+    );
+
+    return res.status(200).json({
+      message: "Enrollment progress retrieved",
+      success: true,
+      data: progress,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
 const dropCourse = async (req, res) => {
   try {
     const { id } = req.params;
@@ -192,6 +237,8 @@ module.exports = {
   getStudentEnrollments,
   getCourseEnrollments,
   updateProgress,
+  markAsCompleted,
+  getEnrollmentProgress,
   dropCourse,
   deleteEnrollment,
 };

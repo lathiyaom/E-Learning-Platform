@@ -190,6 +190,67 @@ const updateProgress = async (enrollmentId, tenantId, progressPercent) => {
   return enrollment;
 };
 
+const markAsCompleted = async (enrollmentId, tenantId, studentId) => {
+  if (!enrollmentId || !tenantId) {
+    throw new Error("Enrollment ID and Tenant ID are required");
+  }
+
+  const enrollment = await Enrollment.findOne({
+    _id: enrollmentId,
+    $or: [
+      { tenantId, studentId },
+      { organization_id: tenantId, student_id: studentId },
+    ],
+  });
+
+  if (!enrollment) {
+    throw new Error("Enrollment not found");
+  }
+
+  if (enrollment.status === "completed") {
+    throw new Error("Course already completed");
+  }
+
+  enrollment.status = "completed";
+  enrollment.completed_at = new Date();
+  enrollment.completedAt = new Date(); // Legacy field
+  enrollment.progress = 100;
+  enrollment.progressPercent = 100;
+
+  await enrollment.save();
+
+  return enrollment;
+};
+
+const getEnrollmentProgress = async (enrollmentId, tenantId) => {
+  if (!enrollmentId || !tenantId) {
+    throw new Error("Enrollment ID and Tenant ID are required");
+  }
+
+  const enrollment = await Enrollment.findOne({
+    _id: enrollmentId,
+    $or: [
+      { tenantId },
+      { organization_id: tenantId },
+    ],
+  }).populate(coursePopulateConfig);
+
+  if (!enrollment) {
+    throw new Error("Enrollment not found");
+  }
+
+  return {
+    enrollment_id: enrollment._id,
+    course: enrollment.courseId || enrollment.course_id,
+    progress: enrollment.progress || enrollment.progressPercent || 0,
+    status: enrollment.status,
+    enrolled_at: enrollment.enrolledAt || enrollment.enrolled_at,
+    completed_at: enrollment.completedAt || enrollment.completed_at,
+    completed_materials: enrollment.completed_materials || [],
+    total_materials: enrollment.completed_materials?.length || 0,
+  };
+};
+
 const dropCourse = async (enrollmentId, tenantId) => {
   if (!enrollmentId || !tenantId) {
     throw new Error("Enrollment ID and Tenant ID are required");
@@ -233,6 +294,8 @@ module.exports = {
   getStudentEnrollmentsAcrossPlatform,
   getCourseEnrollments,
   updateProgress,
+  markAsCompleted,
+  getEnrollmentProgress,
   dropCourse,
   deleteEnrollment,
 };

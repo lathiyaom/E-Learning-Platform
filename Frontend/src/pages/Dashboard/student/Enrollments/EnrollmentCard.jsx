@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
@@ -7,9 +7,12 @@ import {
   CheckCircle2,
   BookOpen,
   Clock,
+  Check,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "../../../../components/Card";
 import moment from "moment";
+import { useMarkAsCompletedMutation } from "../../../../redux/Apis/enrollmentApi";
 
 /* ── Status badge config ── */
 const STATUS_CFG = {
@@ -35,12 +38,15 @@ const STATUS_CFG = {
   },
 };
 
-function EnrollmentCard({ enrollment }) {
+function EnrollmentCard({ enrollment, onStatusChange }) {
   const navigate = useNavigate();
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [markAsCompleted] = useMarkAsCompletedMutation();
 
   // Support both legacy and new field names
   const course = enrollment.courseId || enrollment.course_id || {};
   const status = enrollment.status || "active";
+  const progress = enrollment.progress || enrollment.progressPercent || 0;
   const enrolledAt = enrollment.enrolledAt || enrollment.enrolled_at;
   const completedAt = enrollment.completedAt || enrollment.completed_at;
   const lastAccessed = enrollment.lastAccessedAt || enrollment.last_accessed_at;
@@ -48,6 +54,7 @@ function EnrollmentCard({ enrollment }) {
   const certificateUrl = enrollment.certificate_url || null;
 
   const cfg = STATUS_CFG[status] || STATUS_CFG.active;
+  const isActive = status === "active";
 
   const instructor = course.instructor
     ? `${course.instructor.firstName || ""} ${course.instructor.lastName || ""}`.trim()
@@ -65,6 +72,19 @@ function EnrollmentCard({ enrollment }) {
 
   const handleView = () => {
     if (course._id) navigate(`/card/${course._id}`, { state: { course } });
+  };
+
+  const handleMarkComplete = async (e) => {
+    e.stopPropagation();
+    setIsCompleting(true);
+    try {
+      await markAsCompleted(enrollment._id).unwrap();
+      if (onStatusChange) onStatusChange(enrollment._id, "completed");
+    } catch (error) {
+      console.error("Failed to mark as completed:", error);
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   return (
@@ -132,6 +152,24 @@ function EnrollmentCard({ enrollment }) {
           </div>
         )}
 
+        {/* Progress Bar (only show for active enrollments) */}
+        {isActive && (
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400">Progress</span>
+              <span className="font-semibold text-studprimary dark:text-premium-gold">
+                {progress}%
+              </span>
+            </div>
+            <div className="h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-studprimary to-premium-gold dark:from-premium-gold dark:to-studprimary transition-all duration-500 rounded-full"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Meta info grid */}
         <div className="grid grid-cols-1 gap-1.5 py-3 px-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
           {enrolledAt && (
@@ -170,15 +208,32 @@ function EnrollmentCard({ enrollment }) {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 mt-auto pt-1">
+        <div className="flex gap-2 mt-auto pt-2">
           <button
             onClick={handleView}
             disabled={!course._id}
-            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal text-sm font-bold hover:brightness-110 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-studprimary/20 dark:shadow-premium-gold/20"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-studprimary dark:bg-premium-gold text-white dark:text-deep-charcoal rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
           >
-            <Play className="w-4 h-4" fill="currentColor" />
-            {status === "completed" ? "Review" : "Continue"}
+            <Play className="w-4 h-4" />
+            {isActive ? "Continue" : "Review"}
           </button>
+
+          {/* Mark as Completed Button */}
+          {isActive && (
+            <button
+              onClick={handleMarkComplete}
+              disabled={isCompleting}
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Mark this course as completed"
+            >
+              {isCompleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">Complete</span>
+            </button>
+          )}
 
           {certificateIssued && certificateUrl && (
             <a
