@@ -16,6 +16,7 @@ import TeacherAnalyticsDashboard from "./Teacher/TeacherAnalyticsDashboard";
 import StudentCalendarView from "./student/StudentCalendarView";
 import StudentCourseDetails from "./student/StudentCourseDetails";
 import StudentFeedbackSystem from "./student/StudentFeedbackSystem";
+import StudentAssignments from "./student/StudentAssignments";
 
 // Dashboard Home/Layout
 import DashboardHome from "./DashboardHome";
@@ -52,6 +53,7 @@ const DashboardRouter = () => {
         <>
           <Route path="student/calendar" element={<StudentCalendarView />} />
           <Route path="student/course/:courseId" element={<StudentCourseDetails />} />
+          <Route path="student/assignments" element={<StudentAssignments />} />
           <Route path="student/feedback" element={<StudentFeedbackSystem />} />
         </>
       )}

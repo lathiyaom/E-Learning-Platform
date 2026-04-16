@@ -183,9 +183,25 @@ exports.getStudentAssignments = async (req, res) => {
     const studentId = req.user.id;
     const { courseId, status, page = 1, limit = 10 } = req.query;
 
-    // Get student's enrolled courses
-    const enrollments = await Enrollment.find({ studentId, status: "active" });
-    const courseIds = enrollments.map((e) => e.courseId);
+    // Get student's enrolled courses - try without status filter first
+    const enrollments = await Enrollment.find({ student_id: studentId });
+    console.log('Student enrollments found (no status filter):', enrollments.length, 'for student:', studentId);
+    
+    // Try with different status values if no results
+    const activeEnrollments = await Enrollment.find({ student_id: studentId, status: "active" });
+    console.log('Student enrollments found (active status):', activeEnrollments.length);
+    
+    const allEnrollments = await Enrollment.find({ student_id: studentId, status: { $in: ["active", "completed"] } });
+    console.log('Student enrollments found (active/completed):', allEnrollments.length);
+    
+    const finalEnrollments = allEnrollments.length > 0 ? allEnrollments : enrollments;
+    console.log('Enrollment sample:', finalEnrollments[0]);
+    const courseIds = finalEnrollments.map((e) => e.course_id);
+    console.log('Course IDs extracted:', courseIds);
+    
+    // Check if any assignments exist for these courses
+    const testAssignments = await Assignment.find({ courseId: { $in: courseIds } });
+    console.log('Test assignments found for courses:', testAssignments.length);
 
     // Build query - students should see all assignments for their enrolled courses
     const query = {
@@ -193,6 +209,11 @@ exports.getStudentAssignments = async (req, res) => {
       isVisible: true,
       isDeleted: false,
     };
+    
+    // Test without visibility/deleted filters first
+    const testQuery2 = { courseId: { $in: courseIds } };
+    const testAssignments2 = await Assignment.find(testQuery2);
+    console.log('Test assignments without filters:', testAssignments2.length);
     if (courseId) query.courseId = courseId;
 
     if (status && status !== "all") {
@@ -228,6 +249,9 @@ exports.getStudentAssignments = async (req, res) => {
       .sort({ dueDate: 1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
+    
+    console.log('Assignments query:', JSON.stringify(query, null, 2));
+    console.log('Assignments found:', assignments.length);
 
     // Get submission status for each assignment
     const assignmentIds = assignments.map((a) => a._id);
