@@ -124,6 +124,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<HomeNew />} />
             <Route path="/Login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/Sign-Up" element={<SignUp />} />
             <Route

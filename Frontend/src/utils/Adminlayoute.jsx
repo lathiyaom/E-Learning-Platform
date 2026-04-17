@@ -22,6 +22,7 @@ import {
   Bell,
   UserPlus,
   FileText,
+  UserCheck2,
 } from "lucide-react";
 import AvatarDropdown from "../components/Avatar";
 import DarkModeToggle from "../components/DarkModeToggle";
@@ -142,6 +143,13 @@ const AdminLayout = ({
         label: "Chat",
         link: "/teacher/chat",
         breadcrumb: "Messages",
+      },
+      {
+        id: "Profile",
+        icon: UserCheck2,
+        label: "profile",
+        link: "/profile",
+        breadcrumb: "Profile",
       },
       {
         id: "help",

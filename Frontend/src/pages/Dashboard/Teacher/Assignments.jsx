@@ -33,6 +33,7 @@ import {
   useUpdateAssignmentMutation,
   useDeleteAssignmentMutation,
   useGetAssignmentSubmissionsQuery,
+  useGradeSubmissionMutation,
 } from "../../../redux/Apis/assignmentApi";
 import { useGetAllCoursesQuery } from "../../../redux/Apis/courseApi";
 import { useUploadDocumentMutation, useDeleteFileMutation } from "../../../redux/Apis/uploadApi";
@@ -184,6 +185,38 @@ const SubmissionsModal = ({ assignment, onClose }) => {
   });
   const submissions = submissionsData?.data || [];
 
+  const [gradeSubmission, { isLoading: isGrading }] = useGradeSubmissionMutation();
+  const [gradingId, setGradingId] = useState(null);
+  const [gradeInputs, setGradeInputs] = useState({ grade: "", feedback: "" });
+
+  const startGrading = (sub) => {
+    setGradingId(sub._id);
+    setGradeInputs({ grade: sub.grade || "", feedback: sub.teacherFeedback || "" });
+  };
+
+  const cancelGrading = () => {
+    setGradingId(null);
+    setGradeInputs({ grade: "", feedback: "" });
+  };
+
+  const handleGradeSubmit = async (subId) => {
+    if (!gradeInputs.grade) {
+      ErrorToster("Please enter a valid grade");
+      return;
+    }
+    try {
+      await gradeSubmission({
+        submissionId: subId,
+        grade: Number(gradeInputs.grade),
+        teacherFeedback: gradeInputs.feedback,
+      }).unwrap();
+      SuccessToster("Grade updated successfully");
+      setGradingId(null);
+    } catch (err) {
+      ErrorToster(err?.data?.message || "Failed to grade submission");
+    }
+  };
+
   const handleSubmissionFileDownload = async (event, file) => {
     event.preventDefault();
 
@@ -258,26 +291,97 @@ const SubmissionsModal = ({ assignment, onClose }) => {
                     </div>
                     <div className="text-right flex-shrink-0">
                       {sub.grade !== null && sub.grade !== undefined ? (
-                        <div>
-                          <p className="text-lg font-extrabold text-studprimary dark:text-premium-gold">
-                            {sub.grade}
-                            <span className="text-sm font-normal text-slate-400">/{sub.maxGrade}</span>
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {sub.percentage?.toFixed(1)}% · {sub.letterGrade}
-                          </p>
+                        <div className="flex flex-col items-end gap-1">
+                          <div>
+                            <p className="text-lg font-extrabold text-studprimary dark:text-premium-gold">
+                              {sub.grade}
+                              <span className="text-sm font-normal text-slate-400">/{sub.maxGrade}</span>
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {sub.percentage?.toFixed(1)}% · {sub.letterGrade}
+                            </p>
+                          </div>
+                          {!gradingId && (
+                            <button
+                              onClick={() => startGrading(sub)}
+                              className="text-xs font-semibold text-studprimary hover:underline dark:text-premium-gold"
+                            >
+                              Edit Grade
+                            </button>
+                          )}
                         </div>
                        ) : (
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full ${(sub.status === 'submitted' || sub.status === 'resubmitted') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'}`}>
-                          {(sub.status === 'submitted' || sub.status === 'resubmitted') ? (
-                            <><CheckCircle size={11} /> Submitted</>
-                          ) : (
-                            <><Clock size={11} /> {sub.status ? sub.status.charAt(0).toUpperCase() + sub.status.slice(1) : 'Pending'}</>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full ${(sub.status === 'submitted' || sub.status === 'resubmitted') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'}`}>
+                            {(sub.status === 'submitted' || sub.status === 'resubmitted') ? (
+                              <><CheckCircle size={11} /> Submitted</>
+                            ) : (
+                              <><Clock size={11} /> {sub.status ? sub.status.charAt(0).toUpperCase() + sub.status.slice(1) : 'Pending'}</>
+                            )}
+                          </span>
+                          {(sub.status === 'submitted' || sub.status === 'resubmitted') && !gradingId && (
+                            <button
+                              onClick={() => startGrading(sub)}
+                              className="text-xs font-semibold px-3 py-1 bg-studprimary text-white rounded-lg hover:bg-studprimary-dark hover:opacity-90 transition-colors"
+                            >
+                              Grade
+                            </button>
                           )}
-                        </span>
+                        </div>
                       )}
                     </div>
                   </div>
+
+                  {gradingId === sub._id && (
+                    <div className="mt-4 p-4 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-inner">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-4">
+                          <div className="w-32">
+                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Score</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                value={gradeInputs.grade}
+                                onChange={(e) => setGradeInputs({ ...gradeInputs, grade: e.target.value })}
+                                max={sub.maxGrade}
+                                min={0}
+                                placeholder="0"
+                                className="w-full pl-3 pr-10 py-1.5 bg-white dark:bg-[#1A1B23] border border-slate-300 dark:border-white/20 rounded-lg text-sm text-slate-900 dark:text-white outline-none focus:border-studprimary"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">/{sub.maxGrade}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Feedback (Optional)</label>
+                          <textarea
+                            value={gradeInputs.feedback}
+                            onChange={(e) => setGradeInputs({ ...gradeInputs, feedback: e.target.value })}
+                            placeholder="Provide feedback for the student..."
+                            rows={2}
+                            className="w-full px-3 py-2 bg-white dark:bg-[#1A1B23] border border-slate-300 dark:border-white/20 rounded-lg text-sm text-slate-900 dark:text-white outline-none focus:border-studprimary resize-none"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-1">
+                          <button
+                            onClick={cancelGrading}
+                            disabled={isGrading}
+                            className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-white/10 hover:bg-slate-50 border border-slate-200 dark:border-white/10 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleGradeSubmit(sub._id)}
+                            disabled={isGrading}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-studprimary hover:bg-studprimary-dark hover:opacity-90 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {isGrading ? <div className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <Save size={12} />}
+                            Save Grade
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {sub.textContent && (
                     <div className="mt-3 p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10">
