@@ -184,10 +184,15 @@ const getAllCourses = async (tenantId, sortBy = "popular") => {
 
   let query = {};
   if (tenantId) {
+    const mongoose = require("mongoose");
+    const tenantObjId = mongoose.Types.ObjectId.isValid(tenantId)
+      ? new mongoose.Types.ObjectId(tenantId)
+      : tenantId;
     query = {
-      $or: [{ tenantId }, { organization_id: tenantId }],
+      $or: [{ tenantId: tenantObjId }, { organization_id: tenantObjId }],
     };
   }
+
   // If no tenantId (e.g., teacher not assigned), return all courses
 
   // Use aggregation to include enrollment counts

@@ -270,10 +270,12 @@ const teacherOrganizationService = {
       });
 
       // Get average rating for teacher's courses
+      const mongoose = require("mongoose");
+      const orgObjId = mongoose.Types.ObjectId.isValid(organizationId) ? new mongoose.Types.ObjectId(organizationId) : organizationId;
       const ratings = await Rating.aggregate([
         {
           $match: {
-            tenantId: organizationId,
+            tenantId: orgObjId,
             courseId: { $in: courseIds },
           },
         },

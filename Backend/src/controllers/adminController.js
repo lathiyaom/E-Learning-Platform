@@ -28,13 +28,22 @@ const getMyUsers = async (req, res) => {
     });
 
     // Build filter criteria
-    const filter = { tenant_id: tenantId };
+    const filter = {
+      $or: [{ tenant_id: tenantId }, { organizations: tenantId }]
+    };
     
     if (search) {
-      filter.$or = [
-        { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } }
+      const tenantOr = filter.$or;
+      delete filter.$or;
+      filter.$and = [
+        { $or: tenantOr },
+        {
+          $or: [
+            { firstName: { $regex: search, $options: "i" } },
+            { lastName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } }
+          ]
+        }
       ];
     }
 
@@ -98,7 +107,10 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
     const tenantId = req.tenantId;
 
-    const user = await User.findOne({ _id: id, tenant_id: tenantId })
+    const user = await User.findOne({
+      _id: id,
+      $or: [{ tenant_id: tenantId }, { organizations: tenantId }]
+    })
       .select("-password -token -refreshToken")
       .populate("organizations", "name code");
 
@@ -131,7 +143,10 @@ const updateUser = async (req, res) => {
     const updateData = req.body;
 
     // Find the user within tenant scope
-    const user = await User.findOne({ _id: id, tenant_id: tenantId });
+    const user = await User.findOne({
+      _id: id,
+      $or: [{ tenant_id: tenantId }, { organizations: tenantId }]
+    });
     
     if (!user) {
       return res.status(404).json({
@@ -178,7 +193,10 @@ const suspendUser = async (req, res) => {
     const { id } = req.params;
     const tenantId = req.tenantId;
 
-    const user = await User.findOne({ _id: id, tenant_id: tenantId });
+    const user = await User.findOne({
+      _id: id,
+      $or: [{ tenant_id: tenantId }, { organizations: tenantId }]
+    });
     
     if (!user) {
       return res.status(404).json({
@@ -228,7 +246,10 @@ const activateUser = async (req, res) => {
     const { id } = req.params;
     const tenantId = req.tenantId;
 
-    const user = await User.findOne({ _id: id, tenant_id: tenantId });
+    const user = await User.findOne({
+      _id: id,
+      $or: [{ tenant_id: tenantId }, { organizations: tenantId }]
+    });
     
     if (!user) {
       return res.status(404).json({
@@ -259,7 +280,10 @@ const deleteUser = async (req, res) => {
     const { id } = req.params;
     const tenantId = req.tenantId;
 
-    const user = await User.findOne({ _id: id, tenant_id: tenantId });
+    const user = await User.findOne({
+      _id: id,
+      $or: [{ tenant_id: tenantId }, { organizations: tenantId }]
+    });
     
     if (!user) {
       return res.status(404).json({

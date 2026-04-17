@@ -83,14 +83,16 @@ const Attendance = () => {
     if (existingAttendance?._id) {
       const next = {};
       existingAttendance.attendanceRecords?.forEach((record) => {
-        next[record.studentId] = record.status;
+        const studentObj = record.studentId;
+        const sid = typeof studentObj === 'object' && studentObj !== null ? studentObj._id : studentObj;
+        next[sid] = record.status;
       });
       setAttendanceData(next);
       return;
     }
 
     setAttendanceData({});
-  }, [existingAttendance?._id, selectedDate]);
+  }, [existingAttendance, selectedDate]);
 
   const statusBreakdown = students.reduce(
     (acc, enrollment) => {

@@ -1,24 +1,30 @@
 const { Course, User, Enrollment, Attendance, Rating, Feedback } = require("../models");
 
-const byTenant = (tenantId) => ({ $or: [{ tenantId }, { organization_id: tenantId }, { tenant_id: tenantId }] });
+const byTenant = (tenantId) => {
+  const mongoose = require("mongoose");
+  const tId = mongoose.Types.ObjectId.isValid(tenantId) ? new mongoose.Types.ObjectId(tenantId) : tenantId;
+  return { $or: [{ tenantId: tId }, { organization_id: tId }, { tenant_id: tId }] };
+};
 
 const analyticsService = {
   getAdminDashboard: async (tenantId) => {
     try {
+      const mongoose = require("mongoose");
+      const tId = mongoose.Types.ObjectId.isValid(tenantId) ? new mongoose.Types.ObjectId(tenantId) : tenantId;
       const totalUsers = await User.countDocuments(byTenant(tenantId));
       const totalStudents = await User.countDocuments({ ...byTenant(tenantId), userType: "student" });
       const totalTeachers = await User.countDocuments({ ...byTenant(tenantId), userType: "teacher" });
       const totalCourses = await Course.countDocuments({
-        $or: [{ tenantId }, { organization_id: tenantId }],
+        $or: [{ tenantId: tId }, { organization_id: tId }],
       });
       const totalEnrollments = await Enrollment.countDocuments({
-        $or: [{ tenantId }, { organization_id: tenantId }],
+        $or: [{ tenantId: tId }, { organization_id: tId }],
       });
 
       const enrollmentTrend = await Enrollment.aggregate([
         {
           $match: {
-            $or: [{ tenantId }, { organization_id: tenantId }],
+            $or: [{ tenantId: tId }, { organization_id: tId }],
           },
         },
         {
@@ -36,7 +42,7 @@ const analyticsService = {
       const topCourses = await Enrollment.aggregate([
         {
           $match: {
-            $or: [{ tenantId }, { organization_id: tenantId }],
+            $or: [{ tenantId: tId }, { organization_id: tId }],
           },
         },
         { $group: { _id: { $ifNull: ["$courseId", "$course_id"] }, count: { $sum: 1 } } },
@@ -57,9 +63,11 @@ const analyticsService = {
 
   getTeacherDashboard: async (tenantId, teacherId) => {
     try {
+      const mongoose = require("mongoose");
+      const tId = mongoose.Types.ObjectId.isValid(tenantId) ? new mongoose.Types.ObjectId(tenantId) : tenantId;
       const myCourses = await Course.find({
         $and: [
-          { $or: [{ tenantId }, { organization_id: tenantId }] },
+          { $or: [{ tenantId: tId }, { organization_id: tId }] },
           { $or: [{ createdBy: teacherId }, { teacher_id: teacherId }] },
         ],
       });
@@ -180,10 +188,12 @@ const analyticsService = {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
+      const mongoose = require("mongoose");
+      const tId = mongoose.Types.ObjectId.isValid(tenantId) ? new mongoose.Types.ObjectId(tenantId) : tenantId;
       const trends = await Enrollment.aggregate([
         {
           $match: {
-            $or: [{ tenantId }, { organization_id: tenantId }],
+            $or: [{ tenantId: tId }, { organization_id: tId }],
             createdAt: { $gte: startDate },
           },
         },
