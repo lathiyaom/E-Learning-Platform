@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CourseCard from "../Student_Dashboard/RecommendedCourseCard";
 import { ArrowDown, ArrowUp, LayoutGrid, List } from "lucide-react";
 import { useGetMyEnrollmentsQuery } from "../../../../redux/Apis/enrollmentApi";
 
 function CourseSection() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Ongoing");
   const [showAll, setShowAll] = useState(false);
   const { data: enrollmentsData, isLoading } = useGetMyEnrollmentsQuery();
@@ -16,6 +18,7 @@ function CourseSection() {
 
     return {
       id: enrollment._id || enrollment.id,
+      courseId: course._id || course.id,
       title: course.title || "Untitled Course",
       image: course.image || "https://placehold.co/640x360?text=Course",
       category: course.category || "General",
@@ -89,7 +92,7 @@ function CourseSection() {
                   key={course.id}
                   course={course}
                   isOngoing={true}
-                  onButtonClick={() => console.log("Continue", course.title)}
+                  onButtonClick={() => navigate(`/card/${course.courseId}`)}
                 />
               ))}
             </div>
